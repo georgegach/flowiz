@@ -48,3 +48,9 @@ Project website: http://sintel.is.tue.mpg.de/
 # Acknowledgements
 The library is based on Midlebury's Vision Project MATLAB code: http://vision.middlebury.edu/flow/   
 Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
+
+# To-Do
+- [x] Ported
+- [ ] Visualization
+- [ ] Standalone PNG packaging (remove PIL dependency)
+- [ ] Version 1.0 + pip
