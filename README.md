@@ -37,4 +37,14 @@ tqdm==4.25.0
 Pillow==5.2.0
 ```
 
+# Example
+Example converted image `frame_0001.flo.png` from MPI Sintel dataset (alley_1 scene).   
+Project website: http://sintel.is.tue.mpg.de/
+
+
 ![Image](https://github.com/georgegach/flow2image/raw/master/tmp/flows/frame_0001.flo.png)
+
+
+# Acknowledgements
+The library is based on Midlebury's Vision Project MATLAB code: http://vision.middlebury.edu/flow/   
+Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
