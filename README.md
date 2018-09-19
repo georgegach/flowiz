@@ -2,7 +2,8 @@
 Converts Optical Flow [.flo] files to images [.png] and optionally compiles them to a video [.mp4] via ffmpeg
 
 ## Usage
-Convert [.flo] files from `tmp` directory to [.png] images and save into `tmp/flows` (with same filename + '.png'). Appending `-v` and `-r 2` flags will enable you to generate 2 fps [.mp4] video from converted images.
+Convert [.flo] files from `tmp` directory to [.png] images and save into `tmp/flows` (with same filename + '.png').  
+Appending `-v` and `-r 2` flags will enable you to generate 2 fps [.mp4] video from converted images.
 ```bash
 python f2i.py tmp/*.flo -v -r 2 -o tmp/flows
 ```
@@ -26,7 +27,7 @@ optional arguments:
   --framerate FRAMERATE, -r FRAMERATE
                         Frames per second of the video.
 ```
-Appropriate Jupyter Notebook is also provided - `test.ipynb`.
+Relevant Jupyter Notebook is also available - `test.ipynb`.
 
 
 # Requirements
@@ -35,3 +36,5 @@ numpy==1.14.3
 tqdm==4.25.0
 Pillow==5.2.0
 ```
+
+![Image](https://github.com/georgegach/flow2image/raw/master/tmp/flows/frame_0001.flo.png)
