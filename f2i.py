@@ -186,7 +186,7 @@ class Flow(object):
 
     def _flowToUV(self, flow):
         u,v = self._normalizeFlow(flow)
-        uv = (np.dstack([u,v])*255.999).astype('uint8')
+        uv = (np.dstack([u,v])*127.999+128).astype('uint8')
         return uv
     
     def _saveAsPNG(self, arr, path):
