@@ -133,7 +133,7 @@ class Flow(object):
 
         return img.astype(np.uint8)
 
-    def _flowToColor(self, flow):
+    def _normalizeFlow(self, flow):
         UNKNOWN_FLOW_THRESH = 1e9
         UNKNOWN_FLOW = 1e10
 
@@ -167,7 +167,12 @@ class Flow(object):
         eps = np.finfo(np.float32).eps
         u = u/(maxrad + eps)
         v = v/(maxrad + eps)
-
+        
+        return u,v
+    
+    def _flowToColor(self, flow):
+        
+        u,v = self._normalizeFlow(flow)
         img = self._computeColor(u, v)
 
         # TO-DO 
@@ -179,17 +184,27 @@ class Flow(object):
 
         return img
 
+    def _flowToUV(self, flow):
+        u,v = self._normalizeFlow(flow)
+        uv = (np.dstack([u,v])*255.999).astype('uint8')
+        return uv
     
     def _saveAsPNG(self, arr, path):
         # TO-DO: No dependency
         Image.fromarray(arr).save(path)
 
 
-    def convertFromFile(self, path):
-        return self._flowToColor(self._readFlow(path))
+    def convertFromFile(self, path, mode='RGB'):
+        return self.convertFromFlow(self._readFlow(path), mode)
 
-    def convertFromFlow(self, flow):
+    def convertFromFlow(self, flow, mode='RGB'):
+        if mode == 'RGB':
+            return self._flowToColor(flow)
+        if mode == 'UV':
+            return self._flowToUV(flow)
+        
         return self._flowToColor(flow)
+            
 
     def convertFiles(self, files, outdir=None):
         if outdir != None and not os.path.exists(outdir):
