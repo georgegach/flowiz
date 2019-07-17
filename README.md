@@ -1,9 +1,9 @@
 # flowiz
 
-![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)
-![PyPI](https://img.shields.io/pypi/v/flowiz.svg)
-![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)
+[![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/flowiz.svg)](https://pypi.org/project/flowiz/)
+[![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)](https://pypi.org/project/flowiz/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)](https://pypistats.org/search/flowiz)
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 
@@ -12,17 +12,12 @@
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
 -   [Installation](#installation)
-
 -   [Usage](#usage)
-
     -   [Command line usage](#command-line-usage)
     -   [Python usage](#python-usage)
     -   [Help](#help)
-
 -   [Acknowledgements](#acknowledgements)
-
 -   [FAQ](#faq)
-
 -   [To-Do](#to-do)
 
 ## Installation
