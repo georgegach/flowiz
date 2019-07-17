@@ -1,6 +1,15 @@
 # flowiz
 Converts Optical Flow [.flo] files to images [.png] and optionally compiles them to a video [.mp4] via ffmpeg
 
+- [Installation](#installation)
+- [Usage](#usage)
+  * [Command line usage](#command-line-usage)
+  * [Python usage](#python-usage)
+  * [Help](#help)
+- [Acknowledgements](#acknowledgements)
+- [FAQ](#faq)
+- [To-Do](#to-do)
+
 
 # Installation
 Grab the latest package from PyPI repo
@@ -18,6 +27,11 @@ or clone the repo and install using `setup.py`
 git clone https://github.com/georgegach/flowiz.git
 cd flowiz
 python setup.py install --user
+```
+
+Make sure you have following packages installed
+```bash
+pip install numpy tqdm pillow
 ```
 
 # Usage
@@ -95,21 +109,14 @@ optional arguments:
 ```
 
 
-# Requirements
-Make sure you have following packages installed
-```bash
-pip install numpy tqdm pillow
-```
-
-
 
 # Acknowledgements
 The library is based on Midlebury's Vision Project MATLAB code: http://vision.middlebury.edu/flow/   
 Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 # FAQ
-> Q: What kind of name is `flowiz`?  
-> A: The kind you choose when `flowkit`, `flowtools`, `flowlib` is already taken. 
+> Q: But what kind of name is `flowiz`?  
+> A: The kind you choose when `flowkit`, `flowtools`, `flowlib` are already taken. 
 
 # To-Do
 - [x] Ported
