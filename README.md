@@ -5,19 +5,24 @@
 ![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=georgegach/flowiz&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 
 [![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
 -   [Installation](#installation)
+
 -   [Usage](#usage)
+
     -   [Command line usage](#command-line-usage)
     -   [Python usage](#python-usage)
     -   [Help](#help)
+
 -   [Acknowledgements](#acknowledgements)
+
 -   [FAQ](#faq)
+
 -   [To-Do](#to-do)
 
 ## Installation
@@ -69,7 +74,9 @@ python -m flowiz demo/flo/*.flo --outdir demo/png/
 
 You may compile converted `.png` images into a _24 fps_ `.mp4` clip by passing `-v` or `--videodir` parameter with a video output directory (without a filename)
 
-    python -m flowiz demo/flo/*.flo -o demo/png --videodir demo/mp4
+```bash
+python -m flowiz demo/flo/*.flo -o demo/png --videodir demo/mp4
+```
 
 Pass `-r` or `--framerate` parameter to control the framerate of compiled video
 
@@ -105,27 +112,27 @@ axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 ### Help
 
 ```bash
-python -m flowiz -h
+$ python -m flowiz -h
+
+usage: __main__.py [-h] [--outdir OUTDIR] [--videodir VIDEODIR]
+                    [--framerate FRAMERATE]
+                    input [input ...]
+
+positional arguments:
+  input                 Input file(s). (e.g.: __ ./demo/flo/*.flo)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --outdir OUTDIR, -o OUTDIR
+                        Output directory path. Default: same directory as
+                        [.flo] files. (e.g.: __ -o ./demo/png/)
+  --videodir VIDEODIR, -v VIDEODIR
+                        Compiles [.mp4] video from [.png] images if parameter
+                        is passed. Parameter requires video output directory
+                        path without a filename. (e.g.: __ -v ./demo/mp4/)
+  --framerate FRAMERATE, -r FRAMERATE
+                        Frames per second of the video. (e.g.: __ -r 2)
 ```
-
-    usage: __main__.py [-h] [--outdir OUTDIR] [--videodir VIDEODIR]
-                       [--framerate FRAMERATE]
-                       input [input ...]
-
-    positional arguments:
-      input                 Input file(s). (e.g.: __ ./demo/flo/*.flo)
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --outdir OUTDIR, -o OUTDIR
-                            Output directory path. Default: same directory as
-                            [.flo] files. (e.g.: __ -o ./demo/png/)
-      --videodir VIDEODIR, -v VIDEODIR
-                            Compiles [.mp4] video from [.png] images if parameter
-                            is passed. Parameter requires video output directory
-                            path without a filename. (e.g.: __ -v ./demo/mp4/)
-      --framerate FRAMERATE, -r FRAMERATE
-                            Frames per second of the video. (e.g.: __ -r 2)
 
 ## Acknowledgements
 
