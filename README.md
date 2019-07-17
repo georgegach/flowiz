@@ -46,7 +46,7 @@ python -m flowiz demo/flo/*.flo -o demo/png -v demo/mp4 --framerate 2
 ```
 
 
-## General usage
+## Python usage
 
 Relevant python code is available in `demo/test.ipynb` notebook. Here's an excerpt:
 ```python
@@ -59,6 +59,15 @@ plt.imshow(img)
 ```
 ![Image](https://github.com/georgegach/flowiz/raw/master/demo/png/frame_0001.flo.png)
 
+In case you need to visualize `U V` channels separately from your numpy `floArray`:
+```
+...
+uv = f.convertFromFlow(floArray, mode='UV')
+...
+axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
+axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
+```
+![Image](https://github.com/georgegach/flowiz/raw/master/demo/_github_assets_/uv_flow.png)
 
 ## Help
 ```bash
