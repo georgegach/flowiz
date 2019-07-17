@@ -100,7 +100,7 @@ class flowiz(object):
         colorwheel[col : MR + col, 0] = 255
 
         return colorwheel
-    
+
     def _computeColor(self, u, v):
         colorwheel = self._colorWheel()
         idxNans = np.where(np.logical_or(
