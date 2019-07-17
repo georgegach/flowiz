@@ -108,7 +108,7 @@ The library is based on Midlebury's Vision Project MATLAB code: http://vision.mi
 Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 # FAQ
-> Q: What kind of name is `flowiz`  
+> Q: What kind of name is `flowiz`?  
 > A: The kind you choose when `flowkit`, `flowtools`, `flowlib` is already taken. 
 
 # To-Do
