@@ -57,7 +57,7 @@ files = glob.glob('demo/flo/*.flo')
 img = f.convertFromFile(files[0])
 plt.imshow(img)
 ```
-![Image](https://github.com/georgegach/flowiz/raw/master/demo/png/frame_0001.flo.png)
+![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/png/frame_0001.flo.png)
 
 In case you need to visualize `U V` channels separately from your numpy `floArray`:
 ```
@@ -67,7 +67,7 @@ uv = f.convertFromFlow(floArray, mode='UV')
 axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
 axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 ```
-![Image](https://github.com/georgegach/flowiz/raw/master/demo/_github_assets_/uv_flow.png)
+![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/_github_assets/uv_flows.png)
 
 ## Help
 ```bash
