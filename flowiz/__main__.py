@@ -1,5 +1,4 @@
 import argparse
-import sys
 import glob
 import os
 from flowiz import flowiz

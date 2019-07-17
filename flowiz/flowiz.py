@@ -24,20 +24,27 @@ class flowiz(object):
         self.flags['d'] = debug
 
     def _readFlow(self, path):
-        assert type(path) is str, "Input [{p}] is not a string".format(p=path)
-        assert os.path.isfile(path), "Path [{p}] does not exist".format(p=path)
-        assert path.split('.')[-1] == 'flo', "File extension [flo] required, [{f}] given".format(f=path.split('.')[-1])
+
+        if not isinstance(path, str):
+            raise AssertionError("Input [{p}] is not a string".format(p=path))
+        if not os.path.isfile(path):
+            raise AssertionError("Path [{p}] does not exist".format(p=path))
+        if not path.split('.')[-1] == 'flo':
+            raise AssertionError("File extension [flo] required, [{f}] given".format(f=path.split('.')[-1]))
 
         flo = open(path, 'rb')
 
         tag = np.fromfile(flo, np.float32, count=1)[0]
-        assert self.TAG_FLOAT == tag, "Wrong Tag [{t}]".format(t=tag)
+        if not self.TAG_FLOAT == tag:
+            raise AssertionError("Wrong Tag [{t}]".format(t=tag))
 
         width = np.fromfile(flo, np.int32, count=1)[0]
-        assert width > 0 and width < 100000, "Illegal width [{w}]".format(w=width)
+        if not width > 0 and width < 100000:
+            raise AssertionError("Illegal width [{w}]".format(w=width))
 
         height = np.fromfile(flo, np.int32, count=1)[0]
-        assert width > 0 and width < 100000, "Illegal height [{h}]".format(h=height)
+        if not width > 0 and width < 100000:
+            raise AssertionError("Illegal height [{h}]".format(h=height))
 
         nbands = 2
         tmp = np.fromfile(flo, np.float32, count= nbands * width * height)
@@ -132,10 +139,11 @@ class flowiz(object):
 
     def _normalizeFlow(self, flow):
         UNKNOWN_FLOW_THRESH = 1e9
-        UNKNOWN_FLOW = 1e10
+        # UNKNOWN_FLOW = 1e10
 
         height, width, nBands = flow.shape
-        assert nBands == 2, "Image must have two bands. [{h},{w},{nb}] shape given instead".format(h=height, w=width, nb=nBands)
+        if not nBands == 2:
+            raise AssertionError("Image must have two bands. [{h},{w},{nb}] shape given instead".format(h=height, w=width, nb=nBands))
 
         u = flow[:, :, 0]
         v = flow[:, :, 1]
