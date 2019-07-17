@@ -1,23 +1,20 @@
 # Converts Flow .flo files to Images
 
 # Author : George Gach (@georgegach)
-# Date   : August 2018
+# Date   : July 2019
 
 # Adapted from the Middlebury Vision project's Flow-Code
 # URL    : http://vision.middlebury.edu/flow/ 
 
 
 import numpy as np
-import sys
 import os
-import glob
 import errno
-import argparse
 from tqdm import tqdm
 from PIL import Image
 
 
-class Flow(object):
+class flowiz(object):
 
     def __init__(self, debug=False):
         self.flow = None
@@ -224,47 +221,10 @@ class Flow(object):
                 t.set_description(path)
                 self._saveAsPNG(image, path)
             else:
-                path = os.path.join(args.outdir, os.path.basename(f) + '.png')
+                path = os.path.join(outdir, os.path.basename(f) + '.png')
                 t.set_description(path)
                 self._saveAsPNG(image, path)
 
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', nargs='+', help='Input file(s)')
-    parser.add_argument('--outdir', '-o', action='store', help='Output directory path. Default: same directory.')
-    parser.add_argument('--video', '-v', action='store_true', help='Compile as video using ffmpeg.')
-    parser.add_argument('--framerate', '-r', type=int, help='Frames per second of the video.')
-
-
-    args = parser.parse_args()
-
-    if type(args.input) == list: 
-        files = args.input
-    else:
-        files = glob.glob(args.inglob.split('\n')[0])
-
-    print("> Rendering images [.png] from the flows [.flo]")
-    flow = Flow()
-    flow.convertFiles(files, outdir = args.outdir if args.outdir != None else None )
     
-
-    if args.video:
-        print("> Compiling [.mp4] video from the flow images [.png]")
-        if args.framerate == None:
-            args.framerate = 24
-        if args.outdir == None:
-            out = files[0] + '.mp4'
-            files = os.path.join(os.path.dirname(files[0]), '*.png')
-        else:
-            out = os.path.join(args.outdir, os.path.basename(files[0]) + '.mp4')
-            files = os.path.join(args.outdir, '*.png')
-
-        print("> Saving video as: " + out)
-
-        os.system("ffmpeg -r {} -loglevel panic -pattern_type glob -i '{}' {} ".format(
-            args.framerate,
-            files,
-            out
-        ))
