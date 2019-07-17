@@ -12,7 +12,7 @@ parser.add_argument('--framerate', '-r', type=int, help='Frames per second of th
 
 args = parser.parse_args()
 
-if type(args.input) == list: 
+if isinstance(args.input, list):
     flos = args.input
 else:
     flos = glob.glob(args.inglob.split('\n')[0])
@@ -33,7 +33,7 @@ if args.videodir:
 
     if not os.path.exists(args.videodir):
         os.mkdir(args.videodir)
-    
+
     videofilename = os.path.join(args.videodir, os.path.basename(flos[0]) + '.mp4')
     pngpattern = os.path.join(args.outdir, '*.png')
 

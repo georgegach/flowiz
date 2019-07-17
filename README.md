@@ -10,7 +10,7 @@
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
 -   [Installation](#installation)
-    -   [Usage](#usage)
+-   [Usage](#usage)
     -   [Command line usage](#command-line-usage)
     -   [Python usage](#python-usage)
     -   [Help](#help)
@@ -18,7 +18,7 @@ Converts Optical Flow `.flo` files to images `.png` and optionally compiles them
 -   [FAQ](#faq)
 -   [To-Do](#to-do)
 
-# Installation
+## Installation
 
 Grab the latest package from PyPI repo
 
@@ -47,16 +47,16 @@ pip install numpy tqdm pillow
 apt install ffmpeg
 ```
 
-# Usage
+## Usage
 
-Package can be used both from the command line and python script. 
+Package can be used both from the command line and python script.
 
-## Command line usage
+### Command line usage
 
 The following script grabs `.flo` files from `./demo/flo/` directory and converts into `.png` saving in the same directory
 
 ```bash
-python -m flowiz demo/flo/*.flo 
+python -m flowiz demo/flo/*.flo
 ```
 
 You can pass output directory for `.png` images via `-o` or `--outdir` parameter
@@ -75,7 +75,7 @@ Pass `-r` or `--framerate` parameter to control the framerate of compiled video
 python -m flowiz demo/flo/*.flo -o demo/png -v demo/mp4 --framerate 2
 ```
 
-## Python usage
+### Python usage
 
 Relevant python code is available in `demo/test.ipynb` notebook. Here's an excerpt:
 
@@ -92,15 +92,15 @@ plt.imshow(img)
 
 In case you need to visualize `U V` channels separately from your numpy `floArray`:
 
-    ...
-    uv = f.convertFromFlow(floArray, mode='UV')
-    ...
-    axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
-    axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
+```python
+uv = f.convertFromFlow(floArray, mode='UV')
+axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
+axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
+```
 
 ![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/_github_assets/uv_flows.png)
 
-## Help
+### Help
 
 ```bash
 python -m flowiz -h
@@ -125,17 +125,17 @@ python -m flowiz -h
       --framerate FRAMERATE, -r FRAMERATE
                             Frames per second of the video. (e.g.: __ -r 2)
 
-# Acknowledgements
+## Acknowledgements
 
-The library is based on Midlebury's Vision Project MATLAB code: <http://vision.middlebury.edu/flow/>  
+The library is based on Midlebury's Vision Project MATLAB code: <http://vision.middlebury.edu/flow/>
 Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
-# FAQ
+## FAQ
 
-> Q: But what kind of name is `flowiz`?  
-> A: The kind you choose when `flowkit`, `flowtools`, `flowlib` are already taken. 
+> Q: But what kind of name is `flowiz`?
+> A: The kind you choose when `flowkit`, `flowtools`, `flowlib` are already taken.
 
-# To-Do
+## To-Do
 
 -   [x] Ported
 -   [x] Version 1.0 + pip

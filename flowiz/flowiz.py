@@ -4,8 +4,7 @@
 # Date   : July 2019
 
 # Adapted from the Middlebury Vision project's Flow-Code
-# URL    : http://vision.middlebury.edu/flow/ 
-
+# URL    : http://vision.middlebury.edu/flow/
 
 import numpy as np
 import os
@@ -82,7 +81,7 @@ class flowiz(object):
         col += YG
 
         #GC
-        colorwheel[col : GC + col, 1] = 255 
+        colorwheel[col : GC + col, 1] = 255
         colorwheel[col : GC + col, 2] = np.floor(255*np.arange(0, GC, 1)/GC)
         col += GC
 
@@ -92,7 +91,7 @@ class flowiz(object):
         col += CB
 
         #BM
-        colorwheel[col : BM + col, 2] = 255 
+        colorwheel[col : BM + col, 2] = 255
         colorwheel[col : BM + col, 0] = np.floor(255*np.arange(0, BM, 1)/BM)
         col += BM
 
@@ -105,7 +104,7 @@ class flowiz(object):
     def _computeColor(self, u, v):
         colorwheel = self._colorWheel()
         idxNans = np.where(np.logical_or(
-            np.isnan(u), 
+            np.isnan(u),
             np.isnan(v)
         ))
         u[idxNans] = 0
@@ -129,8 +128,8 @@ class flowiz(object):
             col1 = tmp[k1] / 255
             col = (1-f) * col0 + f * col1
             idx = radius <= 1
-            col[idx] = 1 - radius[idx] * (1 - col[idx]) 
-            col[~idx] *= 0.75 
+            col[idx] = 1 - radius[idx] * (1 - col[idx])
+            col[~idx] *= 0.75
             img[:, :, i] = np.floor(255 * col).astype(np.uint8) # RGB
             # img[:, :, 2 - i] = np.floor(255 * col).astype(np.uint8) # BGR
 
@@ -150,7 +149,7 @@ class flowiz(object):
 
         # Fix unknown flow
         idxUnknown = np.where(np.logical_or(
-            abs(u) > UNKNOWN_FLOW_THRESH, 
+            abs(u) > UNKNOWN_FLOW_THRESH,
             abs(v) > UNKNOWN_FLOW_THRESH
         ))
         u[idxUnknown] = 0
@@ -172,18 +171,18 @@ class flowiz(object):
         eps = np.finfo(np.float32).eps
         u = u/(maxrad + eps)
         v = v/(maxrad + eps)
-        
+
         return u,v
-    
+
     def _flowToColor(self, flow):
-        
+
         u,v = self._normalizeFlow(flow)
         img = self._computeColor(u, v)
 
-        # TO-DO 
+        # TO-DO
         # Indicate unknown flows on the image
-        # Originally done as 
-        # 
+        # Originally done as
+        #
         # IDX = repmat(idxUnknown, [1 1 3]);
         # img(IDX) = 0;
 
@@ -193,7 +192,7 @@ class flowiz(object):
         u,v = self._normalizeFlow(flow)
         uv = (np.dstack([u,v])*127.999+128).astype('uint8')
         return uv
-    
+
     def _saveAsPNG(self, arr, path):
         # TO-DO: No dependency
         Image.fromarray(arr).save(path)
@@ -207,16 +206,15 @@ class flowiz(object):
             return self._flowToColor(flow)
         if mode == 'UV':
             return self._flowToUV(flow)
-        
+
         return self._flowToColor(flow)
-            
 
     def convertFiles(self, files, outdir=None):
         if outdir != None and not os.path.exists(outdir):
             try:
                 os.makedirs(outdir)
                 print("> Created directory: " + outdir)
-            except OSError as exc: 
+            except OSError as exc:
                 if exc.errno != errno.EEXIST:
                     raise
 
@@ -235,4 +233,3 @@ class flowiz(object):
 
 
 
-    
