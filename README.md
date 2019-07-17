@@ -1,5 +1,7 @@
 # flowiz
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9a6f9554aa2644a682fac372d7d581f8)](https://app.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade_Dashboard)
+
 ![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)
 ![PyPI](https://img.shields.io/pypi/v/flowiz.svg)
 ![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)
