@@ -3,9 +3,11 @@
 ![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)
 ![PyPI](https://img.shields.io/pypi/v/flowiz.svg)
 ![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg?style=flat)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)
 
-![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=georgegach/flowiz&amp;utm_campaign=Badge_Grade)
+
+[![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
@@ -132,7 +134,7 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 ## FAQ
 
-> Q: But what kind of name is `flowiz`?
+> Q: But what kind of name is `flowiz`?  
 > A: The kind you choose when `flowkit`, `flowtools`, `flowlib` are already taken.
 
 ## To-Do
