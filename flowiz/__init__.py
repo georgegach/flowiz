@@ -21,3 +21,4 @@
 # SOFTWARE.
 
 from .flowiz import flowiz
+from .gui import gui

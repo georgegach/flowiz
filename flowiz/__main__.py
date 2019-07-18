@@ -1,7 +1,7 @@
 import argparse
 import glob
 import os
-from flowiz import flowiz
+from .flowiz import flowiz
 
 
 parser = argparse.ArgumentParser()
