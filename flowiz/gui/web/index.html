@@ -8,7 +8,7 @@
             font-family: 'Material Icons';
             font-style: normal;
             font-weight: 400;
-            src: url('fonts/material-icons.woff2') format('woff2');
+            src: url('fonts/material_icons.woff2') format('woff2');
         }
 
         .material-icons {
@@ -44,8 +44,41 @@
         </div>
 
         <div id="viewer" class="viewer">
-            <div class="carousel" id="carousel">
+            <div class="header z-depth-2">
+                <a class="btn-floating btn waves-effect waves-light" id="prevBtn"><i class="material-icons">navigate_before</i></a>
+                <a class="btn-floating btn waves-effect waves-light" id="nextBtn"><i class="material-icons">navigate_next</i></a>
             </div>
+            <div class="main">
+                <div class="browser z-depth-1">
+                    <div id="collection" class="collection">
+
+                    </div>
+                </div>
+                <div class="display">
+                    <img src="" id="canvas" class="materialboxed tooltipped" data-position="bottom"
+                        data-tooltip="2-D Optical Flow" />
+                </div>
+
+
+                <div class="info z-depth-1">
+
+                    <div class="details">
+                    </div>
+                    <div class="legends">
+                        <img src="assets/rgb.jpg" class="legend tooltipped" data-position="bottom"
+                            data-tooltip="RGB directional color-coding">
+                        <img src="assets/uv.jpg" class="legend tooltipped" data-position="bottom"
+                            data-tooltip="Binary directional color-coding">
+                    </div>
+                    <div class="uv">
+                        <img src="" alt="" id="u" class='materialboxed tooltipped' data-position="bottom"
+                            data-tooltip="Horizontal Optical Flow">
+                        <img src="" alt="" id="v" class='materialboxed tooltipped' data-position="bottom"
+                            data-tooltip="Vertical Optical Flow">
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 

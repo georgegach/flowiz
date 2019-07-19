@@ -2,6 +2,7 @@ html, body {
     margin: 0;
     padding: 0;
     background-color: #212121;
+    overflow:hidden !important;
 }
 
 
@@ -24,7 +25,7 @@ html, body {
     padding: 50px;
     border-radius: 5px;
     border: 5px dashed;
-    border-color:#F50057;
+    border-color:#83a82d;
     color: #212121;
     transition: all 0.2s ease-in-out;
 }
@@ -73,7 +74,9 @@ html, body {
     height: 100%;
     transition: all 0.2s ease-in-out;
     opacity: 0;
-    transform: scale(0.9)
+    transform: scale(0.9);
+    display: flex;
+    flex-direction: column;
 }
 
 .loaded {
@@ -82,4 +85,98 @@ html, body {
     position: relative;
     z-index: inherit;
     transition: all 0.2s ease-in-out;
+}
+
+
+
+
+.viewer .header {
+    height: 80px;
+    width:100%;
+    z-index: 3;
+    background-color: #512DA8;
+}
+
+.viewer .main {
+    display:flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.viewer .browser {
+    background-color: #424242;
+    width: 200px;
+    overflow: auto;;
+    z-index: 2;
+    overflow-x:hidden;
+}
+
+.viewer .collection {
+    margin:0;
+    border:0;
+    border-radius: 0;
+}
+
+.viewer a.collection-item {
+    background: none;
+    border:none;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: #E0E0E0;
+}
+
+.viewer a.collection-item.active {
+    background-color:#83a82d;
+}
+
+.viewer a.collection-item:not(.active):hover {
+    background-color: #616161;
+}
+
+.viewer .display {
+    background-color: #212121;
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.viewer .info {
+    background-color:#424242 ;
+    width: 300px;
+    z-index: 2;
+}
+
+.viewer .uv {
+    width:100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer .uv img {
+    width: 100%;
+}
+
+.viewer .legends {
+    display: flex;
+    flex-direction: row;
+}
+
+.viewer .legends .legend {
+    width:50%;
+}
+
+
+.viewer .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.viewer .header .btn-floating {
+    background-color: #83a82d;
+    margin: 0 10px;
 }
