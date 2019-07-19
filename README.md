@@ -1,11 +1,12 @@
 # flowiz
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 [![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/flowiz.svg)](https://pypi.org/project/flowiz/)
 [![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)](https://pypi.org/project/flowiz/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)](https://pypistats.org/search/flowiz)
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
+
 
 [![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
 
@@ -88,7 +89,7 @@ from flowiz import flowiz
 
 f = flowiz()
 files = glob.glob('demo/flo/*.flo')
-img = f.convertFromFile(files[0])
+img = f.convert_from_file(files[0])
 plt.imshow(img)
 ```
 
@@ -97,7 +98,7 @@ plt.imshow(img)
 In case you need to visualize `U V` channels separately from your numpy `floArray`:
 
 ```python
-uv = f.convertFromFlow(floArray, mode='UV')
+uv = f.convert_from_flow(floArray, mode='UV')
 axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
 axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 ```

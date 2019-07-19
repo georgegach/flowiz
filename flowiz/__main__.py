@@ -1,8 +1,7 @@
 import argparse
 import glob
 import os
-from .flowiz import flowiz
-
+import flowiz as fz
 
 parser = argparse.ArgumentParser()
 parser.add_argument('input', nargs='+', help='Input file(s). (e.g.: __ ./demo/flo/*.flo)')
@@ -20,10 +19,8 @@ else:
 if args.outdir == None:
     args.outdir = os.path.dirname(flos[0])
 
-
 print("> Rendering images [.png] from the flows [.flo]")
-f = flowiz()
-f.convertFiles(flos, outdir = args.outdir)
+fz.convert_files(flos, outdir = args.outdir)
 
 
 if args.videodir:

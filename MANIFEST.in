@@ -1,1 +1,2 @@
 include flowiz/gui/web/*
+include flowiz/gui/web/*/*

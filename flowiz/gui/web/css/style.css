@@ -1,0 +1,85 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #212121;
+}
+
+
+
+.app { 
+    background-color: #212121;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.dropzone {
+    font-size: 2em;
+    width: 80%;
+    height: 80%;
+    background: #3a3a3a;
+    padding: 50px;
+    border-radius: 5px;
+    border: 5px dashed;
+    border-color:#F50057;
+    color: #212121;
+    transition: all 0.2s ease-in-out;
+}
+
+.dropzone.uploading {
+    transition: all 0.2s ease-in-out;
+    animation: fade-animation 2s infinite;
+    -webkit-animation: fade-animation 2s infinite;
+}
+
+.dropzone.done {
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.dropzone.hidden {
+    position: absolute;
+    z-index: -1;
+}
+
+
+@keyframes fade-animation {
+    0% {opacity: 0.8} 
+    50% {opacity: 0.3}
+    100% {opacity:0.8}
+  }
+
+.dropzone .dz-preview.dz-image-preview {
+    background: transparent
+}
+
+.dz-progress {
+    display: none;
+}
+
+
+
+
+
+.viewer { 
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    background-color: #313131;
+    height: 100%;
+    transition: all 0.2s ease-in-out;
+    opacity: 0;
+    transform: scale(0.9)
+}
+
+.loaded {
+    transform: scale(1);
+    opacity: 1;
+    position: relative;
+    z-index: inherit;
+    transition: all 0.2s ease-in-out;
+}
