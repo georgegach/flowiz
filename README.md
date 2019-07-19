@@ -85,11 +85,10 @@ python -m flowiz demo/flo/*.flo -o demo/png -v demo/mp4 --framerate 2
 Relevant python code is available in `demo/test.ipynb` notebook. Here's an excerpt:
 
 ```python
-from flowiz import flowiz
+import flowiz as fz
 
-f = flowiz()
 files = glob.glob('demo/flo/*.flo')
-img = f.convert_from_file(files[0])
+img = fz.convert_from_file(files[0])
 plt.imshow(img)
 ```
 
@@ -98,7 +97,7 @@ plt.imshow(img)
 In case you need to visualize `U V` channels separately from your numpy `floArray`:
 
 ```python
-uv = f.convert_from_flow(floArray, mode='UV')
+uv = fz.convert_from_flow(floArray, mode='UV')
 axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
 axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 ```
@@ -144,5 +143,7 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 -   [x] Ported
 -   [x] Version 1.0 + pip
+-   [x] flow viewer (gui basics)
+-   [ ] flowiz.gui 
 -   [ ] Standalone PNG packaging (remove `pillow` dependency)
 -   [ ] Standalone MP4 compiler (remove `ffmpeg` dependency)
