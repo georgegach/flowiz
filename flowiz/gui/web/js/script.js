@@ -280,29 +280,26 @@ document.addEventListener("keyup", function (event) {
         return;
     }
 
+    var newEvent = document.createEvent("HTMLEvents");
+    newEvent.initEvent("click", true, false);
+
     log(event.key, event.keycode);
     var key = event.key || event.keyCode;
     if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
-        var event = document.createEvent("HTMLEvents");
-        event.initEvent("click", true, false);
         document.querySelector("#nextBtn").dispatchEvent(event);
     }
     if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
-        var event = document.createEvent("HTMLEvents");
-        event.initEvent("click", true, false);
         document.querySelector("#prevBtn").dispatchEvent(event);
     }
 
     if (key === " " || key === 32) {
-        var event = document.createEvent("HTMLEvents");
-        event.initEvent("click", true, false);
         document.querySelector("#playBtn").dispatchEvent(event);
     }
 
     if (key === "s" || key === 83) {
         log("saving");
-        // var event = document.createEvent("HTMLEvents");
-        // event.initEvent("click", true, false);
+        // var newEvent = document.createEvent("HTMLEvents");
+        // newEvent.initEvent("click", true, false);
         document.querySelector("#saveBtn").click();
     }
 
