@@ -139,7 +139,7 @@ UI.Viewer = {
                     element.classList.add('active')
                 })
             });
-            UI.Viewer.updateCanvas(payload)
+            UI.Viewer.updateCanvas(UI.props.entries[0])
             log(UI.props.entries)
         }
     }),
