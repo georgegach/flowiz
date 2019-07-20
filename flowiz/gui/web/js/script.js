@@ -154,46 +154,46 @@ UI.Viewer = {
 
 }
 
-UI_mockup = {
+UImockup = {
 
     entries: [
         {
             "name": "frame_0001.flo",
             "type": "flowimage",
-            "rgb": "_mockup/frame_0001.flo.png",
-            "u": "_mockup/frame_0001.flo.u.png",
-            "v": "_mockup/frame_0001.flo.v.png"
+            "rgb": "mockup/frame_0001.flo.png",
+            "u": "mockup/frame_0001.flo.u.png",
+            "v": "mockup/frame_0001.flo.v.png"
         }, {
             "name": "frame_0002.flo",
             "type": "flowimage",
-            "rgb": "_mockup/frame_0002.flo.png",
-            "u": "_mockup/frame_0002.flo.u.png",
-            "v": "_mockup/frame_0002.flo.v.png"
+            "rgb": "mockup/frame_0002.flo.png",
+            "u": "mockup/frame_0002.flo.u.png",
+            "v": "mockup/frame_0002.flo.v.png"
         }, {
             "name": "frame_0003.flo",
             "type": "flowimage",
-            "rgb": "_mockup/frame_0003.flo.png",
-            "u": "_mockup/frame_0003.flo.u.png",
-            "v": "_mockup/frame_0003.flo.v.png"
+            "rgb": "mockup/frame_0003.flo.png",
+            "u": "mockup/frame_0003.flo.u.png",
+            "v": "mockup/frame_0003.flo.v.png"
         }, {
             "name": "frame_0004.flo",
             "type": "flowimage",
-            "rgb": "_mockup/frame_0004.flo.png",
-            "u": "_mockup/frame_0004.flo.u.png",
-            "v": "_mockup/frame_0004.flo.v.png"
+            "rgb": "mockup/frame_0004.flo.png",
+            "u": "mockup/frame_0004.flo.u.png",
+            "v": "mockup/frame_0004.flo.v.png"
         }, {
             "name": "frame_0005.flo",
             "type": "flowimage",
-            "rgb": "_mockup/frame_0005.flo.png",
-            "u": "_mockup/frame_0005.flo.u.png",
-            "v": "_mockup/frame_0005.flo.v.png"
+            "rgb": "mockup/frame_0005.flo.png",
+            "u": "mockup/frame_0005.flo.u.png",
+            "v": "mockup/frame_0005.flo.v.png"
         },
     ],
 
     loadImages: () => new Promise(resolve => {
-        UI.props.entriesLength = UI_mockup.entries.length
-        UI.props.entriesProgress = UI_mockup.entries.length
-        UI_mockup.entries.forEach(payload => {
+        UI.props.entriesLength = UImockup.entries.length
+        UI.props.entriesProgress = UImockup.entries.length
+        UImockup.entries.forEach(payload => {
             UI.Viewer.processPayload(payload)
         });
     })
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log('Eel Communication Error')
         if (UI.config.debug) {
             log("Mockup-mode active")
-            UI_mockup.loadImages()
+            UImockup.loadImages()
         }
     }
 
