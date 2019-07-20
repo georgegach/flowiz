@@ -14,7 +14,7 @@
 </p>
 
 <br>
-_____
+<h1></h1>
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 

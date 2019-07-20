@@ -1,7 +1,8 @@
 // APP CONFIG
 window.UI = {
     config: {
-        debug: true
+        debug: false,
+        mockup: true,
     },
 
     props: {
@@ -10,7 +11,7 @@ window.UI = {
         entriesLength: 0,
         entriesProgress: 0,
         entriesActive: 0,
-        entries: []
+        entries: [],
     },
 
 }
@@ -18,138 +19,141 @@ window.UI = {
 // APP FUNCTIONS
 
 function log(msg) {
-    if (UI.config.debug) {
-        console.log(msg)
+    if (window.UI.config.debug) {
+        console.log(msg);
     }
 }
 
 String.prototype.toElement = function () {
-    var template = document.createElement('template');
-    html = this.trim(); // Never return a text node of whitespace as the result
+    var template = document.createElement("template");
+    var html = this.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
     return template.content.firstChild;
 }
 
 // APP MODULES
 
-UI.Dropzone = {
-    e: document.querySelector('#dpz'),
+window.UI.Dropzone = {
+    e: document.querySelector("#dpz"),
     state: {
-        uploading: () => new Promise(resolve => {
-            log("uploading")
-            UI.Dropzone.e.classList.add('uploading')
-            resolve()
+        uploading: () => new Promise((resolve) => {
+            log("uploading");
+            window.UI.Dropzone.e.classList.add("uploading");
+            resolve();
         }),
 
-        uploaded: () => new Promise(resolve => {
-            log("uploaded")
-            UI.Dropzone.e.classList.remove('uploading')
+        uploaded: () => new Promise((resolve) => {
+            log("uploaded");
+            window.UI.Dropzone.e.classList.remove("uploading");
             setTimeout(() => {
-                UI.Dropzone.e.classList.add('done')
+                window.UI.Dropzone.e.classList.add("done");
                 setTimeout(() => {
-                    UI.Dropzone.e.classList.add('hidden')
-                    resolve()
-                }, 200)
-            }, 0)
+                    window.UI.Dropzone.e.classList.add("hidden");
+                    resolve();
+                }, 200);
+            }, 0);
         }),
 
-        unhide: () => new Promise(resolve => {
-            log('unhiding dropzone')
-            UI.Dropzone.e.classList.remove('hidden')
+        unhide: () => new Promise((resolve) => {
+            log("unhiding dropzone");
+            window.UI.Dropzone.e.classList.remove("hidden");
             setTimeout(() => {
-                UI.Dropzone.e.classList.remove('done')
-                resolve()
-            }, 200)
+                window.UI.Dropzone.e.classList.remove("done");
+                resolve();
+            }, 200);
         }),
 
 
-        reset: () => new Promise(resolve => {
-            log("reset")
-            var dpz = Dropzone.forElement("#dpz")
+        reset: () => new Promise((resolve) => {
+            log("reset");
+            var dpz = Dropzone.forElement("#dpz");
             dpz.emit("reset");
-            UI.Viewer.state.hidden().then(UI.Dropzone.state.unhide);
-            UI.props.entries = []
-            UI.props.entriesLength = 0;
-            UI.props.entriesProgress = 0;
-            UI.props.entriesActive = 0;
-            resolve()
+            window.UI.Viewer.state.hidden().then(window.UI.Dropzone.state.unhide);
+            window.UI.props.entries = []
+            window.UI.props.entriesLength = 0;
+            window.UI.props.entriesProgress = 0;
+            window.UI.props.entriesActive = 0;
+            resolve();
         }),
 
         test: () => {
-            UI.Dropzone.state.uploading()
-                .then(UI.Dropzone.state.uploaded)
-                .then(UI.Dropzone.state.reset)
+            window.UI.Dropzone.state.uploading()
+                .then(window.UI.Dropzone.state.uploaded)
+                .then(window.UI.Dropzone.state.reset);
         }
     }
 
 }
 
-UI.Viewer = {
-    e: document.querySelector('#viewer'),
+window.UI.Viewer = {
+    e: document.querySelector("#viewer"),
     c: document.querySelector("#carousel"),
-    m: document.querySelectorAll('.materialboxed'),
-    col: document.querySelector('#collection'),
+    m: document.querySelectorAll(".materialboxed"),
+    col: document.querySelector("#collection"),
     canvas: document.querySelector("#canvas"),
-    u: document.querySelector('#u'),
-    v: document.querySelector('#v'),
+    u: document.querySelector("#u"),
+    v: document.querySelector("#v"),
 
     state: {
-        hidden: () => new Promise(resolve => {
-            UI.Viewer.e.classList.remove('loaded')
-            resolve()
+        hidden: () => new Promise((resolve) => {
+            window.UI.Viewer.e.classList.remove("loaded");
+            resolve();
         }),
 
-        loaded: () => new Promise(resolve => {
-            UI.Viewer.e.classList.add('loaded')
-            resolve()
+        loaded: () => new Promise((resolve) => {
+            window.UI.Viewer.e.classList.add("loaded");
+            resolve();
         }),
     },
 
-    updateCarousel: (img) => new Promise(resolve => {
-        cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement()
-        cNode.querySelector('img').src = img.rgb
-        UI.Viewer.c.appendChild(cNode)
+    updateCarousel: (img) => new Promise((resolve) => {
+        cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement();
+        cNode.querySelector("img").src = img.rgb
+        window.UI.Viewer.c.appendChild(cNode);
+        resolve();
     }),
 
-    processPayload: (payload) => new Promise(resolve => {
-        UI.props.entries.push(payload)
-        UI.props.entriesProgress--;
-        console.log(UI.props.entriesProgress)
+    processPayload: (payload) => new Promise((resolve) => {
+        window.UI.props.entries.push(payload);
+        window.UI.props.entriesProgress--;
+        log(window.UI.props.entriesProgress);
 
         // DO SOMETHING HERE
 
-        UI.Viewer.col.appendChild(`<a href="#" data-id="${UI.props.entriesLength - UI.props.entriesProgress - 1}" class="collection-item">${payload.name}</a>`.toElement())
+        window.UI.Viewer.col.appendChild(`<a href="#" data-id="${window.UI.props.entriesLength - window.UI.props.entriesProgress - 1}" class="collection-item">${payload.name}</a>`.toElement());
 
         // STOP BEFORE HERE
 
-        if (UI.props.entriesProgress == 0) {
-            M.Materialbox.init(UI.Viewer.m);
-            M.Tooltip.init(document.querySelectorAll('.tooltipped'), {
+        if (window.UI.props.entriesProgress == 0) {
+            M.Materialbox.init(window.UI.Viewer.m);
+            M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
                 enterDelay: 2000
             });
-            UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded)
-            UI.Viewer.col.querySelector('.collection-item').classList.add('active')
-            UI.Viewer.col.querySelectorAll('.collection-item').forEach(element => {
-                element.addEventListener('click', function (e) {
-                    UI.props.entriesActive = e.target.getAttribute('data-id')
-                    UI.Viewer.canvas.src = UI.props.entries[UI.props.entriesActive].rgb
-                    UI.Viewer.u.src = UI.props.entries[UI.props.entriesActive].u
-                    UI.Viewer.v.src = UI.props.entries[UI.props.entriesActive].v
-                    document.querySelector(".collection-item.active").classList.remove('active')
-                    element.classList.add('active')
-                })
+            window.UI.Dropzone.state.uploaded().then(window.UI.Viewer.state.loaded);
+            window.UI.Viewer.col.querySelector(".collection-item").classList.add("active");
+            window.UI.Viewer.col.querySelectorAll(".collection-item").forEach(element => {
+                element.addEventListener("click", function (e) {
+                    window.UI.props.entriesActive = e.target.getAttribute("data-id");
+                    window.UI.Viewer.canvas.src = window.UI.props.entries[window.UI.props.entriesActive].rgb
+                    window.UI.Viewer.u.src = window.UI.props.entries[window.UI.props.entriesActive].u
+                    window.UI.Viewer.v.src = window.UI.props.entries[window.UI.props.entriesActive].v
+                    document.querySelector(".collection-item.active").classList.remove("active");
+                    element.classList.add("active");
+                });
             });
-            UI.Viewer.updateCanvas(UI.props.entries[0])
-            log(UI.props.entries)
+            window.UI.Viewer.updateCanvas(window.UI.props.entries[0]);
+            log(window.UI.props.entries);
         }
+        resolve()
     }),
 
-    updateCanvas: (payload) => new Promise(resolve => {
-        document.querySelector("#saveBtn").href = payload.rgb
-        document.querySelector("#saveBtn").download = payload.name + ".png"
-        UI.Viewer.canvas.src = payload.rgb
-        UI.Viewer.u.src = payload.u
-        UI.Viewer.v.src = payload.v
+    updateCanvas: (payload) => new Promise((resolve) => {
+        document.querySelector("#saveBtn").href = payload.rgb;
+        document.querySelector("#saveBtn").download = payload.name + ".png";
+        window.UI.Viewer.canvas.src = payload.rgb;
+        window.UI.Viewer.u.src = payload.u;
+        window.UI.Viewer.v.src = payload.v;
+        resolve();
     }),
 
 }
@@ -190,126 +194,126 @@ UImockup = {
         },
     ],
 
-    loadImages: () => new Promise(resolve => {
-        UI.props.entriesLength = UImockup.entries.length
-        UI.props.entriesProgress = UImockup.entries.length
+    loadImages: () => new Promise((resolve) => {
+        window.UI.props.entriesLength = UImockup.entries.length
+        window.UI.props.entriesProgress = UImockup.entries.length
         UImockup.entries.forEach(payload => {
-            UI.Viewer.processPayload(payload)
+            window.UI.Viewer.processPayload(payload);
         });
-    })
+    }),
 
 }
 
 document.addEventListener("DOMContentLoaded", function () {
 
     try {
-        eel.expose(confirm)
+        eel.expose(confirm);
         function confirm(result) {
             // probably unnecessary
         }
 
-        eel.expose(generate)
+        eel.expose(generate);
         function generate(payload) {
-            UI.Viewer.processPayload(payload)
+            window.UI.Viewer.processPayload(payload);
         }
     } catch (error) {
-        console.log('Eel Communication Error')
-        if (UI.config.debug) {
-            log("Mockup-mode active")
-            UImockup.loadImages()
+        log("Eel Communication Error");
+        if (window.UI.config.mockup) {
+            log("Mockup-mode active");
+            UImockup.loadImages();
         }
     }
 
 
-    M.Modal.init(document.querySelectorAll('.modal'), {});
+    M.Modal.init(document.querySelectorAll(".modal"), {});
 
 });
 
 document.querySelector("#nextBtn").addEventListener("click", function () {
-    log("next")
-    UI.props.entriesActive++
-    if (UI.props.entriesActive == UI.props.entriesLength) {
-        UI.props.entriesActive = 0
+    log("next");
+    window.UI.props.entriesActive++
+    if (window.UI.props.entriesActive == window.UI.props.entriesLength) {
+        window.UI.props.entriesActive = 0
     }
-    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-    document.querySelector(".collection-item.active").classList.remove('active')
-    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
-})
+    window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
+    document.querySelector(".collection-item.active").classList.remove("active");
+    document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
+});
 
 document.querySelector("#prevBtn").addEventListener("click", function () {
-    log("prev")
-    UI.props.entriesActive--
-    if (UI.props.entriesActive == -1) {
-        UI.props.entriesActive = UI.props.entriesLength - 1
+    log("prev");
+    window.UI.props.entriesActive--
+    if (window.UI.props.entriesActive == -1) {
+        window.UI.props.entriesActive = window.UI.props.entriesLength - 1
     }
-    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-    document.querySelector(".collection-item.active").classList.remove('active')
-    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
-})
+    window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
+    document.querySelector(".collection-item.active").classList.remove("active");
+    document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
+});
 
 function playback() {
-    log("play")
+    log("play");
 
-    if (UI.props.play) {
+    if (window.UI.props.play) {
         setTimeout(() => {
-            UI.props.entriesActive++
-            if (UI.props.entriesActive == UI.props.entriesLength) {
-                UI.props.entriesActive = 0
+            window.UI.props.entriesActive++
+            if (window.UI.props.entriesActive == window.UI.props.entriesLength) {
+                window.UI.props.entriesActive = 0
             }
-            UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-            document.querySelector(".collection-item.active").classList.remove('active')
-            document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
-            window.requestAnimationFrame(playback)
-        }, 1000.0 / UI.props.framerate)
+            window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
+            document.querySelector(".collection-item.active").classList.remove("active");
+            document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
+            window.requestAnimationFrame(playback);
+        }, 1000.0 / window.UI.props.framerate);
     }
 
 }
 
 document.querySelector("#playBtn").addEventListener("click", function (e) {
-    UI.props.play = !UI.props.play
-    document.querySelector("#playBtn").classList.toggle("active")
-    playback()
-})
+    window.UI.props.play = !window.UI.props.play
+    document.querySelector("#playBtn").classList.toggle("active");
+    playback();
+});
 
-document.addEventListener('keyup', function (event) {
+document.addEventListener("keyup", function (event) {
     if (event.defaultPrevented) {
         return;
     }
 
-    log(event.key, event.keycode)
+    log(event.key, event.keycode);
     var key = event.key || event.keyCode;
-    if (key === 'ArrowRight' || key === 39 || key === 'ArrowDown' || key === 40) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#nextBtn').dispatchEvent(event)
+    if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector("#nextBtn").dispatchEvent(event);
     }
-    if (key === 'ArrowLeft' || key === 37 || key === 'ArrowUp' || key === 37) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#prevBtn').dispatchEvent(event)
-    }
-
-    if (key === ' ' || key === 32) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#playBtn').dispatchEvent(event)
+    if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector("#prevBtn").dispatchEvent(event);
     }
 
-    if (key === 's' || key === 83) {
-        log("saving")
-        // var event = document.createEvent("HTMLEvents")
-        // event.initEvent("click", true, false)
-        document.querySelector('#saveBtn').click()
+    if (key === " " || key === 32) {
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector("#playBtn").dispatchEvent(event);
     }
 
-    if (key === 'Escape' || key === 27) {
-        UI.Dropzone.state.reset()
+    if (key === "s" || key === 83) {
+        log("saving");
+        // var event = document.createEvent("HTMLEvents");
+        // event.initEvent("click", true, false);
+        document.querySelector("#saveBtn").click();
+    }
+
+    if (key === "Escape" || key === 27) {
+        window.UI.Dropzone.state.reset();
     }
 
 });
 
 Dropzone.options.dpz = {
-    url: '/',
+    url: "/",
     autoProcessQueue: false,
     uploadMultiple: true,
     maxentriesize: null,
@@ -318,16 +322,16 @@ Dropzone.options.dpz = {
             var reader = new FileReader();
             reader.onload = function (event) {
                 eel.upload({
-                    'name': file.name,
-                    'type': 'flo',
-                    'content': event.target.result,
-                    'path': file.path
+                    "name": file.name,
+                    "type": "flo",
+                    "content": event.target.result,
+                    "path": file.path
                 });
-                UI.props.entriesLength++;
-                UI.props.entriesProgress++;
+                window.UI.props.entriesLength++;
+                window.UI.props.entriesProgress++;
             };
             reader.readAsDataURL(file);
-            UI.Dropzone.state.uploading()
+            window.UI.Dropzone.state.uploading();
         });
     },
     accept: function (file, done) {
