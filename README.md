@@ -12,9 +12,8 @@
   <a href="https://notebooks.ai/georgegach/flowiz/lab"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a>
 
 </p>
-
 <br>
-_____
+<h1></h1>
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
