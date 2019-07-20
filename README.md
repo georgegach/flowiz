@@ -1,20 +1,17 @@
 <p align="center">
-
-<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' width="600">
-
-<br>
-
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
-[![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/flowiz.svg)](https://pypi.org/project/flowiz/)
-[![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)](https://pypi.org/project/flowiz/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)](https://pypistats.org/search/flowiz)
-
-
-
-[![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
+  <img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' width="600">
 </p>
+<br>
+<p align="center">
+  <a href="https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=georgegach/flowiz&amp;utm_campaign=Badge_Grade"><img src="https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c" alt="Codacy Badge" /></a>
+  <a href="https://github.com/georgegach/flowiz/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/flowiz.svg" alt="PyPI - License" /></a>
+  <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/v/flowiz.svg" alt="PyPI" /></a>
+  <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/status/flowiz.svg" alt="PyPI - Status" /></a>
+  <a href="https://pypistats.org/search/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="PyPI - Downloads" /></a>
+  <br>
+  <a href="https://notebooks.ai/georgegach/flowiz/lab"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a>
 
+</p>
 
 <br>
 _____
@@ -114,21 +111,19 @@ axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 
 ![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/uv_flows.png)
 
-
 ### GUI usage
 
 Beta version of the `flowiz` graphical user interface is now accessible via `flowiz.gui` package. It is packaged using [ChrisKnott / Eel](https://github.com/ChrisKnott/Eel) and available via default web browser. To run the GUI simply type:
+
 ```bash
 python -m flowiz.gui
 ```
+
 Upon launching the web app, drag and drop or choose `.flo` file(s) using the `open file dialog`. Files will be converted using the python backend and placed in a temporary directory `flowiz/gui/web/guitemp`. Upon every session temporary directory will be emptied to avoid unnecessary polution.  
 
 Mockup of the GUI is available at [georgegach.github.io/flowiz](http://georgegach.github.io/flowiz)
 
 ![Demo Video](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/flowiz.demo.gif)
-
-
-
 
 ### Help
 
