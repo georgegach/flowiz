@@ -131,7 +131,7 @@ window.UI.Viewer = {
             });
             window.UI.Dropzone.state.uploaded().then(window.UI.Viewer.state.loaded);
             window.UI.Viewer.col.querySelector(".collection-item").classList.add("active");
-            window.UI.Viewer.col.querySelectorAll(".collection-item").forEach(element => {
+            window.UI.Viewer.col.querySelectorAll(".collection-item").forEach((element) => {
                 element.addEventListener("click", function (e) {
                     window.UI.props.entriesActive = e.target.getAttribute("data-id");
                     window.UI.Viewer.canvas.src = window.UI.props.entries[window.UI.props.entriesActive].rgb;
@@ -156,7 +156,7 @@ window.UI.Viewer = {
         resolve();
     }),
 
-}
+};
 
 window.UI.mockup = {
 
