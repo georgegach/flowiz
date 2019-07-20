@@ -47,6 +47,9 @@ html, body {
     z-index: -1;
 }
 
+.dropzone .dz-message {
+    color: white;
+}
 
 @keyframes fade-animation {
     0% {opacity: 0.8} 
@@ -171,12 +174,43 @@ html, body {
 
 .viewer .header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 50px;
 }
 
 
-.viewer .header .btn-floating {
-    background-color: #83a82d;
+.viewer .header .btn-flat {
+    background: none;
     margin: 0 10px;
+    transition: all 0.2s;
+}
+
+.viewer .header .btn-flat:hover {
+    transform: scale(1.4);
+    transition: all 0.2s;
+}
+
+.viewer .header .btn-flat.active i
+{
+    color: #512DA8;
+    background-color: white;
+    transition: all 0.5s ease-in-out; 
+}
+
+
+.viewer .header .logo {
+    /* width: 200px; */
+    color: white;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-size: 2em;
+    font-weight: 100;
+}
+
+.viewer .modal-content, .viewer .modal-footer, td, tr, th {
+    text-align: center;
+    justify-content: center;
+    align-items: center;
 }

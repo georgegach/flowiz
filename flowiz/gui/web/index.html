@@ -27,8 +27,18 @@
             -webkit-font-smoothing: antialiased;
         }
     </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-91391080-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-91391080-2');
+    </script>
+
     <!--Import materialize.css-->
-    <link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
     <link type="text/css" rel="stylesheet" href="css/dropzone.css" media="screen,projection" />
     <link type="text/css" rel="stylesheet" href="css/style.css" media="screen,projection" />
 
@@ -38,15 +48,82 @@
 
 <body>
     <div class="app">
+
+
         <div class="dropzone needsclick" method="post" id="dpz" action="/">
             <div class="dz-message" data-dz-message><span>Drag and drop some flow files or click to open file
                     dialog</span></div>
         </div>
 
         <div id="viewer" class="viewer">
+            <div id="modal1" class="modal">
+                <div class="modal-content">
+                    <h4>Keyboard shortcuts</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Shortcut</th>
+                                <th></th>
+                                <th>Action</th>
+                                <th>Shortcut</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>Next image</td>
+                                <td>→ or ↓</td>
+                                <td></td>
+                                <td>Previous image</td>
+                                <td>← or ↑</td>
+                            </tr>
+                            <tr>
+                                <td>Escape to upload</td>
+                                <td>ESC</td>
+                                <td></td>
+                                <td>Open temp folder</td>
+                                <td>F</td>
+                            </tr>
+                            <tr>
+                                <td>Save image</td>
+                                <td>S</td>
+                                <td></td>
+                                <td>Play/Pause movie</td>
+                                <td>SPACE</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <a href="http://github.com/georgegach/flowiz" target="_blank"
+                        class="modal-close waves-effect waves-green btn">Get me to Github</a>
+                    <a href="#!" class="modal-close waves-effect waves-green btn">OK</a>
+                </div>
+            </div>
+
             <div class="header z-depth-2">
-                <a class="btn-floating btn waves-effect waves-light" id="prevBtn"><i class="material-icons">navigate_before</i></a>
-                <a class="btn-floating btn waves-effect waves-light" id="nextBtn"><i class="material-icons">navigate_next</i></a>
+                <div class="logo">
+                    flowiz
+                </div>
+                <div class="navkeys">
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="prevBtn"><i
+                            class="material-icons">navigate_before</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="nextBtn"><i
+                            class="material-icons">navigate_next</i></a>
+                </div>
+                <div class="buttons">
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="playBtn"><i
+                            class="material-icons">ondemand_video</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" href="./.guitemp/" target="_blank"
+                        id="openBtn"><i class="material-icons">folder_open</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="saveBtn"><i
+                            class="material-icons">save</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light modal-trigger" href="#modal1"
+                        id="helpBtn"><i class="material-icons">help_outline</i></a>
+
+                </div>
+
             </div>
             <div class="main">
                 <div class="browser z-depth-1">

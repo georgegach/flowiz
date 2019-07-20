@@ -23,7 +23,6 @@ savedir = os.path.join(
 @eel.expose
 def upload(file):
     eel.confirm(file['name'])
-
     rgb, u, v = create_b64_image(file)
     eel.generate({
         'name': file['name'],

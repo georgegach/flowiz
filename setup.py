@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='flowiz',
-    version='2.0.0b',
+    version='2.1.0b',
     author="George Gach",
     author_email="george@gach.space",
     description="Optical Flow file wizard",

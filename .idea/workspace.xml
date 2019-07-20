@@ -2,15 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="edacd649-3ddc-42b7-9827-dcd8ef341206" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/demo/test.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/demo/test.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flowiz/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flowiz/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flowiz/flowiz.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/flowiz.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flowiz/gui/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flowiz/gui/__main__.py" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/__main__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/flowiz/gui/gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/flowiz/gui/web/css/materialize.css" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/web/css/materialize.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flowiz/gui/web/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/web/css/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/flowiz/gui/web/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/web/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/flowiz/gui/web/js/script.js" beforeDir="false" afterPath="$PROJECT_DIR$/flowiz/gui/web/js/script.js" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -23,8 +19,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/flowiz/gui/__main__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="284">
-              <caret line="37" selection-start-line="37" selection-end-line="37" />
+            <state relative-caret-position="600">
+              <caret line="48" selection-start-line="48" selection-end-line="48" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -35,7 +31,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/flowiz/flowiz.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="474">
+            <state relative-caret-position="3465">
               <caret line="236" column="26" selection-start-line="236" selection-start-column="26" selection-end-line="236" selection-end-column="26" />
               <folding>
                 <element signature="e#201#219#0" expanded="true" />
@@ -47,8 +43,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/flowiz/gui/web/js/script.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="384">
-              <caret line="73" column="15" selection-start-line="73" selection-start-column="15" selection-end-line="73" selection-end-column="15" />
+            <state relative-caret-position="1644">
+              <caret line="157" column="15" selection-start-line="157" selection-start-column="15" selection-end-line="157" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -130,7 +126,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -147,10 +142,12 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
@@ -283,9 +280,19 @@
     <entry file="file://$PROJECT_DIR$/.guitemp/frame_0003.flo.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/flowiz/gui/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="48" selection-start-line="48" selection-end-line="48" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/flowiz/flowiz.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="474">
+        <state relative-caret-position="3465">
           <caret line="236" column="26" selection-start-line="236" selection-start-column="26" selection-end-line="236" selection-end-column="26" />
           <folding>
             <element signature="e#201#219#0" expanded="true" />
@@ -293,20 +300,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/flowiz/gui/__main__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="284">
-          <caret line="37" selection-start-line="37" selection-end-line="37" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/flowiz/gui/web/js/script.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="384">
-          <caret line="73" column="15" selection-start-line="73" selection-start-column="15" selection-end-line="73" selection-end-column="15" />
+        <state relative-caret-position="1644">
+          <caret line="157" column="15" selection-start-line="157" selection-start-column="15" selection-end-line="157" selection-end-column="15" />
         </state>
       </provider>
     </entry>
