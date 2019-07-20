@@ -66,10 +66,10 @@ window.UI.Dropzone = {
 
         reset: () => new Promise((resolve) => {
             log("reset");
-            var dpz = Dropzone.forElement("#dpz");
+            var dpz = window.Dropzone.forElement("#dpz");
             dpz.emit("reset");
             window.UI.Viewer.state.hidden().then(window.UI.Dropzone.state.unhide);
-            window.UI.props.entries = []
+            window.UI.props.entries = [];
             window.UI.props.entriesLength = 0;
             window.UI.props.entriesProgress = 0;
             window.UI.props.entriesActive = 0;
@@ -107,8 +107,8 @@ window.UI.Viewer = {
     },
 
     updateCarousel: (img) => new Promise((resolve) => {
-        cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement();
-        cNode.querySelector("img").src = img.rgb
+        var cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement();
+        cNode.querySelector("img").src = img.rgb;
         window.UI.Viewer.c.appendChild(cNode);
         resolve();
     }),
@@ -125,8 +125,8 @@ window.UI.Viewer = {
         // STOP BEFORE HERE
 
         if (window.UI.props.entriesProgress == 0) {
-            M.Materialbox.init(window.UI.Viewer.m);
-            M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
+            window.M.Materialbox.init(window.UI.Viewer.m);
+            window.M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
                 enterDelay: 2000
             });
             window.UI.Dropzone.state.uploaded().then(window.UI.Viewer.state.loaded);
@@ -134,9 +134,9 @@ window.UI.Viewer = {
             window.UI.Viewer.col.querySelectorAll(".collection-item").forEach(element => {
                 element.addEventListener("click", function (e) {
                     window.UI.props.entriesActive = e.target.getAttribute("data-id");
-                    window.UI.Viewer.canvas.src = window.UI.props.entries[window.UI.props.entriesActive].rgb
-                    window.UI.Viewer.u.src = window.UI.props.entries[window.UI.props.entriesActive].u
-                    window.UI.Viewer.v.src = window.UI.props.entries[window.UI.props.entriesActive].v
+                    window.UI.Viewer.canvas.src = window.UI.props.entries[window.UI.props.entriesActive].rgb;
+                    window.UI.Viewer.u.src = window.UI.props.entries[window.UI.props.entriesActive].u;
+                    window.UI.Viewer.v.src = window.UI.props.entries[window.UI.props.entriesActive].v;
                     document.querySelector(".collection-item.active").classList.remove("active");
                     element.classList.add("active");
                 });
@@ -158,7 +158,7 @@ window.UI.Viewer = {
 
 }
 
-UImockup = {
+window.UI.mockup = {
 
     entries: [
         {
@@ -195,9 +195,9 @@ UImockup = {
     ],
 
     loadImages: () => new Promise((resolve) => {
-        window.UI.props.entriesLength = UImockup.entries.length
-        window.UI.props.entriesProgress = UImockup.entries.length
-        UImockup.entries.forEach(payload => {
+        window.UI.props.entriesLength = window.UI.mockup.entries.length;
+        window.UI.props.entriesProgress = window.UI.mockup.entries.length;
+        window.UI.mockup.entries.forEach((payload) => {
             window.UI.Viewer.processPayload(payload);
         });
     }),
@@ -220,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
         log("Eel Communication Error");
         if (window.UI.config.mockup) {
             log("Mockup-mode active");
-            UImockup.loadImages();
+            window.UI.mockup.loadImages();
         }
     }
 
@@ -242,9 +242,9 @@ document.querySelector("#nextBtn").addEventListener("click", function () {
 
 document.querySelector("#prevBtn").addEventListener("click", function () {
     log("prev");
-    window.UI.props.entriesActive--
+    window.UI.props.entriesActive--;
     if (window.UI.props.entriesActive == -1) {
-        window.UI.props.entriesActive = window.UI.props.entriesLength - 1
+        window.UI.props.entriesActive = window.UI.props.entriesLength - 1;
     }
     window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
     document.querySelector(".collection-item.active").classList.remove("active");
@@ -256,9 +256,9 @@ function playback() {
 
     if (window.UI.props.play) {
         setTimeout(() => {
-            window.UI.props.entriesActive++
+            window.UI.props.entriesActive++;
             if (window.UI.props.entriesActive == window.UI.props.entriesLength) {
-                window.UI.props.entriesActive = 0
+                window.UI.props.entriesActive = 0;
             }
             window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
             document.querySelector(".collection-item.active").classList.remove("active");
@@ -270,7 +270,7 @@ function playback() {
 }
 
 document.querySelector("#playBtn").addEventListener("click", function (e) {
-    window.UI.props.play = !window.UI.props.play
+    window.UI.props.play = !window.UI.props.play;
     document.querySelector("#playBtn").classList.toggle("active");
     playback();
 });
