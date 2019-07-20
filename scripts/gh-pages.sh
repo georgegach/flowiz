@@ -1,6 +1,6 @@
 #!/bin/bash
 directory=_site
-web=flowiz/gui/web
+web=flowiz/gui/web/*
 main=gui
 gh=gh-pages
 build_command() {
@@ -9,6 +9,7 @@ build_command() {
 
 echo -e "\033[0;32mDeleting existing $gh branch\033[0m"
 git push origin --delete $gh
+git branch -D $gh
 
 echo -e "\033[0;32mSetting up new $gh branch\033[0m"
 git checkout --orphan $gh
