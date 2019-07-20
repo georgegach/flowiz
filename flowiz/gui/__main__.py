@@ -8,7 +8,7 @@ import re
 import shutil
 import matplotlib.pyplot as plt
 
-accessdir = '.guitemp'
+accessdir = '_guitemp'
 savedir = os.path.join(
     os.path.join(
         os.path.dirname(__file__),
