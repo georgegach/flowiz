@@ -1,7 +1,8 @@
-<center>
+<p align="center">
 
-<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' style="margin:50px;max-width:800px">
+<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' width="600">
 
+<br>
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 [![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
@@ -12,11 +13,11 @@
 
 
 [![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
+</p>
 
-<br/>
 
-___
-</center>
+<br>
+_____
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
