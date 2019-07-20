@@ -1,4 +1,7 @@
-# flowiz
+<center>
+
+<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' style="margin:50px;max-width:800px">
+
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 [![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
@@ -10,12 +13,18 @@
 
 [![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
 
+<br/>
+
+___
+</center>
+
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
 -   [Installation](#installation)
 -   [Usage](#usage)
     -   [Command line usage](#command-line-usage)
     -   [Python usage](#python-usage)
+    -   [GUI usage](#gui-usage)
     -   [Help](#help)
 -   [Acknowledgements](#acknowledgements)
 -   [FAQ](#faq)
@@ -46,7 +55,7 @@ python setup.py install --user
 Make sure you have following packages installed
 
 ```bash
-pip install numpy tqdm pillow
+pip install numpy tqdm pillow eel
 apt install ffmpeg
 ```
 
@@ -102,7 +111,23 @@ axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
 axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 ```
 
-![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/_github_assets/uv_flows.png)
+![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/uv_flows.png)
+
+
+### GUI usage
+
+Beta version of the `flowiz` graphical user interface is now accessible via `flowiz.gui` package. It is packaged using [ChrisKnott / Eel](https://github.com/ChrisKnott/Eel) and available via default web browser. To run the GUI simply type:
+```bash
+python -m flowiz.gui
+```
+Upon launching the web app, drag and drop or choose `.flo` file(s) using the `open file dialog`. Files will be converted using the python backend and placed in a temporary directory `flowiz/gui/web/guitemp`. Upon every session temporary directory will be emptied to avoid unnecessary polution.  
+
+Mockup of the GUI is available at [georgegach.github.io/flowiz](http://georgegach.github.io/flowiz)
+
+![Demo Video](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/flowiz.demo.gif)
+
+
+
 
 ### Help
 
@@ -137,7 +162,7 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 ## FAQ
 
 > Q: But what kind of name is `flowiz`?  
-> A: The kind you choose when `flowkit`, `flowtools`, `flowlib` are already taken.
+> A: The kind you choose when `flowkit`, `flowtools`, `flowlib`, `flowlab` are already taken.
 
 ## To-Do
 

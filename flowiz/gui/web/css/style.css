@@ -176,7 +176,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 50px;
+    /* padding: 0 30px; */
 }
 
 
@@ -207,6 +207,13 @@ html, body {
     display: flex;
     font-size: 2em;
     font-weight: 100;
+    width: 200px;
+    height: 100%;
+    /* background-color: #ddd; */
+}
+
+.viewer .header .logo img {
+    height: 40px;
 }
 
 .viewer .modal-content, .viewer .modal-footer, td, tr, th {
