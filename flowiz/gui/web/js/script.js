@@ -1,5 +1,5 @@
 // APP CONFIG
-window.UI = {
+var UI = window.UI = {
     config: {
         debug: false,
         mockup: true,
@@ -7,85 +7,83 @@ window.UI = {
 
     props: {
         play: false,
-        framerate: 2,
+        framerate: 12,
         entriesLength: 0,
         entriesProgress: 0,
         entriesActive: 0,
-        entries: [],
+        entries: {}
     },
 
 }
 
 // APP FUNCTIONS
 
-function log(msg) {
-    if (window.UI.config.debug) {
+function log(...msg) {
+    if (UI.config.debug) {
         console.log(msg);
     }
 }
 
 String.prototype.toElement = function () {
     var template = document.createElement("template");
-    var html = this.trim(); // Never return a text node of whitespace as the result
+    html = this.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
     return template.content.firstChild;
 }
 
 // APP MODULES
 
-window.UI.Dropzone = {
+UI.Dropzone = {
     e: document.querySelector("#dpz"),
     state: {
-        uploading: () => new Promise((resolve) => {
+        uploading: () => new Promise(resolve => {
             log("uploading");
-            window.UI.Dropzone.e.classList.add("uploading");
+            UI.Dropzone.e.classList.add("uploading");
             resolve();
         }),
 
-        uploaded: () => new Promise((resolve) => {
+        uploaded: () => new Promise(resolve => {
             log("uploaded");
-            window.UI.Dropzone.e.classList.remove("uploading");
+            UI.Dropzone.e.classList.remove("uploading");
             setTimeout(() => {
-                window.UI.Dropzone.e.classList.add("done");
+                UI.Dropzone.e.classList.add("done");
                 setTimeout(() => {
-                    window.UI.Dropzone.e.classList.add("hidden");
+                    UI.Dropzone.e.classList.add("hidden");
                     resolve();
-                }, 200);
-            }, 0);
+                }, 200)
+            }, 0)
         }),
 
-        unhide: () => new Promise((resolve) => {
+        unhide: () => new Promise(resolve => {
             log("unhiding dropzone");
-            window.UI.Dropzone.e.classList.remove("hidden");
+            UI.Dropzone.e.classList.remove("hidden");
             setTimeout(() => {
-                window.UI.Dropzone.e.classList.remove("done");
+                UI.Dropzone.e.classList.remove("done");
                 resolve();
-            }, 200);
+            }, 200)
         }),
 
 
-        reset: () => new Promise((resolve) => {
+        reset: () => new Promise(resolve => {
             log("reset");
-            var dpz = window.Dropzone.forElement("#dpz");
+            UI.Viewer.col.querySelector(".collection-item.active").classList.remove("active");
+            var dpz = Dropzone.forElement("#dpz");
             dpz.emit("reset");
-            window.UI.Viewer.state.hidden().then(window.UI.Dropzone.state.unhide);
-            window.UI.props.entries = [];
-            window.UI.props.entriesLength = 0;
-            window.UI.props.entriesProgress = 0;
-            window.UI.props.entriesActive = 0;
+            dpz.removeAllFiles();
+            UI.Viewer.state.hidden().then(UI.Dropzone.state.unhide);
             resolve();
         }),
 
         test: () => {
-            window.UI.Dropzone.state.uploading()
-                .then(window.UI.Dropzone.state.uploaded)
-                .then(window.UI.Dropzone.state.reset);
+            UI.Dropzone.state.uploading()
+                .then(UI.Dropzone.state.uploaded)
+                .then(UI.Dropzone.state.reset);
         }
     }
 
 }
 
-window.UI.Viewer = {
+UI.Viewer = {
     e: document.querySelector("#viewer"),
     c: document.querySelector("#carousel"),
     m: document.querySelectorAll(".materialboxed"),
@@ -93,72 +91,69 @@ window.UI.Viewer = {
     canvas: document.querySelector("#canvas"),
     u: document.querySelector("#u"),
     v: document.querySelector("#v"),
+    nextBtn: document.querySelector("#nextBtn"),
+    prevBtn: document.querySelector("#prevBtn"),
 
     state: {
-        hidden: () => new Promise((resolve) => {
-            window.UI.Viewer.e.classList.remove("loaded");
+        hidden: () => new Promise(resolve => {
+            UI.Viewer.e.classList.remove("loaded");
             resolve();
         }),
 
-        loaded: () => new Promise((resolve) => {
-            window.UI.Viewer.e.classList.add("loaded");
+        loaded: () => new Promise(resolve => {
+            UI.Viewer.e.classList.add("loaded");
             resolve();
         }),
     },
 
-    updateCarousel: (img) => new Promise((resolve) => {
-        var cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement();
-        cNode.querySelector("img").src = img.rgb;
-        window.UI.Viewer.c.appendChild(cNode);
-        resolve();
-    }),
 
-    processPayload: (payload) => new Promise((resolve) => {
-        window.UI.props.entries.push(payload);
-        window.UI.props.entriesProgress--;
-        log(window.UI.props.entriesProgress);
+    processPayload: (payload) => new Promise(resolve => {
+        var nameid = String(payload.name).replace(".", "").replace("_", "")
+        UI.props.entriesActive = nameid
+        UI.props.entries[nameid] = payload
+        UI.props.entriesProgress--;
+        console.log(UI.props.entriesProgress);
 
         // DO SOMETHING HERE
 
-        window.UI.Viewer.col.appendChild(`<a href="#" data-id="${window.UI.props.entriesLength - window.UI.props.entriesProgress - 1}" class="collection-item">${payload.name}</a>`.toElement());
+        UI.Viewer.col.appendChild(`<a href="#" id="${nameid}" class="collection-item">${payload.name}</a>`.toElement());
 
         // STOP BEFORE HERE
 
-        if (window.UI.props.entriesProgress === 0) {
-            window.M.Materialbox.init(window.UI.Viewer.m);
-            window.M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
+        if (UI.props.entriesProgress == 0) {
+            M.Materialbox.init(UI.Viewer.m);
+            M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
                 enterDelay: 2000
             });
-            window.UI.Dropzone.state.uploaded().then(window.UI.Viewer.state.loaded);
-            window.UI.Viewer.col.querySelector(".collection-item").classList.add("active");
-            window.UI.Viewer.col.querySelectorAll(".collection-item").forEach((element) => {
+            UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded);
+            UI.Viewer.col.querySelectorAll(".collection-item").forEach(element => {
                 element.addEventListener("click", function (e) {
-                    window.UI.props.entriesActive = e.target.getAttribute("data-id");
-                    window.UI.Viewer.canvas.src = window.UI.props.entries[window.UI.props.entriesActive].rgb;
-                    window.UI.Viewer.u.src = window.UI.props.entries[window.UI.props.entriesActive].u;
-                    window.UI.Viewer.v.src = window.UI.props.entries[window.UI.props.entriesActive].v;
+                    UI.props.entriesActive = e.target.id;
+                    UI.Viewer.canvas.src = UI.props.entries[UI.props.entriesActive].rgb;
+                    UI.Viewer.u.src = UI.props.entries[UI.props.entriesActive].u;
+                    UI.Viewer.v.src = UI.props.entries[UI.props.entriesActive].v;
                     document.querySelector(".collection-item.active").classList.remove("active");
                     element.classList.add("active");
-                });
+                })
             });
-            window.UI.Viewer.updateCanvas(window.UI.props.entries[0]);
-            log(window.UI.props.entries);
+            document.querySelector(`.collection-item#${UI.props.entriesActive}`).classList.add("active")
+            UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+            log(UI.props.entries);
         }
         resolve();
     }),
 
-    updateCanvas: (payload) => new Promise((resolve) => {
+    updateCanvas: (payload) => new Promise(resolve => {
         document.querySelector("#saveBtn").href = payload.rgb;
         document.querySelector("#saveBtn").download = payload.name + ".png";
-        window.UI.Viewer.canvas.src = payload.rgb;
-        window.UI.Viewer.u.src = payload.u;
-        window.UI.Viewer.v.src = payload.v;
-        resolve();
+        UI.Viewer.canvas.src = payload.rgb;
+        UI.Viewer.u.src = payload.u;
+        UI.Viewer.v.src = payload.v;
     }),
 
 };
 
-window.UI.mockup = {
+UI.Mockup = {
 
     entries: [
         {
@@ -194,122 +189,152 @@ window.UI.mockup = {
         },
     ],
 
-    loadImages: () => new Promise((resolve) => {
-        window.UI.props.entriesLength = window.UI.mockup.entries.length;
-        window.UI.props.entriesProgress = window.UI.mockup.entries.length;
-        window.UI.mockup.entries.forEach((payload) => {
-            window.UI.Viewer.processPayload(payload);
+    loadImages: () => new Promise(resolve => {
+        UI.props.entriesLength = UI.Mockup.entries.length
+        UI.props.entriesProgress = UI.Mockup.entries.length
+        UI.Mockup.entries.forEach(payload => {
+            UI.Viewer.processPayload(payload);
         });
     }),
 
 };
 
+
+// HTML LOADED
 document.addEventListener("DOMContentLoaded", function () {
 
     try {
         function confirm(result) {
-            // probably unnecessary
+            // Dropzone.forElement("#dpz").removeAllFiles();
         }
         window.eel.expose(confirm);
 
         function generate(payload) {
-            window.UI.Viewer.processPayload(payload);
+            UI.Viewer.processPayload(payload);
         }
         window.eel.expose(generate);
     } catch (error) {
-        log("Eel Communication Error");
-        if (window.UI.config.mockup) {
+        console.log("Eel Communication Error")
+        if (UI.config.mockup) {
             log("Mockup-mode active");
-            window.UI.mockup.loadImages();
+            UI.Mockup.loadImages();
         }
     }
 
 
-    window.M.Modal.init(document.querySelectorAll(".modal"), {});
+    M.Modal.init(document.querySelectorAll(".modal"), {});
+
+    UI.Viewer.nextBtn.addEventListener("click", function () {
+        log("next");
+        var activeElement = document.querySelector(`a#${UI.props.entriesActive}`);
+        var newElement = activeElement.nextSibling;
+        if (newElement === null) {
+            newElement = document.querySelector(".collection-item");
+        }
+        activeElement.classList.remove("active");
+        newElement.classList.add("active");
+        UI.props.entriesActive = newElement.id
+        UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+    })
+
+    UI.Viewer.prevBtn.addEventListener("click", function () {
+        log("prev");
+        var activeElement = document.querySelector(`a#${UI.props.entriesActive}`);
+        var newElement = activeElement.previousSibling;
+        if (newElement.classList === undefined) {
+            newElement = document.querySelector(".collection-item:last-child");
+        }
+        newElement.classList.add("active");
+        activeElement.classList.remove("active");
+        UI.props.entriesActive = newElement.id
+        UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+    })
+
+
+    document.querySelector("#playBtn").addEventListener("click", function (e) {
+        UI.props.play = !UI.props.play;
+        document.querySelector("#playBtn").classList.toggle("active");
+        playback();
+    })
+
+
+    document.querySelector("#fullscreenBtn").addEventListener("click", function (e) {
+        setTimeout(() => { toggleFullScreen() }, 100);
+    })
+
+    document.querySelector("#escBtn").addEventListener("click", function (e) {
+        setTimeout(() => { UI.Dropzone.state.reset(); }, 100);
+    })
+
+
+
+    document.addEventListener("keyup", function (event) {
+        if (event.defaultPrevented) {
+            return;
+        }
+
+        log(event.key, event.keycode)
+        var key = event.key || event.keyCode;
+        if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
+            var event = document.createEvent("HTMLEvents");
+            event.initEvent("click", true, false);
+            UI.Viewer.nextBtn.dispatchEvent(event);
+        }
+        if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
+            var event = document.createEvent("HTMLEvents");
+            event.initEvent("click", true, false);
+            UI.Viewer.prevBtn.dispatchEvent(event);
+        }
+
+        if (key === " " || key === 32) {
+            var event = document.createEvent("HTMLEvents");
+            event.initEvent("click", true, false);
+            document.querySelector("#playBtn").dispatchEvent(event);
+        }
+
+        if (key === "s" || key === 83) {
+            log("saving");
+            // var event = document.createEvent("HTMLEvents")
+            // event.initEvent("click", true, false)
+            document.querySelector("#saveBtn").click();
+        }
+
+        if (key === "Escape" || key === 27) {
+            UI.Dropzone.state.reset();
+        }
+
+    });
 
 });
 
-document.querySelector("#nextBtn").addEventListener("click", function () {
-    log("next");
-    window.UI.props.entriesActive++;
-    if (window.UI.props.entriesActive === window.UI.props.entriesLength) {
-        window.UI.props.entriesActive = 0;
-    }
-    window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
-    document.querySelector(".collection-item.active").classList.remove("active");
-    document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
-});
 
-document.querySelector("#prevBtn").addEventListener("click", function () {
-    log("prev");
-    window.UI.props.entriesActive--;
-    if (window.UI.props.entriesActive === -1) {
-        window.UI.props.entriesActive = window.UI.props.entriesLength - 1;
-    }
-    window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
-    document.querySelector(".collection-item.active").classList.remove("active");
-    document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
-});
+// MODULE FUNCTIONS
+
 
 function playback() {
     log("play");
-
-    if (window.UI.props.play) {
+    if (UI.props.play) {
         setTimeout(() => {
-            window.UI.props.entriesActive++;
-            if (window.UI.props.entriesActive === window.UI.props.entriesLength) {
-                window.UI.props.entriesActive = 0;
-            }
-            window.UI.Viewer.updateCanvas(window.UI.props.entries[window.UI.props.entriesActive]);
-            document.querySelector(".collection-item.active").classList.remove("active");
-            document.querySelectorAll(".collection-item")[window.UI.props.entriesActive].classList.add("active");
+            UI.Viewer.nextBtn.click()
             window.requestAnimationFrame(playback);
-        }, 1000.0 / window.UI.props.framerate);
+        }, 1000.0 / UI.props.framerate);
     }
 
 }
 
-document.querySelector("#playBtn").addEventListener("click", function (e) {
-    window.UI.props.play = !window.UI.props.play;
-    document.querySelector("#playBtn").classList.toggle("active");
-    playback();
-});
-
-document.addEventListener("keyup", function (event) {
-    if (event.defaultPrevented) {
-        return;
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
     }
+}
 
-    var newEvent = document.createEvent("HTMLEvents");
-    newEvent.initEvent("click", true, false);
 
-    log(event.key, event.keycode);
-    var key = event.key || event.keyCode;
-    if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
-        document.querySelector("#nextBtn").dispatchEvent(event);
-    }
-    if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
-        document.querySelector("#prevBtn").dispatchEvent(event);
-    }
-
-    if (key === " " || key === 32) {
-        document.querySelector("#playBtn").dispatchEvent(event);
-    }
-
-    if (key === "s" || key === 83) {
-        log("saving");
-        // var newEvent = document.createEvent("HTMLEvents");
-        // newEvent.initEvent("click", true, false);
-        document.querySelector("#saveBtn").click();
-    }
-
-    if (key === "Escape" || key === 27) {
-        window.UI.Dropzone.state.reset();
-    }
-
-});
-
-window.Dropzone.options.dpz = {
+var Dropzone = window.Dropzone
+Dropzone.options.dpz = {
     url: "/",
     autoProcessQueue: false,
     uploadMultiple: true,
@@ -318,7 +343,7 @@ window.Dropzone.options.dpz = {
         this.on("addedfile", function (file) {
             var reader = new FileReader();
             reader.onload = function (event) {
-                window.eel.upload({
+                eel.upload({
                     "name": file.name,
                     "type": "flo",
                     "content": event.target.result,
@@ -331,8 +356,4 @@ window.Dropzone.options.dpz = {
             window.UI.Dropzone.state.uploading();
         });
     },
-    accept(file, done) {
-        this.emit("success", file);
-        // this.emit("complete", file);
-    }
 };

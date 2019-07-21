@@ -2,6 +2,10 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>georgegach / flowiz</title>
     <!--Import Google Icon Font-->
     <style>
         @font-face {
@@ -41,9 +45,6 @@
     <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
     <link type="text/css" rel="stylesheet" href="css/dropzone.css" media="screen,projection" />
     <link type="text/css" rel="stylesheet" href="css/style.css" media="screen,projection" />
-
-    <!--Let browser know website is optimized for mobile-->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 
 <body>
@@ -115,12 +116,16 @@
                 <div class="buttons">
                     <a class="btn-floating btn-flat waves-effect waves-light" id="playBtn"><i
                             class="material-icons">ondemand_video</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light" href="./guitemp/" target="_blank"
+                    <a class="btn-floating btn-flat waves-effect waves-light" target="_blank"  href="./guitemp/index.html"
                         id="openBtn"><i class="material-icons">folder_open</i></a>
                     <a class="btn-floating btn-flat waves-effect waves-light" id="saveBtn"><i
                             class="material-icons">save</i></a>
                     <a class="btn-floating btn-flat waves-effect waves-light modal-trigger" href="#modal1"
                         id="helpBtn"><i class="material-icons">help_outline</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="fullscreenBtn"><i
+                            class="material-icons">fullscreen</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="escBtn"><i
+                            class="material-icons">exit_to_app</i></a>
 
                 </div>
 
@@ -132,8 +137,7 @@
                     </div>
                 </div>
                 <div class="display">
-                    <img src="" id="canvas" class="materialboxed tooltipped" data-position="bottom"
-                        data-tooltip="2-D Optical Flow" />
+                    <img src="" id="canvas" class="materialboxed tooltipped" data-position="bottom"/>
                 </div>
 
 

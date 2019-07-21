@@ -104,3 +104,4 @@ venv.bak/
 .mypy_cache/
 _gh-pages
 _site
+demo/playground.ipynb

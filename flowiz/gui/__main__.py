@@ -1,12 +1,13 @@
 import eel
 import os
 import io
-from PIL import Image
 import flowiz as fz
 import base64
 import re
 import shutil
 import matplotlib.pyplot as plt
+from .index import generate_index_html
+
 
 accessdir = 'guitemp'
 savedir = os.path.join(
@@ -24,6 +25,7 @@ savedir = os.path.join(
 def upload(file):
     eel.confirm(file['name'])
     rgb, u, v = create_b64_image(file)
+    generate_index_html(savedir, accessdir, os.path.join(savedir,"index.html"))
     eel.generate({
         'name': file['name'],
         'type': 'flowimage',
@@ -31,6 +33,7 @@ def upload(file):
         'u': u,
         'v': v,
     })
+
 
 
 def save_image(arr, name, cmap=None):

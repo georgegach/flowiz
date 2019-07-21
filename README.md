@@ -1,20 +1,20 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' width="600">
-</p>
-<br>
-<p align="center">
-  <a href="https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=georgegach/flowiz&amp;utm_campaign=Badge_Grade"><img src="https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c" alt="Codacy Badge" /></a>
-  <a href="https://github.com/georgegach/flowiz/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/flowiz.svg" alt="PyPI - License" /></a>
-  <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/v/flowiz.svg" alt="PyPI" /></a>
-  <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/status/flowiz.svg" alt="PyPI - Status" /></a>
-  <a href="https://pypistats.org/search/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="PyPI - Downloads" /></a>
-  <br>
-  <a href="https://notebooks.ai/georgegach/flowiz/lab"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a>
+<center>
 
-</p>
+<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' style="margin:50px;max-width:800px">
 
-<br>
-<h1></h1>
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
+[![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/flowiz.svg)](https://pypi.org/project/flowiz/)
+[![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)](https://pypi.org/project/flowiz/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)](https://pypistats.org/search/flowiz)
+
+[![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
+
+<br/>
+
+* * *
+
+</center>
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
 
@@ -160,11 +160,36 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 > Q: But what kind of name is `flowiz`?  
 > A: The kind you choose when `flowkit`, `flowtools`, `flowlib`, `flowlab` are already taken.
 
+> Q: Future work?  
+> A: Some of the `To-Do` features are listed below with no determined timeline. If you'd like to contribute with the said features or something completely new, you may ![fork it](https://img.shields.io/github/forks/georgegach/flowiz.svg?label=fork%20it&style=social) and issue a pull request. 
+
 ## To-Do
 
--   [x] Ported
--   [x] Version 1.0 + pip
--   [x] flow viewer (gui basics)
--   [ ] flowiz.gui 
--   [ ] Standalone PNG packaging (remove `pillow` dependency)
--   [ ] Standalone MP4 compiler (remove `ffmpeg` dependency)
+-   [x] Ported from Matlab `flow_code`
+-   [x] Project is available on PyPI 
+
+-   [x] GUI
+
+    -   [ ] Fully argparsable CLI launch support
+    -   [ ] File `open with` support
+    -   [ ] Original image overlay
+    -   [ ] Full file explorer
+    -   [ ] Flow file info
+        -   [ ] Basics: name, width, height, filesize
+        -   [ ] Histogram
+
+    -   [ ] Progress bar
+    -   [ ] Client-side `.flo` format validation (using `tag`)
+
+-   [x] Library
+
+    -   [ ] Arrow visualizations (using `opencv` or custom compact nanomodule)
+    -   [ ] Standalone `rgb` and `uv:binary` image creation (removes `matplotlib` dependency)
+    -   [ ] Standalone `.mp4` compiler (removes `ffmpeg` dependency)
+
+-   [x] CLI
+    -   [x] _Nothing for now_
+
+
+-   [x] Miscellaneous
+    -   [x] Better logo
