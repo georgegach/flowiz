@@ -1,6 +1,6 @@
 // APP CONFIG
-var Dropzone = window.Dropzone
-var M = window.M
+var Dropzone = window.Dropzone;
+var M = window.M;
 var UI = window.UI = {
     config: {
         debug: false,
@@ -37,7 +37,7 @@ function playback() {
     log("play");
     if (UI.props.play) {
         setTimeout(() => {
-            UI.Viewer.nextBtn.click()
+            UI.Viewer.nextBtn.click();
             window.requestAnimationFrame(playback);
         }, 1000.0 / UI.props.framerate);
     }
@@ -74,7 +74,7 @@ UI.Dropzone = {
                 setTimeout(() => {
                     UI.Dropzone.e.classList.add("hidden");
                     resolve();
-                }, 200)
+                }, 200);
             }, 0);
         }),
 
@@ -105,7 +105,7 @@ UI.Dropzone = {
         }
     }
 
-}
+};
 
 UI.Viewer = {
     e: document.querySelector("#viewer"),
@@ -132,11 +132,11 @@ UI.Viewer = {
 
 
     processPayload: (payload) => new Promise((resolve) => {
-        var nameid = String(payload.name).replace(".", "").replace("_", "")
-        UI.props.entriesActive = nameid
-        UI.props.entries[nameid] = payload
+        var nameid = String(payload.name).replace(".", "").replace("_", "");
+        UI.props.entriesActive = nameid;
+        UI.props.entries[nameid] = payload;
         UI.props.entriesProgress--;
-        console.log(UI.props.entriesProgress);
+        log(UI.props.entriesProgress);
 
         // DO SOMETHING HERE
 
@@ -160,7 +160,7 @@ UI.Viewer = {
                     element.classList.add("active");
                 })
             });
-            document.querySelector(`.collection-item#${UI.props.entriesActive}`).classList.add("active")
+            document.querySelector(`.collection-item#${UI.props.entriesActive}`).classList.add("active");
             UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
             log(UI.props.entries);
         }
@@ -238,11 +238,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         window.eel.expose(generate);
     } catch (error) {
-        console.log("Eel Communication Error")
+        log("Eel Communication Error");
         if (UI.config.mockup) {
             log("Mockup-mode active");
             UI.Mockup.loadImages();
-        };
+        }
     }
 
 
@@ -257,9 +257,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         activeElement.classList.remove("active");
         newElement.classList.add("active");
-        UI.props.entriesActive = newElement.id
+        UI.props.entriesActive = newElement.id;
         UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
-    })
+    });
 
     UI.Viewer.prevBtn.addEventListener("click", function () {
         log("prev");
@@ -272,24 +272,21 @@ document.addEventListener("DOMContentLoaded", function () {
         activeElement.classList.remove("active");
         UI.props.entriesActive = newElement.id
         UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
-    })
-
+    });
 
     document.querySelector("#playBtn").addEventListener("click", function (e) {
         UI.props.play = !UI.props.play;
         document.querySelector("#playBtn").classList.toggle("active");
         playback();
-    })
-
+    });
 
     document.querySelector("#fullscreenBtn").addEventListener("click", function (e) {
         setTimeout(() => { toggleFullScreen() }, 100);
-    })
+    });
 
     document.querySelector("#escBtn").addEventListener("click", function (e) {
         setTimeout(() => { UI.Dropzone.state.reset(); }, 100);
-    })
-
+    });
 
 
     document.addEventListener("keyup", function (event) {
@@ -299,7 +296,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         var event = document.createEvent("HTMLEvents");
         event.initEvent("click", true, false);
-        log(event.key, event.keycode)
+        log(event.key, event.keycode);
         var key = event.key || event.keyCode;
 
         if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
