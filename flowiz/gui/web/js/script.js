@@ -3,7 +3,7 @@ var Dropzone = window.Dropzone;
 var M = window.M;
 var UI = window.UI = {
     config: {
-        debug: false,
+        debug: true,
         mockup: true,
     },
 
@@ -294,34 +294,15 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        var event = document.createEvent("HTMLEvents");
-        event.initEvent("click", true, false);
         log(event.key, event.keycode);
         var key = event.key || event.keyCode;
 
-        if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
-            UI.Viewer.nextBtn.dispatchEvent(event);
-        }
-
-        if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
-            UI.Viewer.prevBtn.dispatchEvent(event);
-        }
-
-        if (key === " " || key === 32) {
-            document.querySelector("#playBtn").dispatchEvent(event);
-        }
-
-        if (key === "s" || key === 83) {
-            log("saving");
-            document.querySelector("#saveBtn").click();
-        }
-
-        if (key === "Escape" || key === 27) {
-            UI.Dropzone.state.reset();
-        }
-
+        if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40)    { UI.Viewer.nextBtn.click();}
+        if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37)       { UI.Viewer.prevBtn.click();}
+        if (key === " "         || key === 32)                                          { document.querySelector("#playBtn").click();}
+        if (key === "s"         || key === 83)                                          { log("saving"); document.querySelector("#saveBtn").click();}
+        if (key === "Escape" || key === 27)                                             { UI.Dropzone.state.reset();}
     });
-
 });
 
 
