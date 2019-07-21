@@ -19,7 +19,7 @@ window.UI = {
 
 function log(msg) {
     if (UI.config.debug) {
-        console.log(msg)
+        console.log(msg);
     }
 }
 
@@ -36,49 +36,50 @@ UI.Dropzone = {
     e: document.querySelector('#dpz'),
     state: {
         uploading: () => new Promise(resolve => {
-            log("uploading")
-            UI.Dropzone.e.classList.add('uploading')
-            resolve()
+            log("uploading");
+            UI.Dropzone.e.classList.add('uploading');
+            resolve();
         }),
 
         uploaded: () => new Promise(resolve => {
-            log("uploaded")
-            UI.Dropzone.e.classList.remove('uploading')
+            log("uploaded");
+            UI.Dropzone.e.classList.remove('uploading');
             setTimeout(() => {
-                UI.Dropzone.e.classList.add('done')
+                UI.Dropzone.e.classList.add('done');
                 setTimeout(() => {
-                    UI.Dropzone.e.classList.add('hidden')
-                    resolve()
+                    UI.Dropzone.e.classList.add('hidden');
+                    resolve();
                 }, 200)
             }, 0)
         }),
 
         unhide: () => new Promise(resolve => {
-            log('unhiding dropzone')
-            UI.Dropzone.e.classList.remove('hidden')
+            log('unhiding dropzone');
+            UI.Dropzone.e.classList.remove('hidden');
             setTimeout(() => {
-                UI.Dropzone.e.classList.remove('done')
-                resolve()
+                UI.Dropzone.e.classList.remove('done');
+                resolve();
             }, 200)
         }),
 
 
         reset: () => new Promise(resolve => {
-            log("reset")
-            var dpz = Dropzone.forElement("#dpz")
+            log("reset");
+            var dpz = window.Dropzone.forElement("#dpz");
             dpz.emit("reset");
+            dpz.removeAllFiles();
             UI.Viewer.state.hidden().then(UI.Dropzone.state.unhide);
-            UI.props.entries = []
+            UI.props.entries = [];
             UI.props.entriesLength = 0;
             UI.props.entriesProgress = 0;
             UI.props.entriesActive = 0;
-            resolve()
+            resolve();
         }),
 
         test: () => {
             UI.Dropzone.state.uploading()
                 .then(UI.Dropzone.state.uploaded)
-                .then(UI.Dropzone.state.reset)
+                .then(UI.Dropzone.state.reset);
         }
     }
 
@@ -95,30 +96,30 @@ UI.Viewer = {
 
     state: {
         hidden: () => new Promise(resolve => {
-            UI.Viewer.e.classList.remove('loaded')
-            resolve()
+            UI.Viewer.e.classList.remove('loaded');
+            resolve();
         }),
 
         loaded: () => new Promise(resolve => {
-            UI.Viewer.e.classList.add('loaded')
-            resolve()
+            UI.Viewer.e.classList.add('loaded');
+            resolve();
         }),
     },
 
     updateCarousel: (img) => new Promise(resolve => {
-        cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement()
-        cNode.querySelector('img').src = img.rgb
-        UI.Viewer.c.appendChild(cNode)
+        cNode = `<a class="carousel-item materialboxed"><img src=""></a>`.toElement();
+        cNode.querySelector('img').src = img.rgb;
+        UI.Viewer.c.appendChild(cNode);
     }),
 
     processPayload: (payload) => new Promise(resolve => {
-        UI.props.entries.push(payload)
+        UI.props.entries.push(payload);
         UI.props.entriesProgress--;
-        console.log(UI.props.entriesProgress)
+        console.log(UI.props.entriesProgress);
 
         // DO SOMETHING HERE
 
-        UI.Viewer.col.appendChild(`<a href="#" data-id="${UI.props.entriesLength - UI.props.entriesProgress - 1}" class="collection-item">${payload.name}</a>`.toElement())
+        UI.Viewer.col.appendChild(`<a href="#" data-id="${UI.props.entriesLength - UI.props.entriesProgress - 1}" class="collection-item">${payload.name}</a>`.toElement());
 
         // STOP BEFORE HERE
 
@@ -127,29 +128,29 @@ UI.Viewer = {
             M.Tooltip.init(document.querySelectorAll('.tooltipped'), {
                 enterDelay: 2000
             });
-            UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded)
-            UI.Viewer.col.querySelector('.collection-item').classList.add('active')
+            UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded);
+            UI.Viewer.col.querySelector('.collection-item').classList.add('active');
             UI.Viewer.col.querySelectorAll('.collection-item').forEach(element => {
                 element.addEventListener('click', function (e) {
-                    UI.props.entriesActive = e.target.getAttribute('data-id')
-                    UI.Viewer.canvas.src = UI.props.entries[UI.props.entriesActive].rgb
-                    UI.Viewer.u.src = UI.props.entries[UI.props.entriesActive].u
-                    UI.Viewer.v.src = UI.props.entries[UI.props.entriesActive].v
-                    document.querySelector(".collection-item.active").classList.remove('active')
-                    element.classList.add('active')
+                    UI.props.entriesActive = e.target.getAttribute('data-id');
+                    UI.Viewer.canvas.src = UI.props.entries[UI.props.entriesActive].rgb;
+                    UI.Viewer.u.src = UI.props.entries[UI.props.entriesActive].u;
+                    UI.Viewer.v.src = UI.props.entries[UI.props.entriesActive].v;
+                    document.querySelector(".collection-item.active").classList.remove('active');
+                    element.classList.add('active');
                 })
             });
-            UI.Viewer.updateCanvas(UI.props.entries[0])
-            log(UI.props.entries)
+            UI.Viewer.updateCanvas(UI.props.entries[0]);
+            log(UI.props.entries);
         }
     }),
 
     updateCanvas: (payload) => new Promise(resolve => {
-        document.querySelector("#saveBtn").href = payload.rgb
-        document.querySelector("#saveBtn").download = payload.name + ".png"
-        UI.Viewer.canvas.src = payload.rgb
-        UI.Viewer.u.src = payload.u
-        UI.Viewer.v.src = payload.v
+        document.querySelector("#saveBtn").href = payload.rgb;
+        document.querySelector("#saveBtn").download = payload.name + ".png";
+        UI.Viewer.canvas.src = payload.rgb;
+        UI.Viewer.u.src = payload.u;
+        UI.Viewer.v.src = payload.v;
     }),
 
 }
@@ -194,7 +195,7 @@ UImockup = {
         UI.props.entriesLength = UImockup.entries.length
         UI.props.entriesProgress = UImockup.entries.length
         UImockup.entries.forEach(payload => {
-            UI.Viewer.processPayload(payload)
+            UI.Viewer.processPayload(payload);
         });
     })
 
@@ -205,18 +206,18 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
         eel.expose(confirm)
         function confirm(result) {
-            // probably unnecessary
+            // window.Dropzone.forElement("#dpz").removeAllFiles();
         }
 
         eel.expose(generate)
         function generate(payload) {
-            UI.Viewer.processPayload(payload)
+            UI.Viewer.processPayload(payload);
         }
     } catch (error) {
         console.log('Eel Communication Error')
         if (UI.config.debug) {
-            log("Mockup-mode active")
-            UImockup.loadImages()
+            log("Mockup-mode active");
+            UImockup.loadImages();
         }
     }
 
@@ -226,50 +227,69 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.querySelector("#nextBtn").addEventListener("click", function () {
-    log("next")
-    UI.props.entriesActive++
+    log("next");
+    UI.props.entriesActive++;
     if (UI.props.entriesActive == UI.props.entriesLength) {
-        UI.props.entriesActive = 0
+        UI.props.entriesActive = 0;
     }
-    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-    document.querySelector(".collection-item.active").classList.remove('active')
-    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
+    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+    document.querySelector(".collection-item.active").classList.remove('active');
+    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active');
 })
 
 document.querySelector("#prevBtn").addEventListener("click", function () {
     log("prev")
-    UI.props.entriesActive--
+    UI.props.entriesActive--;
     if (UI.props.entriesActive == -1) {
-        UI.props.entriesActive = UI.props.entriesLength - 1
+        UI.props.entriesActive = UI.props.entriesLength - 1;
     }
-    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-    document.querySelector(".collection-item.active").classList.remove('active')
-    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
+    UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+    document.querySelector(".collection-item.active").classList.remove('active');
+    document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active');
 })
 
 function playback() {
-    log("play")
+    log("play");
 
     if (UI.props.play) {
         setTimeout(() => {
-            UI.props.entriesActive++
+            UI.props.entriesActive++;
             if (UI.props.entriesActive == UI.props.entriesLength) {
-                UI.props.entriesActive = 0
+                UI.props.entriesActive = 0;
             }
-            UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive])
-            document.querySelector(".collection-item.active").classList.remove('active')
-            document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active')
-            window.requestAnimationFrame(playback)
-        }, 1000.0 / UI.props.framerate)
+            UI.Viewer.updateCanvas(UI.props.entries[UI.props.entriesActive]);
+            document.querySelector(".collection-item.active").classList.remove('active');
+            document.querySelectorAll(".collection-item")[UI.props.entriesActive].classList.add('active');
+            window.requestAnimationFrame(playback);
+        }, 1000.0 / UI.props.framerate);
     }
 
 }
 
 document.querySelector("#playBtn").addEventListener("click", function (e) {
-    UI.props.play = !UI.props.play
-    document.querySelector("#playBtn").classList.toggle("active")
-    playback()
+    UI.props.play = !UI.props.play;
+    document.querySelector("#playBtn").classList.toggle("active");
+    playback();
 })
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen(); 
+      }
+    }
+  }
+
+document.querySelector("#fullscreenBtn").addEventListener("click", function (e) {
+    setTimeout(() => {toggleFullScreen()}, 300);
+})
+
+document.querySelector("#escBtn").addEventListener("click", function (e) {
+    setTimeout(() => {UI.Dropzone.state.reset();}, 300);
+})
+
 
 document.addEventListener('keyup', function (event) {
     if (event.defaultPrevented) {
@@ -279,31 +299,31 @@ document.addEventListener('keyup', function (event) {
     log(event.key, event.keycode)
     var key = event.key || event.keyCode;
     if (key === 'ArrowRight' || key === 39 || key === 'ArrowDown' || key === 40) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#nextBtn').dispatchEvent(event)
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector('#nextBtn').dispatchEvent(event);
     }
     if (key === 'ArrowLeft' || key === 37 || key === 'ArrowUp' || key === 37) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#prevBtn').dispatchEvent(event)
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector('#prevBtn').dispatchEvent(event);
     }
 
     if (key === ' ' || key === 32) {
-        var event = document.createEvent("HTMLEvents")
-        event.initEvent("click", true, false)
-        document.querySelector('#playBtn').dispatchEvent(event)
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
+        document.querySelector('#playBtn').dispatchEvent(event);
     }
 
     if (key === 's' || key === 83) {
-        log("saving")
+        log("saving");
         // var event = document.createEvent("HTMLEvents")
         // event.initEvent("click", true, false)
-        document.querySelector('#saveBtn').click()
+        document.querySelector('#saveBtn').click();
     }
 
     if (key === 'Escape' || key === 27) {
-        UI.Dropzone.state.reset()
+        UI.Dropzone.state.reset();
     }
 
 });
@@ -330,8 +350,4 @@ Dropzone.options.dpz = {
             UI.Dropzone.state.uploading()
         });
     },
-    accept: function (file, done) {
-        this.emit("success", file);
-        // this.emit("complete", file);
-    }
 };

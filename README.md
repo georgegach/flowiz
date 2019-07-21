@@ -2,20 +2,18 @@
 
 <img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" alt='flowiz' style="margin:50px;max-width:800px">
 
-
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c)](https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&utm_medium=referral&utm_content=georgegach/flowiz&utm_campaign=Badge_Grade)
 [![PyPI - License](https://img.shields.io/pypi/l/flowiz.svg)](https://github.com/georgegach/flowiz/blob/master/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/flowiz.svg)](https://pypi.org/project/flowiz/)
 [![PyPI - Status](https://img.shields.io/pypi/status/flowiz.svg)](https://pypi.org/project/flowiz/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/flowiz.svg)](https://pypistats.org/search/flowiz)
 
-
-
 [![Launch Jupyter](https://img.shields.io/static/v1.svg?label=launch&message=notebook&color=F37626&style=for-the-badge&logo=jupyter)](https://notebooks.ai/georgegach/flowiz/lab)
 
 <br/>
 
-___
+* * *
+
 </center>
 
 Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
@@ -113,21 +111,19 @@ axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
 
 ![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/uv_flows.png)
 
-
 ### GUI usage
 
 Beta version of the `flowiz` graphical user interface is now accessible via `flowiz.gui` package. It is packaged using [ChrisKnott / Eel](https://github.com/ChrisKnott/Eel) and available via default web browser. To run the GUI simply type:
+
 ```bash
 python -m flowiz.gui
 ```
+
 Upon launching the web app, drag and drop or choose `.flo` file(s) using the `open file dialog`. Files will be converted using the python backend and placed in a temporary directory `flowiz/gui/web/guitemp`. Upon every session temporary directory will be emptied to avoid unnecessary polution.  
 
 Mockup of the GUI is available at [georgegach.github.io/flowiz](http://georgegach.github.io/flowiz)
 
 ![Demo Video](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/flowiz.demo.gif)
-
-
-
 
 ### Help
 
@@ -164,11 +160,36 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 > Q: But what kind of name is `flowiz`?  
 > A: The kind you choose when `flowkit`, `flowtools`, `flowlib`, `flowlab` are already taken.
 
+> Q: Future work?  
+> A: Some of the `To-Do` features are listed below with no determined timeline. If you'd like to contribute with the said features or something completely new, you may ![fork it](https://img.shields.io/github/forks/georgegach/flowiz.svg?label=fork%20it&style=social) and issue a pull request. 
+
 ## To-Do
 
--   [x] Ported
--   [x] Version 1.0 + pip
--   [x] flow viewer (gui basics)
--   [ ] flowiz.gui 
--   [ ] Standalone PNG packaging (remove `pillow` dependency)
--   [ ] Standalone MP4 compiler (remove `ffmpeg` dependency)
+-   [x] Ported from Matlab `flow_code`
+-   [x] Project is available on PyPI 
+
+-   [x] GUI
+
+    -   [ ] Fully argparsable CLI launch support
+    -   [ ] File `open with` support
+    -   [ ] Original image overlay
+    -   [ ] Full file explorer
+    -   [ ] Flow file info
+        -   [ ] Basics: name, width, height, filesize
+        -   [ ] Histogram
+
+    -   [ ] Progress bar
+    -   [ ] Client-side `.flo` format validation (using `tag`)
+
+-   [x] Library
+
+    -   [ ] Arrow visualizations (using `opencv` or custom compact nanomodule)
+    -   [ ] Standalone `rgb` and `uv:binary` image creation (removes `matplotlib` dependency)
+    -   [ ] Standalone `.mp4` compiler (removes `ffmpeg` dependency)
+
+-   [x] CLI
+    -   [x] _Nothing for now_
+
+
+-   [x] Miscellaneous
+    -   [x] Better logo

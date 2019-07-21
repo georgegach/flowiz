@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name='flowiz',
-    version='2.2.1b',
+    version='2.2.3',
     author="George Gach",
     author_email="george@gach.space",
     description="Optical Flow file wizard",
@@ -14,6 +14,12 @@ setup(
     url="https://github.com/georgegach/flowiz",
     include_package_data=True,
     packages=find_packages(),
+    install_requires=[
+        'numpy',
+        'tqdm',
+        'matplotlib',
+        'eel',
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
