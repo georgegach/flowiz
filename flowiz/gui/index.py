@@ -108,14 +108,7 @@ head = """
 
         #stacktrace {
             margin-top: 15px;
-        }<div class="logo" style="width:100%; text-align: center; margin-top:50px; opacity: 1;">
-            <a href="https://github.com/georgegach/flowiz/stargazers" style="padding: 0 5px;"><img alt="GitHub stars" src="https://img.shields.io/github/stars/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/network/members" style="padding: 0 5px;"><img alt="GitHub forks" src="https://img.shields.io/github/forks/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach" style="padding: 0 5px;"><img alt="GitHub followers" src="https://img.shields.io/github/followers/georgegach.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/watchers" style="padding: 0 5px;"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/georgegach/flowiz.svg?style=social"></a>
-            <br /><br />
-            <img src="githubassets/ubuntu283.png" width="200px" class="" alt="">
-        </div>
+        }
 
         .directory h1 {
             margin-bottom: 15px;
@@ -226,30 +219,9 @@ head = """
             background: #000;
             color: #fff;
             font-weight: bold;
-<div class="logo" style="width:100%; text-align: center; margin-top:50px; opacity: 1;">
-            <a href="https://github.com/georgegach/flowiz/stargazers" style="padding: 0 5px;"><img alt="GitHub stars" src="https://img.shields.io/github/stars/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/network/members" style="padding: 0 5px;"><img alt="GitHub forks" src="https://img.shields.io/github/forks/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach" style="padding: 0 5px;"><img alt="GitHub followers" src="https://img.shields.io/github/followers/georgegach.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/watchers" style="padding: 0 5px;"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/georgegach/flowiz.svg?style=social"></a>
-            <br /><br />
-            <img src="githubassets/ubuntu283.png" width="200px" class="" alt="">
-        </div>
-<div class="logo" style="width:100%; text-align: center; margin-top:50px; opacity: 1;">
-            <a href="https://github.com/georgegach/flowiz/stargazers" style="padding: 0 5px;"><img alt="GitHub stars" src="https://img.shields.io/github/stars/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/network/members" style="padding: 0 5px;"><img alt="GitHub forks" src="https://img.shields.io/github/forks/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach" style="padding: 0 5px;"><img alt="GitHub followers" src="https://img.shields.io/github/followers/georgegach.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/watchers" style="padding: 0 5px;"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/georgegach/flowiz.svg?style=social"></a>
-            <br /><br />
-            <img src="githubassets/ubuntu283.png" width="200px" class="" alt="">
-        </div>
-<div class="logo" style="width:100%; text-align: center; margin-top:50px; opacity: 1;">
-            <a href="https://github.com/georgegach/flowiz/stargazers" style="padding: 0 5px;"><img alt="GitHub stars" src="https://img.shields.io/github/stars/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/network/members" style="padding: 0 5px;"><img alt="GitHub forks" src="https://img.shields.io/github/forks/georgegach/flowiz.svg?style=social"></a>
-            <a href="https://github.com/georgegach" style="padding: 0 5px;"><img alt="GitHub followers" src="https://img.shields.io/github/followers/georgegach.svg?style=social"></a>
-            <a href="https://github.com/georgegach/flowiz/watchers" style="padding: 0 5px;"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/georgegach/flowiz.svg?style=social"></a>
-            <br /><br />
-            <img src="githubassets/ubuntu283.png" width="200px" class="" alt="">
-        </div>
+
+
+
             border-radius: 5px;
         }
 
