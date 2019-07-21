@@ -1,7 +1,7 @@
 #!/bin/bash
 directory=_site
 web=flowiz/gui/web/*
-main=gui
+main=master
 gh=gh-pages
 build_command() {
   cp -r $web $directory
