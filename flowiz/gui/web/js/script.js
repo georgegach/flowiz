@@ -1,4 +1,6 @@
 // APP CONFIG
+var Dropzone = window.Dropzone
+var M = window.M
 var UI = window.UI = {
     config: {
         debug: false,
@@ -26,23 +28,45 @@ function log(...msg) {
 
 String.prototype.toElement = function () {
     var template = document.createElement("template");
-    html = this.trim(); // Never return a text node of whitespace as the result
+    var html = this.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
     return template.content.firstChild;
 }
+
+function playback() {
+    log("play");
+    if (UI.props.play) {
+        setTimeout(() => {
+            UI.Viewer.nextBtn.click()
+            window.requestAnimationFrame(playback);
+        }, 1000.0 / UI.props.framerate);
+    }
+
+}
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
 
 // APP MODULES
 
 UI.Dropzone = {
     e: document.querySelector("#dpz"),
     state: {
-        uploading: () => new Promise(resolve => {
+        uploading: () => new Promise((resolve) => {
             log("uploading");
             UI.Dropzone.e.classList.add("uploading");
             resolve();
         }),
 
-        uploaded: () => new Promise(resolve => {
+        uploaded: () => new Promise((resolve) => {
             log("uploaded");
             UI.Dropzone.e.classList.remove("uploading");
             setTimeout(() => {
@@ -51,20 +75,20 @@ UI.Dropzone = {
                     UI.Dropzone.e.classList.add("hidden");
                     resolve();
                 }, 200)
-            }, 0)
+            }, 0);
         }),
 
-        unhide: () => new Promise(resolve => {
+        unhide: () => new Promise((resolve) => {
             log("unhiding dropzone");
             UI.Dropzone.e.classList.remove("hidden");
             setTimeout(() => {
                 UI.Dropzone.e.classList.remove("done");
                 resolve();
-            }, 200)
+            }, 200);
         }),
 
 
-        reset: () => new Promise(resolve => {
+        reset: () => new Promise((resolve) => {
             log("reset");
             UI.Viewer.col.querySelector(".collection-item.active").classList.remove("active");
             var dpz = Dropzone.forElement("#dpz");
@@ -95,19 +119,19 @@ UI.Viewer = {
     prevBtn: document.querySelector("#prevBtn"),
 
     state: {
-        hidden: () => new Promise(resolve => {
+        hidden: () => new Promise((resolve) => {
             UI.Viewer.e.classList.remove("loaded");
             resolve();
         }),
 
-        loaded: () => new Promise(resolve => {
+        loaded: () => new Promise((resolve) => {
             UI.Viewer.e.classList.add("loaded");
             resolve();
         }),
     },
 
 
-    processPayload: (payload) => new Promise(resolve => {
+    processPayload: (payload) => new Promise((resolve) => {
         var nameid = String(payload.name).replace(".", "").replace("_", "")
         UI.props.entriesActive = nameid
         UI.props.entries[nameid] = payload
@@ -120,13 +144,13 @@ UI.Viewer = {
 
         // STOP BEFORE HERE
 
-        if (UI.props.entriesProgress == 0) {
+        if (UI.props.entriesProgress === 0) {
             M.Materialbox.init(UI.Viewer.m);
             M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
                 enterDelay: 2000
             });
             UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded);
-            UI.Viewer.col.querySelectorAll(".collection-item").forEach(element => {
+            UI.Viewer.col.querySelectorAll(".collection-item").forEach((element) => {
                 element.addEventListener("click", function (e) {
                     UI.props.entriesActive = e.target.id;
                     UI.Viewer.canvas.src = UI.props.entries[UI.props.entriesActive].rgb;
@@ -143,7 +167,7 @@ UI.Viewer = {
         resolve();
     }),
 
-    updateCanvas: (payload) => new Promise(resolve => {
+    updateCanvas: (payload) => new Promise((resolve) => {
         document.querySelector("#saveBtn").href = payload.rgb;
         document.querySelector("#saveBtn").download = payload.name + ".png";
         UI.Viewer.canvas.src = payload.rgb;
@@ -189,10 +213,10 @@ UI.Mockup = {
         },
     ],
 
-    loadImages: () => new Promise(resolve => {
-        UI.props.entriesLength = UI.Mockup.entries.length
-        UI.props.entriesProgress = UI.Mockup.entries.length
-        UI.Mockup.entries.forEach(payload => {
+    loadImages: () => new Promise((resolve) => {
+        UI.props.entriesLength = UI.Mockup.entries.length;
+        UI.props.entriesProgress = UI.Mockup.entries.length;
+        UI.Mockup.entries.forEach((payload) => {
             UI.Viewer.processPayload(payload);
         });
     }),
@@ -218,7 +242,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (UI.config.mockup) {
             log("Mockup-mode active");
             UI.Mockup.loadImages();
-        }
+        };
     }
 
 
@@ -273,29 +297,25 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent("click", true, false);
         log(event.key, event.keycode)
         var key = event.key || event.keyCode;
+
         if (key === "ArrowRight" || key === 39 || key === "ArrowDown" || key === 40) {
-            var event = document.createEvent("HTMLEvents");
-            event.initEvent("click", true, false);
             UI.Viewer.nextBtn.dispatchEvent(event);
         }
+
         if (key === "ArrowLeft" || key === 37 || key === "ArrowUp" || key === 37) {
-            var event = document.createEvent("HTMLEvents");
-            event.initEvent("click", true, false);
             UI.Viewer.prevBtn.dispatchEvent(event);
         }
 
         if (key === " " || key === 32) {
-            var event = document.createEvent("HTMLEvents");
-            event.initEvent("click", true, false);
             document.querySelector("#playBtn").dispatchEvent(event);
         }
 
         if (key === "s" || key === 83) {
             log("saving");
-            // var event = document.createEvent("HTMLEvents")
-            // event.initEvent("click", true, false)
             document.querySelector("#saveBtn").click();
         }
 
@@ -311,29 +331,8 @@ document.addEventListener("DOMContentLoaded", function () {
 // MODULE FUNCTIONS
 
 
-function playback() {
-    log("play");
-    if (UI.props.play) {
-        setTimeout(() => {
-            UI.Viewer.nextBtn.click()
-            window.requestAnimationFrame(playback);
-        }, 1000.0 / UI.props.framerate);
-    }
-
-}
-
-function toggleFullScreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
-    }
-}
 
 
-var Dropzone = window.Dropzone
 Dropzone.options.dpz = {
     url: "/",
     autoProcessQueue: false,
@@ -343,7 +342,7 @@ Dropzone.options.dpz = {
         this.on("addedfile", function (file) {
             var reader = new FileReader();
             reader.onload = function (event) {
-                eel.upload({
+                window.eel.upload({
                     "name": file.name,
                     "type": "flo",
                     "content": event.target.result,
