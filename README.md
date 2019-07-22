@@ -50,7 +50,7 @@ python setup.py install --user
 Make sure you have following packages installed
 
 ```bash
-pip install numpy tqdm pillow eel
+pip install numpy tqdm matplotlib eel
 apt install ffmpeg
 ```
 
