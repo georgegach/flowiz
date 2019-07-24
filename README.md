@@ -8,7 +8,7 @@
 <a href="https://pypistats.org/search/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="PyPI - Downloads" /></a>
     </p>
 <p align="center">
-<a href="https://notebooks.ai/georgegach/flowiz/lab"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a></p>
+<a href="https://mybinder.org/v2/gh/georgegach/flowiz/master?filepath=https%3A%2F%2Fgithub.com%2Fgeorgegach%2Fflowiz%2Fblob%2Fmaster%2Fdemo%2Ftest.ipynb"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a></p>
 </p>
 
 <h1></h1>
@@ -50,7 +50,7 @@ python setup.py install --user
 Make sure you have following packages installed
 
 ```bash
-pip install numpy tqdm pillow eel
+pip install numpy tqdm matplotlib eel
 apt install ffmpeg
 ```
 
