@@ -105,3 +105,4 @@ venv.bak/
 _gh-pages
 _site
 demo/playground.ipynb
+.vscode/
