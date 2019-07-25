@@ -164,9 +164,7 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 -   [x] Ported from Matlab `flow_code`
 -   [x] Project is available on PyPI 
-
 -   [x] GUI
-
     -   [ ] Fully argparsable CLI launch support
     -   [ ] File `open with` support
     -   [ ] Original image overlay
@@ -174,19 +172,13 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
     -   [ ] Flow file info
         -   [ ] Basics: name, width, height, filesize
         -   [ ] Histogram
-
     -   [ ] Progress bar
     -   [ ] Client-side `.flo` format validation (using `tag`)
-
 -   [x] Library
-
     -   [ ] Arrow visualizations (using `opencv` or custom compact nanomodule)
     -   [ ] Standalone `rgb` and `uv:binary` image creation (removes `matplotlib` dependency)
     -   [ ] Standalone `.mp4` compiler (removes `ffmpeg` dependency)
-
 -   [x] CLI
     -   [x] _Nothing for now_
-
-
 -   [x] Miscellaneous
     -   [x] Better logo
