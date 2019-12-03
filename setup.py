@@ -19,6 +19,7 @@ setup(
         'tqdm',
         'matplotlib',
         'eel',
+        'Pillow',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
