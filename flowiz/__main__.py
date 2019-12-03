@@ -8,6 +8,7 @@ parser.add_argument('input', nargs='+', help='Input file(s). (e.g.: __ ./demo/fl
 parser.add_argument('--outdir', '-o', action='store', help='Output directory path. Default: same directory as [.flo] files. (e.g.: __ -o ./demo/png/)')
 parser.add_argument('--videodir', '-v', action='store', help='Compiles [.mp4] video from [.png] images if parameter is passed. Parameter requires video output directory path without a filename. (e.g.: __ -v ./demo/mp4/)')
 parser.add_argument('--framerate', '-r', type=int, help='Frames per second of the video. (e.g.: __ -r 2)')
+parser.add_argument('--min_rad', '-m', action='store', type=float, default=0, help='Minimum radial vector length for normalization of flow')
 
 args = parser.parse_args()
 
@@ -20,7 +21,7 @@ if args.outdir == None:
     args.outdir = os.path.dirname(flos[0])
 
 print("> Rendering images [.png] from the flows [.flo]")
-fz.convert_files(flos, outdir = args.outdir)
+fz.convert_files(flos, outdir=args.outdir, min_rad=args.min_rad)
 
 
 if args.videodir:

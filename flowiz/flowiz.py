@@ -142,7 +142,7 @@ def _compute_color(u, v):
     return img.astype(np.uint8)
 
 
-def _normalize_flow(flow):
+def _normalize_flow(flow, min_rad=0):
     UNKNOWN_FLOW_THRESH = 1e9
     # UNKNOWN_FLOW = 1e10
 
@@ -168,11 +168,11 @@ def _normalize_flow(flow):
     minv = max([999, np.min(v)])
 
     rad = np.sqrt(np.multiply(u, u) + np.multiply(v, v))
-    maxrad = max([-1, np.max(rad)])
+    maxrad = max([-1, np.max(rad), min_rad])
 
     if flags['debug']:
-        print("Max Flow : {maxrad:.4f}. Flow Range [u, v] -> [{minu:.3f}:{maxu:.3f}, {minv:.3f}:{maxv:.3f}] ".format(
-            minu=minu, minv=minv, maxu=maxu, maxv=maxv, maxrad=maxrad
+        print("Max Flow : {maxrad:.4f} Min Rad : {min_rad:.4f}. Flow Range [u, v] -> [{minu:.3f}:{maxu:.3f}, {minv:.3f}:{maxv:.3f}] ".format(
+            minu=minu, minv=minv, maxu=maxu, maxv=maxv, maxrad=maxrad, min_rad=min_rad
         ))
 
     eps = np.finfo(np.float32).eps
@@ -182,9 +182,9 @@ def _normalize_flow(flow):
     return u, v
 
 
-def _flow2color(flow):
+def _flow2color(flow, min_rad=0):
 
-    u, v = _normalize_flow(flow)
+    u, v = _normalize_flow(flow, min_rad=min_rad)
     img = _compute_color(u, v)
 
     # TO-DO
@@ -197,8 +197,8 @@ def _flow2color(flow):
     return img
 
 
-def _flow2uv(flow):
-    u, v = _normalize_flow(flow)
+def _flow2uv(flow, min_rad=0):
+    u, v = _normalize_flow(flow, min_rad=min_rad)
     uv = (np.dstack([u, v])*127.999+128).astype('uint8')
     return uv
 
@@ -208,20 +208,20 @@ def _save_png(arr, path):
     Image.fromarray(arr).save(path)
 
 
-def convert_from_file(path, mode='RGB'):
-    return convert_from_flow(read_flow(path), mode)
+def convert_from_file(path, mode='RGB', min_rad=0):
+    return convert_from_flow(read_flow(path), mode, min_rad=min_rad)
 
 
-def convert_from_flow(flow, mode='RGB'):
+def convert_from_flow(flow, mode='RGB', min_rad=0):
     if mode == 'RGB':
-        return _flow2color(flow)
+        return _flow2color(flow, min_rad=min_rad)
     if mode == 'UV':
-        return _flow2uv(flow)
+        return _flow2uv(flow, min_rad=min_rad)
 
-    return _flow2color(flow)
+    return _flow2color(flow, min_rad=min_rad)
 
 
-def convert_files(files, outdir=None):
+def convert_files(files, outdir=None, min_rad=0):
     if outdir != None and not os.path.exists(outdir):
         try:
             os.makedirs(outdir)
@@ -232,7 +232,7 @@ def convert_files(files, outdir=None):
 
     t = tqdm(files)
     for f in t:
-        image = convert_from_file(f)
+        image = convert_from_file(f, min_rad=min_rad)
 
         if outdir == None:
             path = f + '.png'
