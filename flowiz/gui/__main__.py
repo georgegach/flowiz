@@ -69,5 +69,4 @@ if __name__ == '__main__':
     create_or_clean_tempfolder(savedir)
     print('> GUI webpath:', os.path.join(os.path.dirname(__file__), 'web'))
     eel.init(os.path.join(os.path.dirname(__file__), 'web'))
-    eel.start('index.html', options={
-        'chromeFlags': ['--disable-http-cache']})
+    eel.start('index.html', mode='')
