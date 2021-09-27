@@ -44,7 +44,7 @@ def read_flow(path):
         raise AssertionError("Illegal width [{w}]".format(w=width))
 
     height = np.frombuffer(flo.read(4), np.int32, count=1)[0]
-    if not (width > 0 and width < 100000):
+    if not (height > 0 and height < 100000):
         raise AssertionError("Illegal height [{h}]".format(h=height))
 
     nbands = 2
