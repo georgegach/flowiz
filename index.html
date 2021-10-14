@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>georgegach / flowiz</title>
+    <!--Import Google Icon Font-->
+    <style>
+        @font-face {
+            font-family: 'Material Icons';
+            font-style: normal;
+            font-weight: 400;
+            src: url('fonts/material_icons.woff2') format('woff2');
+        }
+
+        .material-icons {
+            font-family: 'Material Icons';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-91391080-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-91391080-2');
+    </script>
+
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="css/dropzone.css" media="screen,projection" />
+    <link type="text/css" rel="stylesheet" href="css/style.css" media="screen,projection" />
+</head>
+
+<body>
+    <div class="app">
+
+
+        <div class="dropzone needsclick" method="post" id="dpz" action="/">
+            <div class="dz-message" data-dz-message><span>Drag and drop some flow files or click to open file
+                    dialog</span></div>
+        </div>
+
+        <div id="viewer" class="viewer">
+            <div id="modal1" class="modal">
+                <div class="modal-content">
+                    <h4>Keyboard shortcuts</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Shortcut</th>
+                                <th></th>
+                                <th>Action</th>
+                                <th>Shortcut</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <tr>
+                                <td>Next image</td>
+                                <td>→ or ↓</td>
+                                <td></td>
+                                <td>Previous image</td>
+                                <td>← or ↑</td>
+                            </tr>
+                            <tr>
+                                <td>Escape to upload</td>
+                                <td>ESC</td>
+                                <td></td>
+                                <td>Open temp folder</td>
+                                <td>F</td>
+                            </tr>
+                            <tr>
+                                <td>Save image</td>
+                                <td>S</td>
+                                <td></td>
+                                <td>Play/Pause movie</td>
+                                <td>SPACE</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <a href="http://github.com/georgegach/flowiz" target="_blank"
+                        class="modal-close waves-effect waves-green btn">Get me to Github</a>
+                    <a href="#!" class="modal-close waves-effect waves-green btn">OK</a>
+                </div>
+            </div>
+
+            <div class="header z-depth-2">
+                <div class="logo">
+                    <img src="assets/flowiz-logo.png" alt="flowiz">
+                </div>
+                <div class="navkeys">
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="prevBtn"><i
+                            class="material-icons">navigate_before</i></a>
+                    <a class="btn-floating btn-flat waves-effect waves-light" id="nextBtn"><i
+                            class="material-icons">navigate_next</i></a>
+                </div>
+                <div class="buttons">
+                    <a data-tooltip="Play flow images in loop" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="playBtn"><i
+                            class="material-icons">ondemand_video</i></a>
+                    <a data-tooltip="Open flow folder" class="btn-floating tooltipped btn-flat waves-effect waves-light" target="_blank"  href="./guitemp/index.html"
+                        id="openBtn"><i class="material-icons">folder_open</i></a>
+                    <a data-tooltip="Save flow image as PNG" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="saveBtn"><i
+                            class="material-icons">save</i></a>
+                    <a data-tooltip="Help" class="btn-floating tooltipped btn-flat waves-effect waves-light modal-trigger" href="#modal1"
+                        id="helpBtn"><i class="material-icons">help_outline</i></a>
+                    <a data-tooltip="Enter fullscreen" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="fullscreenBtn"><i
+                            class="material-icons">fullscreen</i></a>
+                    <a data-tooltip="Exit session" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="escBtn"><i
+                            class="material-icons" >exit_to_app</i></a>
+
+                </div>
+
+            </div>
+            <div class="main">
+                <div class="browser z-depth-1">
+                    <div id="collection" class="collection">
+
+                    </div>
+                </div>
+                <div class="display">
+                    <img src="" id="canvas" class="materialboxed tooltipped" data-tooltip="Flow representation" data-position="bottom"/>
+                </div>
+
+
+                <div class="info z-depth-1">
+
+                    <div class="details">
+                    </div>
+                    <div class="legends">
+                        <img src="assets/rgb.jpg" class="legend tooltipped" data-position="bottom"
+                            data-tooltip="RGB directional color-coding">
+                        <img src="assets/uv.jpg" class="legend tooltipped" data-position="bottom"
+                            data-tooltip="Bidirectional color-coding">
+                    </div>
+                    <div class="uv">
+                        <img src="" alt="" id="u" class='materialboxed tooltipped' data-position="bottom"
+                            data-tooltip="Horizontal Optical Flow">
+                        <img src="" alt="" id="v" class='materialboxed tooltipped' data-position="bottom"
+                            data-tooltip="Vertical Optical Flow">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+
+    <!--JavaScript at end of body for optimized loading-->
+    <script type="text/javascript" src="/eel.js"></script>
+    <script type="text/javascript" src="js/materialize.js"></script>
+    <script src="js/dropzone.js"></script>
+    <script src="js/script.js"></script>
+</body>
+
+</html>

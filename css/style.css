@@ -1,0 +1,235 @@
+:root {
+    --header-bg-color: #28293D;
+    --header-text-color: #eeeeee;
+
+    --sidebar-bg-color: #2A2D3E;
+    --sidebar-highlight-color: #555870;
+    
+    --main-bg-color: #1B1F2B;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--main-bg-color);
+    overflow:hidden;
+}
+
+
+
+.app { 
+    background-color: var(--main-bg-color);
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.dropzone {
+    font-size: 2em;
+    width: 80%;
+    height: 80%;
+    background: var(--sidebar-bg-color);
+    padding: 50px;
+    border-radius: 5px;
+    border: 5px dashed;
+    border-color: var(--sidebar-highlight-color);
+    color: var(--main-bg-color);
+    transition: all 0.2s ease-in-out;
+}
+
+.dropzone.uploading {
+    transition: all 0.2s ease-in-out;
+    animation: fade-animation 2s infinite;
+    -webkit-animation: fade-animation 2s infinite;
+}
+
+.dropzone.done {
+    transform: scale(0.9);
+    opacity: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+.dropzone.hidden {
+    position: absolute;
+    z-index: -1;
+}
+
+.dropzone .dz-message {
+    color: var(--header-text-color);
+}
+
+@keyframes fade-animation {
+    0% {opacity: 0.8} 
+    50% {opacity: 0.3}
+    100% {opacity:0.8}
+  }
+
+.dropzone .dz-preview.dz-image-preview {
+    background: transparent
+}
+
+.dz-progress {
+    display: none;
+}
+
+#materialbox-overlay {
+    background-color: var(--main-bg-color);
+}
+
+
+
+.viewer { 
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    background-color: var(--main-bg-color);
+    height: 100%;
+    transition: all 0.2s ease-in-out;
+    opacity: 0;
+    transform: scale(0.9);
+    display: flex;
+    flex-direction: column;
+}
+
+.loaded {
+    transform: scale(1);
+    opacity: 1;
+    position: relative;
+    z-index: inherit;
+    transition: all 0.2s ease-in-out;
+}
+
+
+
+
+.viewer .header {
+    height: 80px;
+    width:100%;
+    z-index: 3;
+    background-color: var(--header-bg-color);
+}
+
+.viewer .main {
+    display:flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.viewer .browser {
+    background-color: var(--sidebar-bg-color);
+    width: 200px;
+    overflow: auto;;
+    z-index: 2;
+    overflow-x:hidden;
+}
+
+.viewer .collection {
+    margin:0;
+    border:0;
+    border-radius: 0;
+}
+
+.viewer a.collection-item {
+    background: none;
+    border:none;
+    border-bottom: 1px solid var(--sidebar-highlight-color);
+    color: var(--header-text-color);
+}
+
+.viewer a.collection-item.active {
+    background-color:var(--sidebar-highlight-color);
+}
+
+.viewer a.collection-item:not(.active):hover {
+    background-color: var(--sidebar-bg-color);
+}
+
+.viewer .display {
+    background-color: var(--main-bg-color);
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.viewer .info {
+    background-color: var(--sidebar-bg-color) ;
+    width: 300px;
+    z-index: 2;
+}
+
+.viewer .uv {
+    width:100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer .uv img {
+    width: 100%;
+}
+
+.viewer .legends {
+    display: flex;
+    flex-direction: row;
+}
+
+.viewer .legends .legend {
+    width:50%;
+}
+
+
+.viewer .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* padding: 0 30px; */
+}
+
+
+.viewer .header .btn-flat {
+    background: none;
+    margin: 0 10px;
+    transition: all 0.2s;
+}
+
+
+.viewer .header .btn-flat:hover {
+    transform: scale(1.4);
+    transition: all 0.2s;
+}
+
+.viewer .header .btn-flat.active i
+{
+    color: var(--sidebar-bg-color);
+    background-color: var(--header-text-color);
+    transition: all 0.5s ease-in-out; 
+}
+
+
+.viewer .header .logo {
+    /* width: 200px; */
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-size: 2em;
+    font-weight: 100;
+    width: 200px;
+    height: 100%;
+    /* background-color: #ddd; */
+}
+
+.viewer .header .logo img {
+    height: 40px;
+}
+
+.viewer .modal-content, .viewer .modal-footer, td, tr, th {
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
