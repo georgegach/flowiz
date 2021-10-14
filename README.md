@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/ubuntu1800.png" width=500 alt='flowiz' style="margin:50px;max-width:800px">
+<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/flowiz-logo.png" width=400 alt='flowiz' style="margin:50px;max-width:400px">
 <p>
     
 <p align="center"><a href="https://www.codacy.com/app/georgegach/flowiz?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=georgegach/flowiz&amp;utm_campaign=Badge_Grade"><img src="https://api.codacy.com/project/badge/Grade/676e7f10fc8a46c28ce69409a587828c" alt="Codacy Badge" /></a>
@@ -26,20 +26,23 @@ Converts Optical Flow `.flo` files to images `.png` and optionally compiles them
 -   [To-Do](#to-do)
 
 ## Installation
+### PyPI
 
-Grab the latest package from PyPI repo
+Easiest option to install `flowiz` is to grab the latest package from PyPI repo
 
 ```bash
 pip install flowiz -U
 ```
 
-or grab it straight from Github
+### pip + Github
+Alternatively you may install the package directly from github repo
 
 ```bash
 pip install git+https://github.com/georgegach/flowiz/
 ```
 
-or clone the repo and install using `setup.py`
+### Build yourself
+Or you can run `setup.py` to build it yourself locally
 
 ```bash
 git clone https://github.com/georgegach/flowiz.git
@@ -47,11 +50,11 @@ cd flowiz
 python setup.py install --user
 ```
 
-Make sure you have following packages installed
-
+Make sure you have requirements installed along with an `ffmpeg` to compile a video. `requirements.txt` contains latest working versions of this package. Feel free to use `pip-upgrader`. 
 ```bash
-pip install numpy tqdm matplotlib eel
-apt install ffmpeg
+pip install -r requirements.txt
+apt install ffmpeg 
+# pacman -S ffmpeg
 ```
 
 ## Usage
@@ -165,20 +168,4 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 -   [x] Ported from Matlab `flow_code`
 -   [x] Project is available on PyPI 
 -   [x] GUI
-    -   [ ] Fully argparsable CLI launch support
-    -   [ ] File `open with` support
-    -   [ ] Original image overlay
-    -   [ ] Full file explorer
-    -   [ ] Flow file info
-        -   [ ] Basics: name, width, height, filesize
-        -   [ ] Histogram
-    -   [ ] Progress bar
-    -   [ ] Client-side `.flo` format validation (using `tag`)
--   [x] Library
-    -   [ ] Arrow visualizations (using `opencv` or custom compact nanomodule)
-    -   [ ] Standalone `rgb` and `uv:binary` image creation (removes `matplotlib` dependency)
-    -   [ ] Standalone `.mp4` compiler (removes `ffmpeg` dependency)
--   [x] CLI
-    -   [x] _Nothing for now_
--   [x] Miscellaneous
-    -   [x] Better logo
+    -   [ ] Improve Front to Back-end throughput performance
