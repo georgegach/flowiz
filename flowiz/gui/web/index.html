@@ -105,7 +105,7 @@
 
             <div class="header z-depth-2">
                 <div class="logo">
-                    <img src="assets/ubuntu283i.png" alt="flowiz">
+                    <img src="assets/flowiz-logo.png" alt="flowiz">
                 </div>
                 <div class="navkeys">
                     <a class="btn-floating btn-flat waves-effect waves-light" id="prevBtn"><i
@@ -114,18 +114,18 @@
                             class="material-icons">navigate_next</i></a>
                 </div>
                 <div class="buttons">
-                    <a class="btn-floating btn-flat waves-effect waves-light" id="playBtn"><i
+                    <a data-tooltip="Play flow images in loop" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="playBtn"><i
                             class="material-icons">ondemand_video</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light" target="_blank"  href="./guitemp/index.html"
+                    <a data-tooltip="Open flow folder" class="btn-floating tooltipped btn-flat waves-effect waves-light" target="_blank"  href="./guitemp/index.html"
                         id="openBtn"><i class="material-icons">folder_open</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light" id="saveBtn"><i
+                    <a data-tooltip="Save flow image as PNG" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="saveBtn"><i
                             class="material-icons">save</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light modal-trigger" href="#modal1"
+                    <a data-tooltip="Help" class="btn-floating tooltipped btn-flat waves-effect waves-light modal-trigger" href="#modal1"
                         id="helpBtn"><i class="material-icons">help_outline</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light" id="fullscreenBtn"><i
+                    <a data-tooltip="Enter fullscreen" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="fullscreenBtn"><i
                             class="material-icons">fullscreen</i></a>
-                    <a class="btn-floating btn-flat waves-effect waves-light" id="escBtn"><i
-                            class="material-icons">exit_to_app</i></a>
+                    <a data-tooltip="Exit session" class="btn-floating tooltipped btn-flat waves-effect waves-light" id="escBtn"><i
+                            class="material-icons" >exit_to_app</i></a>
 
                 </div>
 
@@ -137,7 +137,7 @@
                     </div>
                 </div>
                 <div class="display">
-                    <img src="" id="canvas" class="materialboxed tooltipped" data-position="bottom"/>
+                    <img src="" id="canvas" class="materialboxed tooltipped" data-tooltip="Flow representation" data-position="bottom"/>
                 </div>
 
 
@@ -149,7 +149,7 @@
                         <img src="assets/rgb.jpg" class="legend tooltipped" data-position="bottom"
                             data-tooltip="RGB directional color-coding">
                         <img src="assets/uv.jpg" class="legend tooltipped" data-position="bottom"
-                            data-tooltip="Binary directional color-coding">
+                            data-tooltip="Bidirectional color-coding">
                     </div>
                     <div class="uv">
                         <img src="" alt="" id="u" class='materialboxed tooltipped' data-position="bottom"

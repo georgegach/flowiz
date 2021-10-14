@@ -147,7 +147,7 @@ UI.Viewer = {
         if (UI.props.entriesProgress === 0) {
             M.Materialbox.init(UI.Viewer.m);
             M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
-                enterDelay: 2000
+                enterDelay: 100
             });
             UI.Dropzone.state.uploaded().then(UI.Viewer.state.loaded);
             UI.Viewer.col.querySelectorAll(".collection-item").forEach((element) => {
