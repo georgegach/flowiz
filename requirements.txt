@@ -1,5 +1,5 @@
 tqdm==4.59.0
 matplotlib==3.3.4
-numpy==1.20.1
+numpy==1.21.0
 Eel==0.14.0
 Pillow==9.0.1
