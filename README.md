@@ -72,7 +72,7 @@ docker run -it -p 8000:8000 myflowiz:latest
 
 Finally, fire up http://localhost:8000 in your favorite browserH
 
-# Get it from DockerHub
+### Get it from DockerHub
 https://hub.docker.com/repository/docker/georgegach/flowiz
 ```bash
 docker run -it -p 8000:8000 georgegach/flowiz:latest
