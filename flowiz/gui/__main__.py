@@ -7,6 +7,7 @@ import re
 import shutil
 import matplotlib.pyplot as plt
 from .index import generate_index_html
+import argparse
 
 
 accessdir = 'guitemp'
@@ -18,8 +19,9 @@ savedir = os.path.join(
     accessdir
 )
 
-
-
+parser = argparse.ArgumentParser()
+parser.add_argument('--mode', action='store', help='GUI browser: "chrome", "edge", "electron", "default". Use "None" when working with Docker.')
+args = parser.parse_args()
 
 @eel.expose
 def upload(file):
@@ -68,5 +70,10 @@ def create_or_clean_tempfolder(folpath):
 if __name__ == '__main__':
     create_or_clean_tempfolder(savedir)
     print('> GUI webpath:', os.path.join(os.path.dirname(__file__), 'web'))
+    print('> Web app running at http://localhost:8000/')
     eel.init(os.path.join(os.path.dirname(__file__), 'web'))
-    eel.start('index.html', cmdline_args=['--disable-http-cache'])
+    eel.start('index.html', 
+        mode=args.mode if args.mode != "None" else None, 
+        host='localhost' if args.mode != "None" else '0.0.0.0', 
+        cmdline_args=['--disable-http-cache']
+    )
