@@ -20,7 +20,7 @@ savedir = os.path.join(
 )
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--mode', action='store', help='GUI browser: "chrome", "edge", "electron", "default". Use "None" when working with Docker.')
+parser.add_argument('--mode', action='store', help='GUI engine: "chrome", "edge", "electron", "browser". Use "None" when working with Docker.', default='chrome')
 args = parser.parse_args()
 
 @eel.expose

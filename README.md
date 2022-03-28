@@ -57,6 +57,21 @@ apt install ffmpeg
 # pacman -S ffmpeg
 ```
 
+### Docker
+First dockerize cloned repo
+```bash
+git clone https://github.com/georgegach/flowiz.git
+cd flowiz
+docker build . -t myflowiz:latest
+```
+
+Then launch the container with port 8000 exposed
+```bash
+docker run -it -p 8000:8000 myflowiz:latest
+```
+
+Finally, fire up http://localhost:8000 in your favorite browser
+
 ## Usage
 
 Package can be used both from the command line and python script.
@@ -150,6 +165,15 @@ optional arguments:
                         Frames per second of the video. (e.g.: __ -r 2)
 ```
 
+```bash
+$ python -m flowiz.gui -h
+usage: __main__.py [-h] [--mode MODE]
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --mode MODE  GUI engine: "chrome", "edge", "electron", "browser". Use "None" when working with Docker.
+```
+
 ## Acknowledgements
 
 The library is based on Midlebury's Vision Project MATLAB code: <http://vision.middlebury.edu/flow/>
@@ -167,5 +191,6 @@ Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
 
 -   [x] Ported from Matlab `flow_code`
 -   [x] Project is available on PyPI 
+-   [x] Dockerized
 -   [x] GUI
     -   [ ] Improve Front to Back-end throughput performance
