@@ -1,0 +1,21 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get Flowiz version
+      id: flowver
+      run: |
+        export FLOWIZ_VERSION=$(python setup.py --version)
+        echo "::set-output name=ver::${FLOWIZ_VERSION}"
+        
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag flowiz:${{ steps.flowver.outputs.ver }}
