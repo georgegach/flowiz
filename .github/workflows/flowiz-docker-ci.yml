@@ -1,7 +1,10 @@
 name: Docker Image CI
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  push:
+    paths:
+      - 'setup.py'
 
 jobs:
 
@@ -18,5 +21,10 @@ jobs:
         export FLOWIZ_VERSION=$(python setup.py --version)
         echo "::set-output name=ver::${FLOWIZ_VERSION}"
         
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag flowiz:${{ steps.version.outputs.ver }}
+    - name: Build and push
+      uses: docker/build-push-action@v2.10.0
+      with:
+        push: true
+        tags: georgegach/flowiz:latest,georgegach/flowiz:${{ steps.version.outputs.ver }}
+        secrets: |
+          GIT_AUTH_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}
