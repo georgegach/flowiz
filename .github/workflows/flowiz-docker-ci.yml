@@ -14,17 +14,29 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Get Flowiz version
+    - 
+      name: Get Flowiz version
       id: version
       run: |
         export FLOWIZ_VERSION=$(python setup.py --version)
         echo "::set-output name=ver::${FLOWIZ_VERSION}"
         
-    - name: Build and push
-      uses: docker/build-push-action@v2.10.0
+    -
+      name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
+    -
+      name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    -
+      name: Login to DockerHub
+      uses: docker/login-action@v1
       with:
+        username: georgegach
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    -
+      name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
         push: true
         tags: georgegach/flowiz:latest,georgegach/flowiz:${{ steps.version.outputs.ver }}
-        secrets: |
-          GIT_AUTH_TOKEN=${{ secrets.DOCKERHUB_TOKEN }}
