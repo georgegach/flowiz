@@ -2,4 +2,4 @@ tqdm==4.63.1
 matplotlib==3.5.1
 numpy==1.22.3
 Eel==0.14.0
-Pillow==9.0.1
+Pillow==9.3.0
