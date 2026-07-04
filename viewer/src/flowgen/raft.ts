@@ -59,10 +59,29 @@ export async function createRaft(
   }
 
   const inputNames = session.inputNames;
-  const outputName = session.outputNames[0];
   if (inputNames.length < 2) {
     throw new Error(`RAFT model expected 2 inputs, got ${inputNames.length}.`);
   }
+  // The zoo RAFT emits TWO flow outputs — a 1/8-res coarse flow and the full-res
+  // one — so we can't trust outputNames[0]; pick the full-res tensor by shape
+  // after each run instead.
+  const pickFullRes = (out: Record<string, ort.Tensor>): ort.Tensor => {
+    let best: ort.Tensor | null = null;
+    let bestArea = -1;
+    for (const name of session.outputNames) {
+      const t = out[name];
+      const d = t.dims;
+      if (d.length === 4 && d[1] === 2) {
+        const area = d[2] * d[3];
+        if (area > bestArea) {
+          best = t;
+          bestArea = area;
+        }
+      }
+    }
+    if (!best) throw new Error("RAFT: no (1,2,H,W) flow output found.");
+    return best;
+  };
 
   const canvas = new OffscreenCanvas(INPUT_W, INPUT_H);
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
@@ -102,7 +121,8 @@ export async function createRaft(
         [inputNames[1]]: t1,
       };
       const out = await session.run(feeds);
-      const planar = out[outputName].data as Float32Array; // [1,2,H,W]
+      const planar = pickFullRes(out as unknown as Record<string, ort.Tensor>)
+        .data as Float32Array; // [1,2,H,W]
       // planar CHW -> interleaved u,v
       const plane = INPUT_H * INPUT_W;
       const inter = new Float32Array(plane * 2);
