@@ -70,7 +70,7 @@ flowiz view                                           # open the offline browser
 
 ## Browser viewer
 
-Drag a flow file onto **[georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/)** — or click a built-in example (a real sequence plus synthetic rotation/zoom/wave fields) — and inspect it per-pixel: u, v, magnitude and angle on hover, WebGL2 rendering, adjustable normalization, PNG export. Everything runs client-side; your files never leave the machine.
+Drag flow files onto **[georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/)** — or click a built-in example (a real 5-frame sequence plus synthetic rotation/zoom/wave fields) — and inspect them per-pixel: u, v, magnitude and angle on hover, WebGL2 rendering, adjustable normalization, a color-wheel key in the side panel, PNG export, and **movie playback** of multi-frame sequences with a play/pause button and fps control. Everything runs client-side; your files never leave the machine.
 
 ## Documentation
 

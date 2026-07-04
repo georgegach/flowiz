@@ -42,11 +42,13 @@ async function fetchFlo(url: string, name: string): Promise<FlowField> {
 export const EXAMPLES: ExampleDef[] = [
   {
     id: "sequence",
-    label: "Real sequence",
-    load: async () => [
-      await fetchFlo(`${import.meta.env.BASE_URL}samples/frame_0001.flo`, "frame_0001.flo"),
-      await fetchFlo(`${import.meta.env.BASE_URL}samples/frame_0002.flo`, "frame_0002.flo"),
-    ],
+    label: "Real sequence (5 frames)",
+    load: async () => {
+      const names = [1, 2, 3, 4, 5].map((i) => `frame_${String(i).padStart(4, "0")}.flo`);
+      return Promise.all(
+        names.map((n) => fetchFlo(`${import.meta.env.BASE_URL}samples/${n}`, n)),
+      );
+    },
   },
   {
     id: "rotation",

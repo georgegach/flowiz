@@ -48,11 +48,28 @@ app.innerHTML = `
       </div>
       <div class="ctl row">
         <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
-        <label><input id="showlegend" type="checkbox" checked /> Legend</label>
+        <label><input id="showlegend" type="checkbox" /> Overlay legend</label>
       </div>
+
+      <div class="ctl playback" id="playback" hidden>
+        <label>Playback</label>
+        <div class="play-row">
+          <button id="play" class="play-btn" title="Play / pause">▶</button>
+          <input id="fps" type="range" min="1" max="30" step="1" value="8" />
+          <span id="fpsval" class="fps-val">8 fps</span>
+        </div>
+      </div>
+
       <div class="ctl">
         <button id="export" class="primary">Export PNG</button>
       </div>
+
+      <div class="ctl wheel-ctl">
+        <label>Color wheel</label>
+        <canvas id="wheelpanel" class="wheel-panel" width="128" height="128"></canvas>
+        <div class="wheel-note">hue = direction · brightness = magnitude</div>
+      </div>
+
       <div id="stats" class="stats"></div>
       <div id="filmstrip" class="filmstrip"></div>
     </aside>
@@ -70,11 +87,17 @@ const maskCb = document.querySelector<HTMLInputElement>("#mask")!;
 const legendCb = document.querySelector<HTMLInputElement>("#showlegend")!;
 const statsEl = document.querySelector<HTMLDivElement>("#stats")!;
 const filmstrip = document.querySelector<HTMLDivElement>("#filmstrip")!;
+const playbackSection = document.querySelector<HTMLDivElement>("#playback")!;
+const playBtn = document.querySelector<HTMLButtonElement>("#play")!;
+const fpsInput = document.querySelector<HTMLInputElement>("#fps")!;
+const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
+const wheelPanel = document.querySelector<HTMLCanvasElement>("#wheelpanel")!;
 
 let renderer: FlowRenderer | null = null;
 let frames: FlowField[] = [];
 let current = 0;
 let mode: Mode = "rgb";
+let playTimer: number | null = null;
 
 function draw() {
   if (!renderer || !frames[current]) return;
@@ -146,14 +169,51 @@ async function handleFiles(fileList: FileList | File[]) {
 }
 
 function showFrames(parsed: FlowField[]) {
+  stopPlayback();
   frames = parsed.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   drop.hidden = true;
   canvas.hidden = false;
   controls.hidden = false;
+  playbackSection.hidden = frames.length < 2;
   buildFilmstrip();
   loadFrame(0);
   renderLegend();
+  renderWheelPanel();
 }
+
+// --- movie playback ---
+function stopPlayback() {
+  if (playTimer !== null) {
+    clearInterval(playTimer);
+    playTimer = null;
+  }
+  playBtn.textContent = "▶";
+  playBtn.classList.remove("playing");
+}
+
+function startPlayback() {
+  if (frames.length < 2) return;
+  const fps = parseInt(fpsInput.value, 10);
+  playBtn.textContent = "⏸";
+  playBtn.classList.add("playing");
+  playTimer = window.setInterval(() => {
+    loadFrame((current + 1) % frames.length);
+  }, 1000 / fps);
+}
+
+function togglePlayback() {
+  if (playTimer !== null) stopPlayback();
+  else startPlayback();
+}
+
+playBtn.addEventListener("click", togglePlayback);
+fpsInput.addEventListener("input", () => {
+  fpsVal.textContent = `${fpsInput.value} fps`;
+  if (playTimer !== null) {
+    stopPlayback();
+    startPlayback();
+  }
+});
 
 // Shipped examples in the dropzone.
 const examplesEl = document.querySelector<HTMLDivElement>("#examples")!;
@@ -211,6 +271,32 @@ function renderLegend() {
     }
     ctx.putImageData(img, 0, 0);
     legendImg.src = c.toDataURL();
+  });
+}
+
+// --- color wheel in the right-side panel (always visible while viewing) ---
+function renderWheelPanel() {
+  const ctx = wheelPanel.getContext("2d")!;
+  const size = wheelPanel.width;
+  const img = ctx.createImageData(size, size);
+  import("./colorwheel").then(({ uvToColor }) => {
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const u = (x - size / 2) / (size / 2);
+        const v = (y - size / 2) / (size / 2);
+        const idx = (y * size + x) * 4;
+        if (Math.hypot(u, v) <= 1) {
+          const [r, g, b] = uvToColor(u, v);
+          img.data[idx] = r;
+          img.data[idx + 1] = g;
+          img.data[idx + 2] = b;
+          img.data[idx + 3] = 255;
+        } else {
+          img.data[idx + 3] = 0;
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
   });
 }
 

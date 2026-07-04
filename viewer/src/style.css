@@ -89,6 +89,23 @@ button.primary {
   width: 100%; background: var(--accent); color: #fff; border: none;
   padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;
 }
+.play-row { display: flex; align-items: center; gap: 10px; }
+.play-btn {
+  width: 40px; height: 40px; border-radius: 50%; flex: none;
+  background: var(--accent); color: #fff; border: none; cursor: pointer;
+  font-size: 15px; line-height: 1;
+}
+.play-btn.playing { background: var(--panel-2); color: var(--fg); border: 1px solid var(--border); }
+.play-row input[type="range"] { flex: 1; }
+.fps-val { color: var(--muted); font-size: 12px; min-width: 46px; text-align: right; }
+
+.wheel-ctl { text-align: center; }
+.wheel-panel {
+  width: 128px; height: 128px; display: block; margin: 0 auto;
+  image-rendering: auto;
+}
+.wheel-note { color: var(--muted); font-size: 11px; margin-top: 6px; }
+
 .stats { display: grid; gap: 6px; font-size: 13px; }
 .stats > div { display: flex; justify-content: space-between; }
 .stats span { color: var(--muted); }
