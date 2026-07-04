@@ -3,6 +3,10 @@ import { FlowRenderer, type Mode } from "./render";
 import { parseByName, maxMagnitude, type FlowField } from "./flow";
 import { EXAMPLES } from "./examples";
 import { openLearn, initLearnFromHash } from "./learn";
+import { setupExportMenu } from "./ui/export-menu";
+import { openGeneratePanel } from "./ui/generate-panel";
+
+const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
 
 const PLAY_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`;
 const PAUSE_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`;
@@ -25,8 +29,8 @@ app.innerHTML = `
       <div id="drop" class="dropzone">
         <div class="drop-inner">
           <div class="big">Drop optical flow files here</div>
-          <div class="sub">.flo · KITTI .png · .pfm · .npy — everything stays on your machine</div>
-          <label class="pick">Choose files<input id="file" type="file" multiple accept=".flo,.png,.pfm,.npy" hidden /></label>
+          <div class="sub">.flo · KITTI .png · .pfm · .npy — or drop a video to generate flow — everything stays on your machine</div>
+          <label class="pick">Choose files<input id="file" type="file" multiple accept=".flo,.png,.pfm,.npy,.mp4,.webm,.mov,.mkv,.avi" hidden /></label>
           <div class="examples">
             <span class="ex-label">or try an example</span>
             <div id="examples" class="ex-buttons"></div>
@@ -77,9 +81,7 @@ app.innerHTML = `
         </div>
       </div>
 
-      <div class="ctl">
-        <button id="export" class="primary">Export PNG</button>
-      </div>
+      <div class="ctl" id="export-ctl"></div>
 
       <div id="stats" class="stats"></div>
       <div id="filmstrip" class="filmstrip"></div>
@@ -308,7 +310,13 @@ function setLoader(done: number, total: number, name?: string) {
 }
 
 async function handleFiles(fileList: FileList | File[]) {
-  const files = Array.from(fileList);
+  const all = Array.from(fileList);
+  const video = all.find((f) => f.type.startsWith("video/") || VIDEO_RE.test(f.name));
+  if (video) {
+    openGeneratePanel(video, { onFrames: showFrames, notify: showError });
+    return;
+  }
+  const files = all;
   const total = files.length;
   const parsed: FlowField[] = [];
   const showBar = total > 1;
@@ -535,14 +543,12 @@ arrowsCb.addEventListener("change", drawArrows);
 window.addEventListener("resize", () => {
   if (frames.length) drawArrows();
 });
-document.querySelector("#export")!.addEventListener("click", () => {
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = (frames[current]?.name ?? "flow") + ".png";
-    a.click();
-  });
+setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
+  getFrames: () => frames,
+  getCurrent: () => current,
+  getFps: () => parseInt(fpsInput.value, 10),
+  canvas,
+  notify: showError,
 });
 
 // keyboard scrubbing
