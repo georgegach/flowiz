@@ -203,13 +203,13 @@ function drawArrows() {
   ctx.globalAlpha = 1;
 }
 
-// Draw an arrow on the legend wheel from center to the hovered pixel's color.
+// Draw an arrow on the legend wheel from center to a normalized (u,v) point.
 function drawLegendArrow(nu: number, nv: number) {
   if (legendImg.hidden) {
     legendArrow.hidden = true;
     return;
   }
-  const css = 96;
+  const css = legendImg.clientWidth || 140;
   const ratio = Math.min(3, window.devicePixelRatio || 1);
   legendArrow.width = Math.round(css * ratio);
   legendArrow.height = Math.round(css * ratio);
@@ -246,11 +246,6 @@ function drawLegendArrow(nu: number, nv: number) {
   ctx.lineWidth = 1.6;
   trace();
   ctx.stroke();
-  // dot at the tip
-  ctx.fillStyle = "rgba(255,255,255,0.95)";
-  ctx.beginPath();
-  ctx.arc(x1, y1, 1.8, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 function loadFrame(i: number) {
@@ -422,7 +417,7 @@ function backingSize(cssSize: number): number {
 
 // Floating on-canvas legend (opt-in via the checkbox).
 function renderLegend() {
-  const css = 96;
+  const css = 140;
   const px = backingSize(css);
   const c = document.createElement("canvas");
   c.width = c.height = px;
@@ -467,6 +462,7 @@ legendImg.addEventListener("mousemove", (e) => {
   const tv = (e.clientY - rect.top - r) / r;
   if (Math.hypot(tu, tv) > 1) {
     // outside the wheel disk — no target
+    legendArrow.hidden = true;
     if (highlight) {
       highlight = null;
       draw();
@@ -474,9 +470,11 @@ legendImg.addEventListener("mousemove", (e) => {
     return;
   }
   highlight = { u: tu, v: tv, radius: 4 / r }; // ~4px disk around the cursor
+  drawLegendArrow(tu, tv); // arrow from wheel center to the cursor
   draw();
 });
 legendImg.addEventListener("mouseleave", () => {
+  legendArrow.hidden = true;
   if (highlight) {
     highlight = null;
     draw();

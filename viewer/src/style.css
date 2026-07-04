@@ -204,12 +204,12 @@ button.primary:active { transform: translateY(1px); }
 }
 .inspector b { float: right; }
 .legend {
-  position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px;
+  position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
   cursor: crosshair; pointer-events: auto;
 }
 .legend-arrow {
-  position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px;
+  position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
   pointer-events: none;
 }
 .toast {
