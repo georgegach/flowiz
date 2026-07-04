@@ -46,6 +46,11 @@ print(src[i:i+400])
 PY
 echo "::endgroup::"
 
+# NOTE: --build_flags MUST end with a trailing space. build_js.py concatenates
+# its own `-s EXPORTED_FUNCTIONS=...` directly onto this string with no
+# separator; without the trailing space the last flag fuses into `...=1-s ...`,
+# which corrupts CMAKE_CXX_FLAGS and makes every compiler probe (incl. the CPU
+# baseline check) fail. That mis-diagnoses as a baseline error — do not remove.
 echo "::group::Build (emscripten, SIMD, ES6 module, no threads)"
 docker run --rm \
   -v "$WORK/opencv:/src" \
@@ -54,12 +59,9 @@ docker run --rm \
   python3 /src/platforms/js/build_js.py /src/build_js \
     --build_wasm \
     --disable_single_file \
+    --simd \
     --cmake_option="-DBUILD_LIST=core,imgproc,video" \
-    --cmake_option="-DCV_DISABLE_OPTIMIZATION=ON" \
-    --cmake_option="-DCPU_BASELINE=" \
-    --cmake_option="-DCPU_DISPATCH=" \
-    --cmake_option="-DCPU_BASELINE_REQUIRE=" \
-    --build_flags="-s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=cv -s ENVIRONMENT=web,worker -s USE_ES6_IMPORT_META=1"
+    --build_flags="-s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=cv -s ENVIRONMENT=web,worker "
 echo "::endgroup::"
 
 echo "::group::Locate + verify build artifacts"
