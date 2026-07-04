@@ -13,7 +13,7 @@ from typing import Any, Literal, Optional, Sequence, Union
 
 import numpy as np
 
-from flowiz.core.flow import Flow, as_flow
+from flowiz.core.flow import as_flow
 
 Convention = Literal["middlebury", "hsv"]
 MaxFlow = Optional[Union[float, Literal["sequence"]]]

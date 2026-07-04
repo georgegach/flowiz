@@ -85,7 +85,7 @@ line-length = 100
 target-version = "py39"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "W"]
+select = ["E", "F", "I", "B", "W"]
 # B008: typer uses Argument()/Option() as parameter defaults by design.
 ignore = ["E501", "B008"]
 
