@@ -218,6 +218,30 @@ button.primary:active { transform: translateY(1px); }
   box-shadow: var(--shadow-md); z-index: 60;
 }
 
+.loader {
+  position: absolute; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+}
+.loader[hidden] { display: none; }
+.loader-card {
+  width: min(360px, 80%); background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius-l); box-shadow: var(--shadow-lg); padding: 22px 24px;
+}
+.loader-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+.loader-bar {
+  height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden;
+}
+.loader-fill {
+  height: 100%; width: 0%; background: var(--accent); border-radius: 999px;
+  transition: width .12s ease-out;
+}
+.loader-meta {
+  margin-top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
 @media (max-width: 720px) {
   main { flex-direction: column; }
   .controls { width: 100%; border-left: none; border-top: 1px solid var(--border); }

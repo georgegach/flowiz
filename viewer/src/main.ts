@@ -39,6 +39,13 @@ app.innerHTML = `
       <div id="inspector" class="inspector" hidden></div>
       <img id="legend" class="legend" hidden alt="color wheel legend" />
       <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
+      <div id="loader" class="loader" hidden>
+        <div class="loader-card">
+          <div class="loader-title">Loading files</div>
+          <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
+          <div id="loader-meta" class="loader-meta"></div>
+        </div>
+      </div>
     </section>
 
     <aside id="controls" class="controls" hidden>
@@ -86,6 +93,9 @@ const controls = document.querySelector<HTMLElement>("#controls")!;
 const inspector = document.querySelector<HTMLDivElement>("#inspector")!;
 const legendImg = document.querySelector<HTMLImageElement>("#legend")!;
 const legendArrow = document.querySelector<HTMLCanvasElement>("#legendarrow")!;
+const loaderEl = document.querySelector<HTMLDivElement>("#loader")!;
+const loaderFill = document.querySelector<HTMLDivElement>("#loader-fill")!;
+const loaderMeta = document.querySelector<HTMLDivElement>("#loader-meta")!;
 const maxflow = document.querySelector<HTMLInputElement>("#maxflow")!;
 const maxval = document.querySelector<HTMLSpanElement>("#maxval")!;
 const maskCb = document.querySelector<HTMLInputElement>("#mask")!;
@@ -292,17 +302,33 @@ function highlightStrip() {
   );
 }
 
+function setLoader(done: number, total: number, name?: string) {
+  loaderFill.style.width = `${Math.round((done / total) * 100)}%`;
+  loaderMeta.textContent = `${done} / ${total}${name ? ` · ${name}` : ""}`;
+}
+
 async function handleFiles(fileList: FileList | File[]) {
   const files = Array.from(fileList);
+  const total = files.length;
   const parsed: FlowField[] = [];
-  for (const file of files) {
+  const showBar = total > 1;
+  if (showBar) {
+    setLoader(0, total);
+    loaderEl.hidden = false;
+  }
+  for (let i = 0; i < total; i++) {
+    const file = files[i];
+    if (showBar) setLoader(i, total, file.name); // "about to load" i-th
     try {
+      // arrayBuffer() awaits, letting the browser paint the bar between files
       const buf = await file.arrayBuffer();
       parsed.push(parseByName(buf, file.name));
     } catch (e) {
       showError((e as Error).message);
     }
+    if (showBar) setLoader(i + 1, total, file.name);
   }
+  loaderEl.hidden = true;
   if (!parsed.length) return;
   showFrames(parsed);
 }
