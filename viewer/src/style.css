@@ -441,5 +441,6 @@ button.primary:active { transform: translateY(1px); }
   text-align: left; padding: 9px 11px; border: none; background: transparent; color: var(--fg);
   border-radius: var(--radius-s); cursor: pointer; font-size: 13px;
 }
+.export-pop[hidden] { display: none; }
 .export-pop button:hover { background: var(--panel-2); }
 .export-pop button[data-disabled="1"] { color: var(--muted); opacity: 0.55; cursor: not-allowed; }
