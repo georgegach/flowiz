@@ -31,6 +31,7 @@ app.innerHTML = `
         </div>
       </div>
       <canvas id="canvas" hidden></canvas>
+      <canvas id="arrows" class="arrows" hidden></canvas>
       <div id="inspector" class="inspector" hidden></div>
       <img id="legend" class="legend" hidden alt="color wheel legend" />
     </section>
@@ -52,6 +53,7 @@ app.innerHTML = `
       <div class="ctl row">
         <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
         <label><input id="showlegend" type="checkbox" /> Overlay legend</label>
+        <label><input id="showarrows" type="checkbox" /> Arrows</label>
       </div>
 
       <div class="ctl playback" id="playback" hidden>
@@ -95,6 +97,9 @@ const playBtn = document.querySelector<HTMLButtonElement>("#play")!;
 const fpsInput = document.querySelector<HTMLInputElement>("#fps")!;
 const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
 const wheelPanel = document.querySelector<HTMLCanvasElement>("#wheelpanel")!;
+const stageEl = document.querySelector<HTMLElement>("#stage")!;
+const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
+const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
 
 let renderer: FlowRenderer | null = null;
 let frames: FlowField[] = [];
@@ -110,6 +115,87 @@ function draw() {
     maskInvalid: maskCb.checked,
   });
   updateStats();
+  drawArrows();
+}
+
+// --- swirl indicator: sparse directional arrows over the flow ---
+function drawArrowGlyph(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+) {
+  const a = Math.atan2(y1 - y0, x1 - x0);
+  const head = 3.4;
+  const trace = () => {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - head * Math.cos(a - 0.5), y1 - head * Math.sin(a - 0.5));
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - head * Math.cos(a + 0.5), y1 - head * Math.sin(a + 0.5));
+  };
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // dark halo then light stroke → readable on any background color
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.lineWidth = 2.4;
+  trace();
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.95)";
+  ctx.lineWidth = 1.1;
+  trace();
+  ctx.stroke();
+}
+
+function drawArrows() {
+  const f = frames[current];
+  if (!arrowsCb.checked || !f || canvas.hidden) {
+    arrowsCanvas.hidden = true;
+    return;
+  }
+  const cr = canvas.getBoundingClientRect();
+  const sr = stageEl.getBoundingClientRect();
+  const cssW = cr.width;
+  const cssH = cr.height;
+  const ratio = Math.min(3, window.devicePixelRatio || 1);
+  arrowsCanvas.hidden = false;
+  arrowsCanvas.width = Math.round(cssW * ratio);
+  arrowsCanvas.height = Math.round(cssH * ratio);
+  arrowsCanvas.style.width = `${cssW}px`;
+  arrowsCanvas.style.height = `${cssH}px`;
+  arrowsCanvas.style.left = `${cr.left - sr.left}px`;
+  arrowsCanvas.style.top = `${cr.top - sr.top}px`;
+
+  const ctx = arrowsCanvas.getContext("2d")!;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const maxFlow = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
+  const spacing = 26; // display px between arrows → fairly sparse
+  const maxLen = spacing * 0.62;
+  const sx = cssW / f.width;
+  const sy = cssH / f.height;
+
+  for (let py = spacing / 2; py < cssH; py += spacing) {
+    for (let px = spacing / 2; px < cssW; px += spacing) {
+      const fx = Math.floor(px / sx);
+      const fy = Math.floor(py / sy);
+      if (fx < 0 || fy < 0 || fx >= f.width || fy >= f.height) continue;
+      const idx = fy * f.width + fx;
+      if (maskCb.checked && f.valid && !f.valid[idx]) continue;
+      const u = f.data[idx * 2];
+      const v = f.data[idx * 2 + 1];
+      const mag = Math.hypot(u, v);
+      if (!isFinite(mag) || mag < maxFlow * 0.04) continue; // skip near-still pixels
+      const norm = Math.min(1, mag / maxFlow);
+      const len = 3 + norm * (maxLen - 3);
+      const ang = Math.atan2(v, u);
+      drawArrowGlyph(ctx, px, py, px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+    }
+  }
 }
 
 function loadFrame(i: number) {
@@ -339,6 +425,10 @@ maxflow.addEventListener("input", () => {
 });
 maskCb.addEventListener("change", draw);
 legendCb.addEventListener("change", () => (legendImg.hidden = !legendCb.checked || !frames.length));
+arrowsCb.addEventListener("change", drawArrows);
+window.addEventListener("resize", () => {
+  if (frames.length) drawArrows();
+});
 document.querySelector("#export")!.addEventListener("click", () => {
   canvas.toBlob((blob) => {
     if (!blob) return;

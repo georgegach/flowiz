@@ -118,6 +118,9 @@ button.primary {
 }
 .thumb.active { border-color: var(--accent); color: var(--fg); }
 
+.arrows {
+  position: absolute; pointer-events: none; border-radius: 10px;
+}
 .inspector {
   position: absolute; pointer-events: none; background: rgba(0,0,0,0.82); color: #fff;
   padding: 8px 10px; border-radius: 8px; font: 12px/1.35 ui-monospace, monospace;
