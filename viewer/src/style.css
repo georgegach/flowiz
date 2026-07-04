@@ -29,7 +29,8 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
 }
-.brand { font-size: 18px; }
+.brand { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.brand-i { width: 22px; height: 22px; color: var(--accent); }
 .brand .ver { color: var(--muted); font-size: 13px; margin-left: 4px; }
 .topbar nav { display: flex; align-items: center; gap: 18px; }
 .topbar a { color: var(--muted); text-decoration: none; }
@@ -165,11 +166,14 @@ button.primary {
   padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--panel);
   flex: none;
 }
-.learn-title { font-size: 17px; font-weight: 600; }
+.learn-title { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+.learn-title-i { width: 20px; height: 20px; color: var(--accent); }
 .learn-close {
   background: none; border: 1px solid var(--border); color: var(--fg);
-  width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 15px;
+  width: 34px; height: 34px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
 }
+.learn-close svg { width: 16px; height: 16px; }
 .learn-close:hover { border-color: var(--accent); color: var(--accent); }
 
 .learn-body { flex: 1; display: flex; min-height: 0; }
@@ -267,7 +271,8 @@ button.primary {
   background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px;
   padding: 14px 10px; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center;
 }
-.lf-app-i { font-size: 26px; line-height: 1; }
+.lf-app-i { color: var(--accent); line-height: 0; }
+.lf-app-i svg { width: 26px; height: 26px; }
 .lf-app-l { font-size: 12.5px; color: var(--muted); }
 
 @media (max-width: 720px) {

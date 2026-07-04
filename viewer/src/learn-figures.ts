@@ -527,24 +527,42 @@ function figFormatFamily(host: HTMLElement): FigureHandle {
   return { stop() {} };
 }
 
+/** Minimal 24×24 line icons; stroke = currentColor so they theme automatically. */
+const ICONS: Record<string, string> = {
+  compression: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9.5h18M3 14.5h18M8 5v14M16 5v14"/>',
+  slowmo: '<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+  editing: '<circle cx="6" cy="6.5" r="2.3"/><circle cx="6" cy="17.5" r="2.3"/><path d="M8 8l11 8.5M8 16L19 7.5"/>',
+  driving: '<path d="M4 13l1.7-4.5A2 2 0 0 1 7.6 7h8.8a2 2 0 0 1 1.9 1.5L20 13v4h-2.5v-1.5h-11V17H4z"/><circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/>',
+  slam: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/>',
+  medical: '<path d="M12 19.5S4.5 15 4.5 9.8C4.5 7.4 6.2 6 8.2 6c1.6 0 2.9.9 3.8 2.3C12.9 6.9 14.2 6 15.8 6c2 0 3.7 1.4 3.7 3.8 0 5.2-7.5 9.7-7.5 9.7z"/>',
+  weather: '<path d="M7.5 18h9a3.8 3.8 0 0 0 .4-7.6 4.8 4.8 0 0 0-9.2-1.2A3.4 3.4 0 0 0 7.5 18z"/>',
+  fluid: '<path d="M3 8.5c3 0 3 2 6 2s3-2 6-2 3 2 6 2M3 14.5c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/>',
+  biology: '<circle cx="9.5" cy="10" r="5"/><circle cx="9.5" cy="10" r="1.6"/><circle cx="16.5" cy="15.5" r="3.4"/><circle cx="16.5" cy="15.5" r="1"/>',
+  action: '<circle cx="13.5" cy="5.5" r="2"/><path d="M13.5 8.5l-3 3.5 3 1.8 1 5.2M10.5 12l-3.5 1M14.5 13.8l3.2 1.2M10.5 20.5l2-3.5"/>',
+};
+
+function svgIcon(name: string): string {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+}
+
 function figApplications(host: HTMLElement): FigureHandle {
   host.className = "learn-fig lf-apps";
   const apps: [string, string][] = [
-    ["🎞️", "Video compression"],
-    ["🐢", "Slow-motion / interpolation"],
-    ["✂️", "Editing & VFX"],
-    ["🚗", "Autonomous driving"],
-    ["🧭", "Visual odometry / SLAM"],
-    ["🫀", "Medical imaging"],
-    ["🛰️", "Weather (cloud winds)"],
-    ["💨", "Fluid dynamics (PIV)"],
-    ["🔬", "Biology / microscopy"],
-    ["🏃", "Action recognition"],
+    ["compression", "Video compression"],
+    ["slowmo", "Slow-motion / interpolation"],
+    ["editing", "Editing & VFX"],
+    ["driving", "Autonomous driving"],
+    ["slam", "Visual odometry / SLAM"],
+    ["medical", "Medical imaging"],
+    ["weather", "Weather (cloud winds)"],
+    ["fluid", "Fluid dynamics (PIV)"],
+    ["biology", "Biology / microscopy"],
+    ["action", "Action recognition"],
   ];
   for (const [icon, label] of apps) {
     const card = document.createElement("div");
     card.className = "lf-app";
-    card.innerHTML = `<div class="lf-app-i">${icon}</div><div class="lf-app-l">${label}</div>`;
+    card.innerHTML = `<div class="lf-app-i">${svgIcon(icon)}</div><div class="lf-app-l">${label}</div>`;
     host.appendChild(card);
   }
   return { stop() {} };

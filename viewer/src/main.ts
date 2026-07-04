@@ -7,7 +7,7 @@ import { openLearn, initLearnFromHash } from "./learn";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
-    <div class="brand">🌀 <strong>flowiz</strong> <span class="ver">viewer</span></div>
+    <div class="brand"><svg class="brand-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a2.4 2.4 0 1 0-2.4-2.4A4.8 4.8 0 1 0 14.4 14.4 7.2 7.2 0 1 1 7.2 7.2"/></svg><strong>flowiz</strong> <span class="ver">viewer</span></div>
     <nav>
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
