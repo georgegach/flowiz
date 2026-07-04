@@ -56,6 +56,9 @@ docker run --rm \
     --disable_single_file \
     --simd \
     --cmake_option="-DBUILD_LIST=core,imgproc,video" \
+    --cmake_option="-DCPU_BASELINE=" \
+    --cmake_option="-DCPU_DISPATCH=" \
+    --cmake_option="-DCV_ENABLE_INTRINSICS=OFF" \
     --build_flags="-s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=cv -s ENVIRONMENT=web,worker -s USE_ES6_IMPORT_META=1"
 echo "::endgroup::"
 
