@@ -4,6 +4,10 @@ import { parseByName, maxMagnitude, type FlowField } from "./flow";
 import { EXAMPLES } from "./examples";
 import { openLearn, initLearnFromHash } from "./learn";
 
+const PLAY_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`;
+const PAUSE_SVG = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`;
+const THEME_SVG = `<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z"/></svg><svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
@@ -12,7 +16,7 @@ app.innerHTML = `
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
       <a href="https://github.com/georgegach/flowiz" target="_blank" rel="noopener">GitHub</a>
-      <button id="theme" title="Toggle theme">◐</button>
+      <button id="theme" title="Toggle theme" aria-label="Toggle theme">${THEME_SVG}</button>
     </nav>
   </header>
 
@@ -47,7 +51,7 @@ app.innerHTML = `
         </div>
       </div>
       <div class="ctl">
-        <label>Max flow <span id="maxval"></span></label>
+        <div class="maxflow-head"><label>Max flow</label><span id="maxval" class="val-chip"></span></div>
         <input id="maxflow" type="range" min="0.1" max="100" step="0.1" />
       </div>
       <div class="ctl row">
@@ -59,7 +63,7 @@ app.innerHTML = `
       <div class="ctl playback" id="playback" hidden>
         <label>Playback</label>
         <div class="play-row">
-          <button id="play" class="play-btn" title="Play / pause">▶</button>
+          <button id="play" class="play-btn" title="Play / pause" aria-label="Play / pause">${PLAY_SVG}</button>
           <input id="fps" type="range" min="1" max="30" step="1" value="8" />
           <span id="fpsval" class="fps-val">8 fps</span>
         </div>
@@ -125,9 +129,10 @@ function drawArrowGlyph(
   y0: number,
   x1: number,
   y1: number,
+  len: number,
 ) {
   const a = Math.atan2(y1 - y0, x1 - x0);
-  const head = 3.4;
+  const head = Math.min(4, len * 0.45); // proportional head → short arrows stay tidy
   const trace = () => {
     ctx.beginPath();
     ctx.moveTo(x0, y0);
@@ -139,13 +144,13 @@ function drawArrowGlyph(
   };
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  // dark halo then light stroke → readable on any background color
-  ctx.strokeStyle = "rgba(0,0,0,0.5)";
-  ctx.lineWidth = 2.4;
+  // thin dark halo then light stroke → readable on any background color
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = 2.0;
   trace();
   ctx.stroke();
-  ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.lineWidth = 1.1;
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 1.25;
   trace();
   ctx.stroke();
 }
@@ -174,8 +179,8 @@ function drawArrows() {
   ctx.clearRect(0, 0, cssW, cssH);
 
   const maxFlow = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
-  const spacing = 26; // display px between arrows → fairly sparse
-  const maxLen = spacing * 0.62;
+  const spacing = 34; // display px between arrows → fairly sparse
+  const maxLen = spacing * 0.55;
   const sx = cssW / f.width;
   const sy = cssH / f.height;
 
@@ -189,13 +194,15 @@ function drawArrows() {
       const u = f.data[idx * 2];
       const v = f.data[idx * 2 + 1];
       const mag = Math.hypot(u, v);
-      if (!isFinite(mag) || mag < maxFlow * 0.04) continue; // skip near-still pixels
+      if (!isFinite(mag) || mag < maxFlow * 0.06) continue; // skip near-still pixels
       const norm = Math.min(1, mag / maxFlow);
       const len = 3 + norm * (maxLen - 3);
       const ang = Math.atan2(v, u);
-      drawArrowGlyph(ctx, px, py, px + Math.cos(ang) * len, py + Math.sin(ang) * len);
+      ctx.globalAlpha = 0.35 + 0.65 * norm; // still regions fade out
+      drawArrowGlyph(ctx, px, py, px + Math.cos(ang) * len, py + Math.sin(ang) * len, len);
     }
   }
+  ctx.globalAlpha = 1;
 }
 
 function loadFrame(i: number) {
@@ -276,14 +283,14 @@ function stopPlayback() {
     clearInterval(playTimer);
     playTimer = null;
   }
-  playBtn.textContent = "▶";
+  playBtn.innerHTML = PLAY_SVG;
   playBtn.classList.remove("playing");
 }
 
 function startPlayback() {
   if (frames.length < 2) return;
   const fps = parseInt(fpsInput.value, 10);
-  playBtn.textContent = "⏸";
+  playBtn.innerHTML = PAUSE_SVG;
   playBtn.classList.add("playing");
   playTimer = window.setInterval(() => {
     loadFrame((current + 1) % frames.length);

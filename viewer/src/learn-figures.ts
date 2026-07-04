@@ -14,6 +14,12 @@ export interface FigureHandle {
 }
 
 const INK = "#8b93a7"; // --muted-ish; legible on light and dark
+const HILITE = "#e0663a"; // fixed warm highlight; reads on both themes
+/** Current accent color from CSS vars (figures re-mount on theme flip). */
+function accentColor(): string {
+  const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  return v || "#4f46e5";
+}
 const reduceMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -170,10 +176,10 @@ function figHeroTriptych(host: HTMLElement): FigureHandle {
   ctx.strokeRect(40, 60, 40, 34);
   ctx.globalAlpha = 1;
   ctx.setLineDash([4, 3]);
-  ctx.strokeStyle = "#e0663a";
+  ctx.strokeStyle = HILITE;
   ctx.strokeRect(58, 46, 40, 34);
   ctx.setLineDash([]);
-  arrow(ctx, 60, 77, 78, 63, "#e0663a", 2);
+  arrow(ctx, 60, 77, 78, 63, HILITE, 2);
   // (2) quiver
   const q = cell(host, "displacements", 150, 116);
   for (let gy = 0; gy < 5; gy++)
@@ -182,30 +188,34 @@ function figHeroTriptych(host: HTMLElement): FigureHandle {
       const py = 14 + gy * 22;
       arrow(q, px, py, px + 12, py - 5, INK, 1.4);
     }
-  // (3) colorized
-  labeledField(host, "color", colorizeCanvas(W, H, data, max), 150);
+  // (3) colorized — soften so the uniform field reads as a pastel hue, not flat magenta
+  labeledField(host, "color", colorizeCanvas(W, H, data, max * 1.8), 150);
   return { stop() {} };
 }
 
 function figReadWheel(host: HTMLElement): FigureHandle {
   host.className = "learn-fig lf-center";
-  const S = 260;
-  const { ctx } = makeCanvas(host, S, S);
-  const cx = S / 2,
-    cy = S / 2,
-    r = S / 2 - 34;
+  const W = 320,
+    H = 280;
+  const { ctx } = makeCanvas(host, W, H);
+  const cx = 160,
+    cy = 140,
+    r = 100;
   paintWheelInto(ctx, cx, cy, r);
   ctx.fillStyle = INK;
   ctx.font = "600 13px -apple-system, system-ui, sans-serif";
-  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("↑ up", cx, cy - r - 16);
-  ctx.fillText("↓ down", cx, cy + r + 16);
-  ctx.fillText("left ←", cx - r - 24, cy);
-  ctx.fillText("→ right", cx + r + 24, cy);
-  ctx.fillText("slow", cx, cy - 10);
-  arrow(ctx, cx, cy + 6, cx, cy + r - 10, INK, 1.4);
-  ctx.fillText("fast", cx + 22, cy + r - 16);
+  ctx.textAlign = "center";
+  ctx.fillText("up", cx, cy - r - 16);
+  ctx.fillText("down", cx, cy + r + 16);
+  ctx.textAlign = "right";
+  ctx.fillText("left", cx - r - 12, cy);
+  ctx.textAlign = "left";
+  ctx.fillText("right", cx + r + 12, cy);
+  const cap = document.createElement("div");
+  cap.className = "lf-cap";
+  cap.textContent = "hue = direction · center = slow, rim = fast";
+  host.appendChild(cap);
   return { stop() {} };
 }
 
@@ -275,6 +285,7 @@ function figAperture(host: HTMLElement): FigureHandle {
   const cx = S / 2,
     cy = 100,
     r = 70;
+  const ac = accentColor();
   return animatedHandle((t) => {
     ctx.clearRect(0, 0, S, 200);
     // clip to aperture
@@ -284,7 +295,7 @@ function figAperture(host: HTMLElement): FigureHandle {
     ctx.clip();
     // a diagonal edge drifting right+down
     const off = (Math.sin(t * 2 * Math.PI) * r) / 1.5;
-    ctx.fillStyle = "#4b78d8";
+    ctx.fillStyle = ac;
     ctx.globalAlpha = 0.5;
     ctx.beginPath();
     ctx.moveTo(cx - r - 40 + off, cy - r - 40);
@@ -301,8 +312,8 @@ function figAperture(host: HTMLElement): FigureHandle {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.stroke();
     // observed (normal) vs true motion arrows
-    arrow(ctx, cx, cy, cx + 30, cy - 30, "#e0663a", 2.4); // normal component (observable)
-    arrow(ctx, cx, cy, cx + 46, cy, "#2f9e6a", 2); // true motion (ambiguous along edge)
+    arrow(ctx, cx, cy, cx + 30, cy - 30, HILITE, 2.4); // normal component (observable)
+    arrow(ctx, cx, cy, cx + 46, cy, ac, 2); // true motion (ambiguous along edge)
     ctx.fillStyle = INK;
     ctx.font = "12px system-ui, sans-serif";
     ctx.textAlign = "left";
@@ -338,13 +349,13 @@ function figBrightness(host: HTMLElement): FigureHandle {
     ctx.stroke();
     ctx.setLineDash([]);
   };
-  drawCurve(0, "#4b78d8", []);
-  drawCurve(48, "#e0663a", [5, 4]);
+  drawCurve(0, accentColor(), []);
+  drawCurve(48, HILITE, [5, 4]);
   ctx.fillStyle = INK;
   ctx.font = "12px system-ui, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("I(x) at t", W - 150, 24);
-  ctx.fillStyle = "#e0663a";
+  ctx.fillStyle = HILITE;
   ctx.fillText("I(x) at t+dt", W - 150, 42);
   ctx.fillStyle = INK;
   arrow(ctx, 190, 40, 238, 40, INK, 1.6);
@@ -386,15 +397,17 @@ function figArchetypes(host: HTMLElement): FigureHandle {
   host.className = "learn-fig lf-grid2";
   const W = 90,
     H = 70;
-  const cells: [string, FieldFn][] = [
-    ["translation", () => [6, 0]],
-    ["rotation", (x, y, cx, cy) => [-(y - cy) / 8, (x - cx) / 8]],
-    ["zoom / expansion", (x, y, cx, cy) => [(x - cx) / 7, (y - cy) / 7]],
-    ["motion boundary", (x, _y, cx) => [x < cx ? 6 : -6, 0]],
+  // [caption, field, magnitude-softening factor] — uniform-field cells get softened
+  // so they read as a pastel hue instead of a flat, fully-saturated tile.
+  const cells: [string, FieldFn, number][] = [
+    ["translation", () => [6, 0], 1.6],
+    ["rotation", (x, y, cx, cy) => [-(y - cy) / 8, (x - cx) / 8], 1],
+    ["zoom / expansion", (x, y, cx, cy) => [(x - cx) / 7, (y - cy) / 7], 1],
+    ["motion boundary", (x, _y, cx) => [x < cx ? 6 : -6, 0], 1.6],
   ];
-  for (const [cap, fn] of cells) {
+  for (const [cap, fn, soft] of cells) {
     const data = synth(W, H, fn);
-    labeledField(host, cap, colorizeCanvas(W, H, data, maxMag(data)), 170);
+    labeledField(host, cap, colorizeCanvas(W, H, data, maxMag(data) * soft), 170);
   }
   return { stop() {} };
 }
