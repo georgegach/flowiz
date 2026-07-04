@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  python:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check flowiz
+      - name: Type check
+        if: matrix.python-version == '3.11'
+        continue-on-error: true
+        run: pyright flowiz
+      - name: Test
+        run: pytest --cov=flowiz --cov-report=term-missing --cov-report=xml --cov-fail-under=85
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  viewer:
+    name: Viewer build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm test --if-present
+      - run: npm run build
+
+  # Single required status check — the CI gate. Branch protection can require
+  # just "gate" instead of every matrix job. Fails if any dependency failed.
+  gate:
+    name: CI gate
+    if: always()
+    needs: [python, viewer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          echo "python:  ${{ needs.python.result }}"
+          echo "viewer:  ${{ needs.viewer.result }}"
+          if [ "${{ needs.python.result }}" != "success" ] || [ "${{ needs.viewer.result }}" != "success" ]; then
+            echo "::error::CI gate failed — one or more jobs did not succeed."
+            exit 1
+          fi
+          echo "All checks passed."

@@ -1,0 +1,27 @@
+{
+  "name": "flowiz-viewer",
+  "version": "3.0.0",
+  "description": "Browser-based optical flow viewer — parses .flo, KITTI PNG, PFM and .npy entirely client-side.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pako": "^2.1.0",
+    "fflate": "^0.8.2",
+    "gifenc": "^1.0.3",
+    "mp4-muxer": "^5.1.5",
+    "onnxruntime-web": "1.20.1"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0",
+    "vite-plugin-static-copy": "^1.0.6",
+    "@types/pako": "^2.0.3"
+  }
+}

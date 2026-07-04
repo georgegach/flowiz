@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use flowiz in your research, please cite it."
+title: "flowiz: the optical flow visualization toolkit"
+abstract: >-
+  flowiz reads every mainstream optical-flow format (Middlebury .flo, KITTI,
+  PFM, NumPy, Spring, PyTorch tensors) and renders publication-quality
+  visualizations, error maps and videos, plus a fully client-side browser viewer.
+type: software
+authors:
+  - family-names: Gach
+    given-names: George
+    email: georgegach@outlook.com
+repository-code: "https://github.com/georgegach/flowiz"
+url: "https://georgegach.github.io/flowiz/"
+license: MIT
+version: 3.0.0
+date-released: 2026-07-04
+keywords:
+  - optical flow
+  - flow visualization
+  - computer vision
+  - KITTI
+  - Sintel
+  - Middlebury
+# After the first v3 release, mint a Zenodo DOI and add it here plus a badge:
+# doi: 10.5281/zenodo.XXXXXXX

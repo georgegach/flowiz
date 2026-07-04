@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+.installed.cfg
+.Python
+env/
+.venv
+venv/
+ENV/
+
+# Testing / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Docs / site
+/site
+docs/_build/
+_docs_site/
+_site/
+
+# Node / viewer
+node_modules/
+viewer/dist/
+viewer/node_modules/
+
+# Bundled viewer build (generated at release time)
+flowiz/viewer_assets/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+.python-version
+workplace

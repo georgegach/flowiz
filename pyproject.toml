@@ -1,0 +1,100 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flowiz"
+version = "3.0.0"
+description = "Optical Flow visualization toolkit — read any flow format, render publication-quality color maps, error maps, and videos"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "George Gach", email = "georgegach@outlook.com" }]
+keywords = [
+    "optical flow",
+    "flow visualization",
+    "flo",
+    "kitti",
+    "sintel",
+    "spring",
+    "raft",
+    "middlebury",
+    "computer vision",
+    "motion estimation",
+    "color wheel",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.21",
+    "matplotlib>=3.6",
+    "Pillow>=9.0",
+    "imageio>=2.20",
+    "imageio-ffmpeg>=0.4.7",
+    "typer>=0.9",
+    "rich>=12.0",
+]
+
+[project.optional-dependencies]
+torch = ["torch>=1.10"]
+spring = ["h5py>=3.0"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.6",
+    "pyright>=1.1.380",
+]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+]
+
+[project.urls]
+Homepage = "https://github.com/georgegach/flowiz"
+Documentation = "https://georgegach.github.io/flowiz/docs/"
+Viewer = "https://georgegach.github.io/flowiz/"
+Repository = "https://github.com/georgegach/flowiz"
+Issues = "https://github.com/georgegach/flowiz/issues"
+
+[project.scripts]
+flowiz = "flowiz.cli.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["flowiz"]
+
+[tool.hatch.build.targets.sdist]
+include = ["flowiz", "README.md", "LICENSE", "CITATION.cff"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "W"]
+# B008: typer uses Argument()/Option() as parameter defaults by design.
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.pyright]
+include = ["flowiz"]
+pythonVersion = "3.9"
+typeCheckingMode = "basic"
+reportMissingImports = false
