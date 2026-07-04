@@ -17,8 +17,11 @@ let dis: DisEngine | null = null;
 let raft: RaftEngine | null = null;
 let prev: RGBAFrame | null = null;
 
+// self.postMessage in a worker takes (message, transfer[]); the DOM lib types
+// the global as Window.postMessage, so go through `any` to get the worker form.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const post = (msg: WorkerResponse, transfer: Transferable[] = []) =>
-  (self as unknown as Worker).postMessage(msg, transfer);
+  (self as any).postMessage(msg, transfer);
 
 function toFlowField(s: SerializedFlow): FlowField {
   return {

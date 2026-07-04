@@ -112,25 +112,42 @@ export class FlowEngine {
     });
   }
 
-  private encode(msg: Omit<Extract<WorkerRequest, { type: `encode-${string}` }>, "id">): Promise<Blob> {
-    const id = this.nextId++;
+  private awaitBlob(msg: WorkerRequest): Promise<Blob> {
     return new Promise((resolve, reject) => {
       this.pendingBlob = resolve;
       this.errored = reject;
-      this.send({ ...msg, id } as WorkerRequest);
+      this.send(msg);
     });
   }
 
   encodeZip(frames: FlowField[], baseName: string): Promise<Blob> {
-    return this.encode({ type: "encode-zip", frames: frames.map(serialize), baseName });
+    return this.awaitBlob({
+      type: "encode-zip",
+      id: this.nextId++,
+      frames: frames.map(serialize),
+      baseName,
+    });
   }
 
   encodeGif(frames: FlowField[], fps: number, sharedMax: number): Promise<Blob> {
-    return this.encode({ type: "encode-gif", frames: frames.map(serialize), fps, sharedMax });
+    return this.awaitBlob({
+      type: "encode-gif",
+      id: this.nextId++,
+      frames: frames.map(serialize),
+      fps,
+      sharedMax,
+    });
   }
 
   encodeMp4(frames: FlowField[], fps: number, sharedMax: number, codec: string): Promise<Blob> {
-    return this.encode({ type: "encode-mp4", frames: frames.map(serialize), fps, sharedMax, codec });
+    return this.awaitBlob({
+      type: "encode-mp4",
+      id: this.nextId++,
+      frames: frames.map(serialize),
+      fps,
+      sharedMax,
+      codec,
+    });
   }
 
   dispose() {
