@@ -54,11 +54,11 @@ docker run --rm \
   python3 /src/platforms/js/build_js.py /src/build_js \
     --build_wasm \
     --disable_single_file \
-    --simd \
     --cmake_option="-DBUILD_LIST=core,imgproc,video" \
+    --cmake_option="-DCV_DISABLE_OPTIMIZATION=ON" \
     --cmake_option="-DCPU_BASELINE=" \
     --cmake_option="-DCPU_DISPATCH=" \
-    --cmake_option="-DCV_ENABLE_INTRINSICS=OFF" \
+    --cmake_option="-DCPU_BASELINE_REQUIRE=" \
     --build_flags="-s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=cv -s ENVIRONMENT=web,worker -s USE_ES6_IMPORT_META=1"
 echo "::endgroup::"
 
