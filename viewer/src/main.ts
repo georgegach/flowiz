@@ -216,7 +216,9 @@ function drawArrows() {
 }
 
 // Draw an arrow on the legend wheel from center to a normalized (u,v) point.
-function drawLegendArrow(nu: number, nv: number) {
+// When selRadius (normalized, wheel radius = 1) is given, the wheel outside
+// the selection disk around (nu, nv) is muted to mirror the image highlight.
+function drawLegendArrow(nu: number, nv: number, selRadius?: number) {
   if (legendImg.hidden) {
     legendArrow.hidden = true;
     return;
@@ -237,6 +239,34 @@ function drawLegendArrow(nu: number, nv: number) {
   const s = rad > 1 ? 1 / rad : 1; // clamp onto the wheel
   const x1 = r + nu * s * r;
   const y1 = r + nv * s * r;
+
+  if (selRadius !== undefined) {
+    const selPx = selRadius * r;
+    // Mute the wheel outside the selection disk: gray veil over the wheel
+    // circle with a punched-out hole at the cursor.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(r, r, r, 0, Math.PI * 2);
+    ctx.clip();
+    const veil = new Path2D();
+    veil.rect(0, 0, css, css);
+    veil.arc(x1, y1, selPx, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(128,128,128,0.5)";
+    ctx.fill(veil, "evenodd");
+    ctx.restore();
+    // Ring marking the selection radius.
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "rgba(0,0,0,0.55)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(x1, y1, selPx, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(x1, y1, selPx, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   const a = Math.atan2(y1 - r, x1 - r);
   const head = 5;
   const trace = () => {
@@ -489,11 +519,13 @@ canvas.addEventListener("mouseleave", () => {
 });
 
 // --- legend hover: isolate the hovered direction/speed in the flow image ---
-legendImg.addEventListener("mousemove", (e) => {
+let hlRadius = 0.06; // selection radius in normalized units (wheel radius = 1)
+
+function updateLegendHover(clientX: number, clientY: number) {
   const rect = legendImg.getBoundingClientRect();
   const r = rect.width / 2;
-  const tu = (e.clientX - rect.left - r) / r;
-  const tv = (e.clientY - rect.top - r) / r;
+  const tu = (clientX - rect.left - r) / r;
+  const tv = (clientY - rect.top - r) / r;
   if (Math.hypot(tu, tv) > 1) {
     // outside the wheel disk — no target
     legendArrow.hidden = true;
@@ -503,10 +535,22 @@ legendImg.addEventListener("mousemove", (e) => {
     }
     return;
   }
-  highlight = { u: tu, v: tv, radius: 4 / r }; // ~4px disk around the cursor
-  drawLegendArrow(tu, tv); // arrow from wheel center to the cursor
+  highlight = { u: tu, v: tv, radius: hlRadius };
+  drawLegendArrow(tu, tv, hlRadius); // arrow + selection ring, rest muted
   draw();
-});
+}
+
+legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
+legendImg.addEventListener(
+  "wheel",
+  (e) => {
+    e.preventDefault(); // keep the page from scrolling while resizing
+    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    hlRadius = Math.min(1.5, Math.max(0.02, hlRadius * factor));
+    updateLegendHover(e.clientX, e.clientY);
+  },
+  { passive: false },
+);
 legendImg.addEventListener("mouseleave", () => {
   legendArrow.hidden = true;
   if (highlight) {
