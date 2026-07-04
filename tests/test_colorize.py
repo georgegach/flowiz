@@ -68,3 +68,34 @@ def test_wheel_legend_alpha():
 def test_colorwheel_cached():
     assert fz.make_colorwheel() is fz.make_colorwheel()
     assert fz.make_colorwheel().shape == (55, 3)
+
+
+def test_hsv_convention(radial_flow):
+    img = fz.colorize(radial_flow, convention="hsv")
+    assert img.shape == (*radial_flow.shape[:2], 3)
+    assert img.dtype == np.uint8
+
+
+def test_legend_overlay(radial_flow):
+    plain = fz.colorize(radial_flow, legend=False)
+    withleg = fz.colorize(radial_flow, legend=True)
+    # The bottom-right corner differs once the wheel is composited in.
+    assert not np.array_equal(plain[-5:, -5:], withleg[-5:, -5:])
+
+
+def test_magnitude_custom_cmap(radial_flow):
+    img = fz.flow_to_magnitude(radial_flow, cmap="viridis", max_flow=3.0)
+    assert img.shape[2] == 3
+
+
+def test_uv_handles_bad_values(radial_flow):
+    f = radial_flow.copy()
+    f[0, 0, 0] = np.nan
+    uv = fz.flow_to_uv(f)
+    assert uv.dtype == np.uint8
+
+
+def test_colorize_sequence_none_and_float(radial_flow):
+    a = fz.colorize_sequence([radial_flow, radial_flow * 2], max_flow=None)
+    b = fz.colorize_sequence([radial_flow], max_flow=4.0)
+    assert len(a) == 2 and len(b) == 1

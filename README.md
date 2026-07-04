@@ -6,6 +6,11 @@
 Read any flow format · render publication-quality color maps · compute error maps · compile videos · or just drag-drop into the browser viewer.</p>
 
 <p align="center">
+<a href="https://github.com/georgegach/flowiz/actions/workflows/ci.yml"><img src="https://github.com/georgegach/flowiz/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/georgegach/flowiz/actions/workflows/pages.yml"><img src="https://github.com/georgegach/flowiz/actions/workflows/pages.yml/badge.svg" alt="Pages deploy"></a>
+<a href="https://codecov.io/gh/georgegach/flowiz"><img src="https://codecov.io/gh/georgegach/flowiz/branch/master/graph/badge.svg" alt="Coverage"></a>
+</p>
+<p align="center">
 <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/v/flowiz.svg" alt="PyPI"></a>
 <a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/pyversions/flowiz.svg" alt="Python versions"></a>
 <a href="https://pypistats.org/packages/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="Downloads"></a>

@@ -29,7 +29,15 @@ jobs:
         continue-on-error: true
         run: pyright flowiz
       - name: Test
-        run: pytest --cov=flowiz --cov-report=term-missing
+        run: pytest --cov=flowiz --cov-report=term-missing --cov-report=xml --cov-fail-under=85
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   viewer:
     name: Viewer build
@@ -46,3 +54,21 @@ jobs:
       - run: npm run typecheck
       - run: npm test --if-present
       - run: npm run build
+
+  # Single required status check — the CI gate. Branch protection can require
+  # just "gate" instead of every matrix job. Fails if any dependency failed.
+  gate:
+    name: CI gate
+    if: always()
+    needs: [python, viewer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all jobs succeeded
+        run: |
+          echo "python:  ${{ needs.python.result }}"
+          echo "viewer:  ${{ needs.viewer.result }}"
+          if [ "${{ needs.python.result }}" != "success" ] || [ "${{ needs.viewer.result }}" != "success" ]; then
+            echo "::error::CI gate failed — one or more jobs did not succeed."
+            exit 1
+          fi
+          echo "All checks passed."
