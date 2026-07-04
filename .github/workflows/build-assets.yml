@@ -49,10 +49,15 @@ jobs:
           fi
           git commit -m "Assets: add RAFT ONNX models (flow-gen Optimal/Best tiers)"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin master && git push origin master && exit 0
+            git pull --rebase origin master && git push origin master && break
             echo "push race, retry $i"; sleep 3
+            if [ "$i" = 5 ]; then echo "::error::could not push after retries"; exit 1; fi
           done
-          echo "::error::could not push after retries"; exit 1
+          # Commits pushed with GITHUB_TOKEN don't trigger workflows, so kick the
+          # Pages deploy explicitly to publish the new assets.
+          gh workflow run pages.yml || echo "::warning::could not trigger Pages deploy"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   dis:
     if: ${{ inputs.build_dis }}
@@ -74,7 +79,10 @@ jobs:
           fi
           git commit -m "Assets: add slim opencv.js DIS build (flow-gen Fastest tier)"
           for i in 1 2 3 4 5; do
-            git pull --rebase origin master && git push origin master && exit 0
+            git pull --rebase origin master && git push origin master && break
             echo "push race, retry $i"; sleep 3
+            if [ "$i" = 5 ]; then echo "::error::could not push after retries"; exit 1; fi
           done
-          echo "::error::could not push after retries"; exit 1
+          gh workflow run pages.yml || echo "::warning::could not trigger Pages deploy"
+        env:
+          GH_TOKEN: ${{ github.token }}
