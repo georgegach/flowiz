@@ -122,4 +122,7 @@ def as_flow(x: Any, *, source: Optional[str] = None) -> Flow:
             f"{arr.shape}."
         )
 
-    return Flow(data=np.ascontiguousarray(arr, dtype=np.float32), source=source or "array")
+    # Always copy (order="C" forces a fresh contiguous buffer) so downstream
+    # code can never mutate the caller's array — a v2 defect.
+    data = np.array(arr, dtype=np.float32, order="C")
+    return Flow(data=data, source=source or "array")
