@@ -42,11 +42,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- viewer/public/models; then
+          git add viewer/public/models
+          if git diff --cached --quiet; then
             echo "No model changes to commit."
             exit 0
           fi
-          git add viewer/public/models
           git commit -m "Assets: add RAFT ONNX models (flow-gen Optimal/Best tiers)"
           for i in 1 2 3 4 5; do
             git pull --rebase origin master && git push origin master && exit 0
@@ -67,11 +67,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- viewer/public/vendor/opencv; then
+          git add viewer/public/vendor/opencv
+          if git diff --cached --quiet; then
             echo "No opencv changes to commit."
             exit 0
           fi
-          git add viewer/public/vendor/opencv
           git commit -m "Assets: add slim opencv.js DIS build (flow-gen Fastest tier)"
           for i in 1 2 3 4 5; do
             git pull --rebase origin master && git push origin master && exit 0

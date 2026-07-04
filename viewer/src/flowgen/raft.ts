@@ -22,9 +22,11 @@ interface ModelSpec {
 }
 
 const MODELS: Record<"raft-small" | "raft-large", ModelSpec> = {
-  // raft-small: OpenCV model-zoo int8 export → raw [0,255].
-  "raft-small": { file: "raft-small-int8-360x480.onnx", pixelRange: "raw" },
-  // raft-large: torchvision export → normalized [-1,1].
+  // Both tiers are the OpenCV-zoo RAFT (2023aug): raft-large = fp32, raft-small
+  // = our per-tensor int8 dynamic quantization of it. Both want [-1,1] input —
+  // verified empirically (0.04px EPE on a known translation) by
+  // .github/scripts/fetch_raft_models.py; do not change without re-running it.
+  "raft-small": { file: "raft-small-int8-360x480.onnx", pixelRange: "signed" },
   "raft-large": { file: "raft-large-360x480.onnx", pixelRange: "signed" },
 };
 
