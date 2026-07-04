@@ -2,12 +2,14 @@ import "./style.css";
 import { FlowRenderer, type Mode } from "./render";
 import { parseByName, maxMagnitude, type FlowField } from "./flow";
 import { EXAMPLES } from "./examples";
+import { openLearn, initLearnFromHash } from "./learn";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
     <div class="brand">🌀 <strong>flowiz</strong> <span class="ver">viewer</span></div>
     <nav>
+      <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
       <a href="https://github.com/georgegach/flowiz" target="_blank" rel="noopener">GitHub</a>
       <button id="theme" title="Toggle theme">◐</button>
@@ -25,6 +27,7 @@ app.innerHTML = `
             <span class="ex-label">or try an example</span>
             <div id="examples" class="ex-buttons"></div>
           </div>
+          <button id="learn-link" class="learn-hint">New to optical flow? Start here →</button>
         </div>
       </div>
       <canvas id="canvas" hidden></canvas>
@@ -380,3 +383,8 @@ document.querySelector<HTMLInputElement>("#file")!.addEventListener("change", (e
   if (input.files) handleFiles(input.files);
 });
 legendCb.dispatchEvent(new Event("change"));
+
+// --- Learn panel ---
+document.querySelector("#learn-btn")!.addEventListener("click", () => openLearn());
+document.querySelector("#learn-link")!.addEventListener("click", () => openLearn());
+initLearnFromHash();
