@@ -84,8 +84,8 @@ Drag flow files onto **[georgegach.github.io/flowiz](https://georgegach.github.i
 If flowiz helped your research or figures, a citation is appreciated (it's requested, not required — the MIT license asks nothing):
 
 ```bibtex
-@software{gach_flowiz,
-  author  = {George Gach},
+@software{gachechiladze_flowiz,
+  author  = {Giorgi Gachechiladze},
   title   = {flowiz: the optical flow visualization toolkit},
   url      = {https://github.com/georgegach/flowiz},
   version = {3.0.0},
@@ -101,4 +101,4 @@ Based on the Middlebury Vision Project color coding — original credits to Dani
 
 ## License
 
-MIT © George Gach
+MIT © Giorgi Gachechiladze

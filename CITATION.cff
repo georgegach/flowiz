@@ -7,8 +7,8 @@ abstract: >-
   visualizations, error maps and videos, plus a fully client-side browser viewer.
 type: software
 authors:
-  - family-names: Gach
-    given-names: George
+  - family-names: Gachechiladze
+    given-names: Giorgi
     email: georgegach@outlook.com
 repository-code: "https://github.com/georgegach/flowiz"
 url: "https://georgegach.github.io/flowiz/"

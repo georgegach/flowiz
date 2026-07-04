@@ -1,7 +1,7 @@
 # flowiz v3.0 — PRD + SDD
 
 **Status:** Approved for implementation
-**Author:** George Gach (product) + Claude (spec)
+**Author:** Giorgi Gachechiladze (product) + Claude (spec)
 **Date:** 2026-07-04
 **Implementer:** Claude Opus — this document is the single source of truth. Where it is silent, follow the "Design principles" section rather than inventing scope.
 

@@ -9,7 +9,7 @@ description = "Optical Flow visualization toolkit — read any flow format, rend
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "George Gach", email = "georgegach@outlook.com" }]
+authors = [{ name = "Giorgi Gachechiladze", email = "georgegach@outlook.com" }]
 keywords = [
     "optical flow",
     "flow visualization",
