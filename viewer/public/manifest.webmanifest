@@ -1,0 +1,10 @@
+{
+  "name": "flowiz optical flow viewer",
+  "short_name": "flowiz",
+  "description": "Client-side optical flow visualizer.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "icons": []
+}

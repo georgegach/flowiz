@@ -1,0 +1,112 @@
+:root {
+  --bg: #0b0e14;
+  --panel: #131824;
+  --panel-2: #1b2233;
+  --fg: #e6e9f0;
+  --muted: #8b93a7;
+  --accent: #5b9dff;
+  --border: #232c40;
+}
+:root.light {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --panel-2: #eef1f7;
+  --fg: #1a1f2b;
+  --muted: #5a6478;
+  --accent: #2f6bd8;
+  --border: #dbe1ec;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
+}
+.brand { font-size: 18px; }
+.brand .ver { color: var(--muted); font-size: 13px; margin-left: 4px; }
+.topbar nav { display: flex; align-items: center; gap: 18px; }
+.topbar a { color: var(--muted); text-decoration: none; }
+.topbar a:hover { color: var(--fg); }
+#theme { background: none; border: 1px solid var(--border); color: var(--fg); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; }
+
+main { flex: 1; display: flex; min-height: 0; }
+.stage {
+  flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(91,157,255,0.08), transparent);
+}
+#canvas {
+  max-width: 100%; max-height: 100%; image-rendering: pixelated;
+  border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.dropzone {
+  width: min(680px, 90%); border: 2px dashed var(--border); border-radius: 16px;
+  padding: 64px 24px; text-align: center; background: var(--panel);
+  transition: border-color .15s, background .15s;
+}
+.dropzone.hover { border-color: var(--accent); background: var(--panel-2); }
+.drop-inner .big { font-size: 22px; font-weight: 600; }
+.drop-inner .sub { color: var(--muted); margin: 8px 0 20px; }
+.pick {
+  display: inline-block; background: var(--accent); color: #fff; padding: 10px 18px;
+  border-radius: 10px; cursor: pointer; font-weight: 600;
+}
+
+.controls {
+  width: 300px; border-left: 1px solid var(--border); background: var(--panel);
+  padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+}
+.ctl label { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; }
+.ctl.row { display: flex; gap: 18px; }
+.ctl.row label { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--fg); }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.segmented button {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--fg);
+  padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px;
+}
+.segmented button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+button.primary {
+  width: 100%; background: var(--accent); color: #fff; border: none;
+  padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer;
+}
+.stats { display: grid; gap: 6px; font-size: 13px; }
+.stats > div { display: flex; justify-content: space-between; }
+.stats span { color: var(--muted); }
+.stats .fname { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.filmstrip { display: flex; flex-wrap: wrap; gap: 6px; }
+.thumb {
+  width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel-2); color: var(--muted); cursor: pointer;
+}
+.thumb.active { border-color: var(--accent); color: var(--fg); }
+
+.inspector {
+  position: absolute; pointer-events: none; background: rgba(0,0,0,0.82); color: #fff;
+  padding: 8px 10px; border-radius: 8px; font: 12px/1.35 ui-monospace, monospace;
+  min-width: 120px;
+}
+.inspector b { float: right; }
+.legend {
+  position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #a5304a; color: #fff; padding: 10px 16px; border-radius: 10px; z-index: 10;
+}
+
+@media (max-width: 720px) {
+  main { flex-direction: column; }
+  .controls { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+}

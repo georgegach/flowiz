@@ -1,202 +1,103 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/flowiz/gui/web/assets/flowiz-logo.png" width=400 alt='flowiz' style="margin:50px;max-width:400px">
-<p>
-    
-<p align="center">
-<a href="https://github.com/georgegach/flowiz/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/flowiz.svg" alt="PyPI - License" /></a>
-<a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/v/flowiz.svg" alt="PyPI" /></a>
-<a href="https://pypistats.org/search/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="PyPI - Downloads" /></a>
-    </p>
-<p align="center">
-<a href="https://mybinder.org/v2/gh/georgegach/flowiz/master?filepath=demo%2Ftest.ipynb"><img src="https://img.shields.io/static/v1.svg?label=launch&amp;message=notebook&amp;color=F37626&amp;style=for-the-badge&amp;logo=jupyter" alt="Launch Jupyter" /></a></p>
+<img src="https://raw.githubusercontent.com/georgegach/flowiz/master/docs/assets/flowiz-logo.png" width="380" alt="flowiz" style="margin:40px">
 </p>
 
-<h1></h1>
+<p align="center"><strong>The optical flow visualization toolkit.</strong><br>
+Read any flow format · render publication-quality color maps · compute error maps · compile videos · or just drag-drop into the browser viewer.</p>
 
-Converts Optical Flow `.flo` files to images `.png` and optionally compiles them to a video `.mp4` via ffmpeg
+<p align="center">
+<a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/v/flowiz.svg" alt="PyPI"></a>
+<a href="https://pypi.org/project/flowiz/"><img src="https://img.shields.io/pypi/pyversions/flowiz.svg" alt="Python versions"></a>
+<a href="https://pypistats.org/packages/flowiz"><img src="https://img.shields.io/pypi/dm/flowiz.svg" alt="Downloads"></a>
+<a href="https://github.com/georgegach/flowiz/blob/master/LICENSE"><img src="https://img.shields.io/pypi/l/flowiz.svg" alt="License"></a>
+<a href="https://georgegach.github.io/flowiz/"><img src="https://img.shields.io/badge/browser-viewer-5b9dff" alt="Viewer"></a>
+</p>
 
--   [Installation](#installation)
--   [Usage](#usage)
-    -   [Command line usage](#command-line-usage)
-    -   [Python usage](#python-usage)
-    -   [GUI usage](#gui-usage)
-    -   [Help](#help)
--   [Acknowledgements](#acknowledgements)
--   [FAQ](#faq)
--   [To-Do](#to-do)
+<p align="center">
+🌀 <strong><a href="https://georgegach.github.io/flowiz/">Try the browser viewer</a></strong> —
+no install, no upload, works offline · 📚 <a href="https://georgegach.github.io/flowiz/docs/">Docs</a>
+</p>
 
-## Installation
-### PyPI
+---
 
-Easiest option to install `flowiz` is to grab the latest package from PyPI repo
+## Why flowiz
 
-```bash
-pip install flowiz -U
-```
+Optical flow research moved on — RAFT, GMFlow, FlowFormer, SEA-RAFT — but everyone still hand-rolls the same Baker/Middlebury color wheel and juggles `.flo`, KITTI PNGs, `.pfm`, `.npy` and raw tensors. flowiz is the one dependency that reads them all and renders them consistently.
 
-### pip + Github
-Alternatively you may install the package directly from github repo
+| | flowiz | `flow_vis` | `mmcv.flow2rgb` | hand-rolled |
+|---|:---:|:---:|:---:|:---:|
+| `.flo` / KITTI / `.pfm` / `.npy` readers | ✅ | ❌ | ❌ | ❌ |
+| Torch tensor input | ✅ | ❌ | ❌ | ❌ |
+| Bit-compatible Middlebury wheel | ✅ | ✅ | ~ | ~ |
+| Temporally consistent video | ✅ | ❌ | ❌ | ❌ |
+| EPE / Fl error maps & compare grids | ✅ | ❌ | ❌ | ❌ |
+| Vector overlays & legends | ✅ | ❌ | ❌ | ❌ |
+| Browser viewer | ✅ | ❌ | ❌ | ❌ |
 
-```bash
-pip install git+https://github.com/georgegach/flowiz/
-```
-
-### Build yourself
-Or you can run `setup.py` to build it yourself locally
-
-```bash
-git clone https://github.com/georgegach/flowiz.git
-cd flowiz
-python setup.py install --user
-```
-
-Make sure you have requirements installed along with an `ffmpeg` to compile a video. `requirements.txt` contains latest working versions of this package. Feel free to use `pip-upgrader`. 
-```bash
-pip install -r requirements.txt
-apt install ffmpeg 
-# pacman -S ffmpeg
-```
-
-### Docker
-First dockerize cloned repo
-```bash
-git clone https://github.com/georgegach/flowiz.git
-cd flowiz
-docker build . -t myflowiz:latest
-```
-
-Then launch the container with port 8000 exposed
-```bash
-docker run -it -p 8000:8000 myflowiz:latest
-```
-
-Finally, fire up http://localhost:8000 in your favorite browserH
-
-### Get it from DockerHub
-https://hub.docker.com/repository/docker/georgegach/flowiz
-```bash
-docker run -it -p 8000:8000 georgegach/flowiz:latest
-```
-
-## Usage
-
-Package can be used both from the command line and python script.
-
-### Command line usage
-
-The following script grabs `.flo` files from `./demo/flo/` directory and converts into `.png` saving in the same directory
+## Install
 
 ```bash
-python -m flowiz demo/flo/*.flo
+pip install flowiz -U        # batteries included: video, CLI, plotting
+pip install flowiz[torch]    # + torch tensor helpers
+pip install flowiz[spring]   # + Spring .flo5 (HDF5) reading
 ```
 
-You can pass output directory for `.png` images via `-o` or `--outdir` parameter
-
-```bash
-python -m flowiz demo/flo/*.flo --outdir demo/png/
-```
-
-You may compile converted `.png` images into a _24 fps_ `.mp4` clip by passing `-v` or `--videodir` parameter with a video output directory (without a filename)
-
-```bash
-python -m flowiz demo/flo/*.flo -o demo/png --videodir demo/mp4
-```
-
-Pass `-r` or `--framerate` parameter to control the framerate of compiled video
-
-```bash
-python -m flowiz demo/flo/*.flo -o demo/png -v demo/mp4 --framerate 2
-```
-
-### Python usage
-
-Relevant python code is available in `demo/test.ipynb` notebook. Here's an excerpt:
+## Quick start
 
 ```python
 import flowiz as fz
 
-files = glob.glob('demo/flo/*.flo')
-img = fz.convert_from_file(files[0])
-plt.imshow(img)
+flow = fz.read("frame_0001.flo")     # .flo, KITTI .png, .pfm, .npy, tensors — auto-detected
+img  = fz.colorize(flow)             # (H, W, 3) uint8 RGB, Middlebury color wheel
+
+# straight from a model
+pred = fz.from_tensor(model(x))      # torch tensor -> Flow
+fz.compare_grid(pred, gt, save="figure.png")   # pred | ground truth | EPE — a paper figure in one call
 ```
 
-![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/png/frame_0001.flo.png)
+![Example](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/png/frame_0001.flo.png)
 
-In case you need to visualize `U V` channels separately from your numpy `floArray`:
-
-```python
-uv = fz.convert_from_flow(floArray, mode='UV')
-axarr[0].imshow(uv[...,0], cmap=plt.get_cmap('binary'))
-axarr[1].imshow(uv[...,1], cmap=plt.get_cmap('binary'))
-```
-
-![Image](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/uv_flows.png)
-
-### GUI usage
-
-Beta version of the `flowiz` graphical user interface is now accessible via `flowiz.gui` package. It is packaged using [ChrisKnott / Eel](https://github.com/ChrisKnott/Eel) and available via default web browser. To run the GUI simply type:
+## Command line
 
 ```bash
-python -m flowiz.gui
+flowiz convert 'flows/*.flo' -o out/ --workers 8      # batch -> PNGs
+flowiz video   'flows/*.flo' -o flow.mp4 -r 24        # flicker-free video (shared normalizer)
+flowiz info    frame_0001.flo                         # header + magnitude stats
+flowiz compare pred.flo gt.flo --save grid.png        # EPE / Fl-score
+flowiz view                                           # open the offline browser viewer
 ```
 
-Upon launching the web app, drag and drop or choose `.flo` file(s) using the `open file dialog`. Files will be converted using the python backend and placed in a temporary directory `flowiz/gui/web/guitemp`. Upon every session temporary directory will be emptied to avoid unnecessary polution.  
+## Browser viewer
 
-Mockup of the GUI is available at [georgegach.github.io/flowiz](http://georgegach.github.io/flowiz)
+Drag a flow file onto **[georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/)** and inspect it per-pixel — u, v, magnitude and angle on hover, WebGL2 rendering, adjustable normalization, PNG export. Everything runs client-side; your files never leave the machine.
 
-![Demo Video](https://raw.githubusercontent.com/georgegach/flowiz/master/demo/githubassets/flowiz.demo.gif)
+## Documentation
 
-### Help
+- [Getting started & API reference](https://georgegach.github.io/flowiz/docs/)
+- [Supported formats](https://georgegach.github.io/flowiz/docs/formats/)
+- [flowiz for papers](https://georgegach.github.io/flowiz/docs/papers/)
+- Examples: [`examples/`](examples/) — KITTI ground truth, RAFT output, error maps, videos
 
-```bash
-$ python -m flowiz -h
+## Citing flowiz
 
-usage: __main__.py [-h] [--outdir OUTDIR] [--videodir VIDEODIR]
-                    [--framerate FRAMERATE]
-                    input [input ...]
+If flowiz helped your research or figures, a citation is appreciated (it's requested, not required — the MIT license asks nothing):
 
-positional arguments:
-  input                 Input file(s). (e.g.: __ ./demo/flo/*.flo)
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --outdir OUTDIR, -o OUTDIR
-                        Output directory path. Default: same directory as
-                        [.flo] files. (e.g.: __ -o ./demo/png/)
-  --videodir VIDEODIR, -v VIDEODIR
-                        Compiles [.mp4] video from [.png] images if parameter
-                        is passed. Parameter requires video output directory
-                        path without a filename. (e.g.: __ -v ./demo/mp4/)
-  --framerate FRAMERATE, -r FRAMERATE
-                        Frames per second of the video. (e.g.: __ -r 2)
+```bibtex
+@software{gach_flowiz,
+  author  = {George Gach},
+  title   = {flowiz: the optical flow visualization toolkit},
+  url      = {https://github.com/georgegach/flowiz},
+  version = {3.0.0},
+  year    = {2026}
+}
 ```
 
-```bash
-$ python -m flowiz.gui -h
-usage: __main__.py [-h] [--mode MODE]
-
-optional arguments:
-  -h, --help   show this help message and exit
-  --mode MODE  GUI engine: "chrome", "edge", "electron", "browser". Use "None" when working with Docker.
-```
+See [`CITATION.cff`](CITATION.cff). Upgrading from v2? See [`MIGRATION.md`](MIGRATION.md).
 
 ## Acknowledgements
 
-The library is based on Midlebury's Vision Project MATLAB code: <http://vision.middlebury.edu/flow/>
-Original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB)
+Based on the Middlebury Vision Project color coding — original credits to Daniel Scharstein (C++) and Deqing Sun (MATLAB): <http://vision.middlebury.edu/flow/>.
 
-## FAQ
+## License
 
-> Q: But what kind of name is `flowiz`?  
-> A: The kind you choose when `flowkit`, `flowtools`, `flowlib`, `flowlab` are already taken.
-
-> Q: Future work?  
-> A: Some of the `To-Do` features are listed below with no determined timeline. If you'd like to contribute with the said features or something completely new, you may ![fork it](https://img.shields.io/github/forks/georgegach/flowiz.svg?label=fork%20it&style=social) and issue a pull request. 
-
-## To-Do
-
--   [x] Ported from Matlab `flow_code`
--   [x] Project is available on PyPI 
--   [x] Dockerized
--   [x] GUI
-    -   [ ] Improve Front to Back-end throughput performance
+MIT © George Gach

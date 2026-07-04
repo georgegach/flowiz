@@ -1,0 +1,53 @@
+site_name: flowiz
+site_description: The optical flow visualization toolkit — formats, color maps, error maps, videos, and a browser viewer.
+site_url: https://georgegach.github.io/flowiz/docs/
+repo_url: https://github.com/georgegach/flowiz
+repo_name: georgegach/flowiz
+docs_dir: docs/site
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Formats: formats.md
+  - Visualization: visualization.md
+  - Metrics: metrics.md
+  - flowiz for papers: papers.md
+  - CLI reference: cli.md
+  - API reference: api.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            docstring_style: google
+
+markdown_extensions:
+  - admonition
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - toc:
+      permalink: true
