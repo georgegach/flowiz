@@ -244,60 +244,58 @@ function showError(msg: string) {
   setTimeout(() => el.remove(), 4000);
 }
 
-// --- color wheel legend (drawn once on a small canvas) ---
-function renderLegend() {
-  const size = 96;
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const ctx = c.getContext("2d")!;
-  const img = ctx.createImageData(size, size);
-  // reuse the CPU reference for an exact legend
-  import("./colorwheel").then(({ uvToColor }) => {
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const u = (x - size / 2) / (size / 2);
-        const v = (y - size / 2) / (size / 2);
-        const idx = (y * size + x) * 4;
-        if (Math.hypot(u, v) <= 1) {
-          const [r, g, b] = uvToColor(u, v);
-          img.data[idx] = r;
-          img.data[idx + 1] = g;
-          img.data[idx + 2] = b;
-          img.data[idx + 3] = 255;
-        } else {
-          img.data[idx + 3] = 0;
-        }
+// --- color wheel painter: supersampled backing store + edge anti-aliasing ---
+async function paintWheel(ctx: CanvasRenderingContext2D, px: number) {
+  const { uvToColor } = await import("./colorwheel");
+  const img = ctx.createImageData(px, px);
+  const r = px / 2;
+  const band = 2.0 / r; // width of the anti-aliased rim, in normalized units
+  for (let y = 0; y < px; y++) {
+    for (let x = 0; x < px; x++) {
+      const u = (x + 0.5 - r) / r;
+      const v = (y + 0.5 - r) / r;
+      const rad = Math.hypot(u, v);
+      const idx = (y * px + x) * 4;
+      if (rad >= 1) {
+        img.data[idx + 3] = 0;
+        continue;
       }
+      const [cr, cg, cb] = uvToColor(u, v);
+      img.data[idx] = cr;
+      img.data[idx + 1] = cg;
+      img.data[idx + 2] = cb;
+      img.data[idx + 3] = rad > 1 - band ? Math.round((255 * (1 - rad)) / band) : 255;
     }
-    ctx.putImageData(img, 0, 0);
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+function backingSize(cssSize: number): number {
+  // 2x supersampling on top of the device pixel ratio for a crisp wheel.
+  const ratio = Math.min(3, window.devicePixelRatio || 1) * 2;
+  return Math.round(cssSize * ratio);
+}
+
+// Floating on-canvas legend (opt-in via the checkbox).
+function renderLegend() {
+  const css = 96;
+  const px = backingSize(css);
+  const c = document.createElement("canvas");
+  c.width = c.height = px;
+  paintWheel(c.getContext("2d")!, px).then(() => {
     legendImg.src = c.toDataURL();
   });
 }
 
-// --- color wheel in the right-side panel (always visible while viewing) ---
+// Color wheel in the right-side panel (always visible while viewing).
 function renderWheelPanel() {
-  const ctx = wheelPanel.getContext("2d")!;
-  const size = wheelPanel.width;
-  const img = ctx.createImageData(size, size);
-  import("./colorwheel").then(({ uvToColor }) => {
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const u = (x - size / 2) / (size / 2);
-        const v = (y - size / 2) / (size / 2);
-        const idx = (y * size + x) * 4;
-        if (Math.hypot(u, v) <= 1) {
-          const [r, g, b] = uvToColor(u, v);
-          img.data[idx] = r;
-          img.data[idx + 1] = g;
-          img.data[idx + 2] = b;
-          img.data[idx + 3] = 255;
-        } else {
-          img.data[idx + 3] = 0;
-        }
-      }
-    }
-    ctx.putImageData(img, 0, 0);
-  });
+  const css = 128;
+  const px = backingSize(css);
+  wheelPanel.width = px;
+  wheelPanel.height = px;
+  wheelPanel.style.width = `${css}px`;
+  wheelPanel.style.height = `${css}px`;
+  paintWheel(wheelPanel.getContext("2d")!, px);
 }
 
 // --- inspector: per-pixel readout on hover ---
@@ -358,7 +356,7 @@ window.addEventListener("keydown", (e) => {
 // theme toggle
 const themeBtn = document.querySelector<HTMLButtonElement>("#theme")!;
 themeBtn.addEventListener("click", () => {
-  document.documentElement.classList.toggle("light");
+  document.documentElement.classList.toggle("dark");
 });
 
 // drag & drop

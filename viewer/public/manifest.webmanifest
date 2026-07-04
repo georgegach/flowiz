@@ -4,7 +4,7 @@
   "description": "Client-side optical flow visualizer.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b0e14",
-  "theme_color": "#0b0e14",
+  "background_color": "#f5f7fb",
+  "theme_color": "#f5f7fb",
   "icons": []
 }

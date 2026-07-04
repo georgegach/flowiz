@@ -4,7 +4,10 @@
  * Used both as the WebGL LUT source and as a CPU reference in tests.
  */
 
+let _cached: Uint8Array | null = null;
+
 export function makeColorwheel(): Uint8Array {
+  if (_cached) return _cached;
   const RY = 15,
     YG = 6,
     GC = 4,
@@ -48,6 +51,7 @@ export function makeColorwheel(): Uint8Array {
   }
   const out = new Uint8Array(ncols * 3);
   for (let i = 0; i < out.length; i++) out[i] = wheel[i];
+  _cached = out;
   return out;
 }
 
