@@ -60,6 +60,16 @@ main { flex: 1; display: flex; min-height: 0; }
   display: inline-block; background: var(--accent); color: #fff; padding: 10px 18px;
   border-radius: 10px; cursor: pointer; font-weight: 600;
 }
+.examples { margin-top: 26px; }
+.ex-label { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+.ex-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ex-btn {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--fg);
+  padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13px;
+  transition: border-color .15s, background .15s;
+}
+.ex-btn:hover { border-color: var(--accent); }
+.ex-btn.loading { opacity: .6; cursor: progress; }
 
 .controls {
   width: 300px; border-left: 1px solid var(--border); background: var(--panel);

@@ -20,19 +20,15 @@ no install, no upload, works offline · 📚 <a href="https://georgegach.github.
 
 ---
 
-## Why flowiz
+## Capabilities
 
-Optical flow research moved on — RAFT, GMFlow, FlowFormer, SEA-RAFT — but everyone still hand-rolls the same Baker/Middlebury color wheel and juggles `.flo`, KITTI PNGs, `.pfm`, `.npy` and raw tensors. flowiz is the one dependency that reads them all and renders them consistently.
-
-| | flowiz | `flow_vis` | `mmcv.flow2rgb` | hand-rolled |
-|---|:---:|:---:|:---:|:---:|
-| `.flo` / KITTI / `.pfm` / `.npy` readers | ✅ | ❌ | ❌ | ❌ |
-| Torch tensor input | ✅ | ❌ | ❌ | ❌ |
-| Bit-compatible Middlebury wheel | ✅ | ✅ | ~ | ~ |
-| Temporally consistent video | ✅ | ❌ | ❌ | ❌ |
-| EPE / Fl error maps & compare grids | ✅ | ❌ | ❌ | ❌ |
-| Vector overlays & legends | ✅ | ❌ | ❌ | ❌ |
-| Browser viewer | ✅ | ❌ | ❌ | ❌ |
+- **Reads every format** — `.flo` (Middlebury), KITTI 16-bit PNG, `.pfm` (Sintel), `.npy`/`.npz`, Spring `.flo5`, and PyTorch tensors — all through one `fz.read`.
+- **Publication-quality color maps** — Baker/Middlebury color wheel, bit-compatible (±1 LSB) with `flow_vis`; UV, magnitude and angle encodings; embedded color-wheel legend.
+- **Temporally consistent video** — sequence-wide normalization for flicker-free MP4/WebM/GIF, no ffmpeg install required.
+- **Evaluation built in** — per-pixel EPE, KITTI Fl-score, error-map heatmaps, and one-call `compare_grid` paper figures.
+- **Vector overlays** — quiver arrows on the color map or any background frame.
+- **Fast & scriptable** — vectorized colorization, multiprocess batch conversion, a `flowiz` CLI, and typed numpy-in/numpy-out APIs.
+- **Browser viewer** — drag-drop any flow file (or click a shipped example) at [georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/); everything runs client-side.
 
 ## Install
 
@@ -69,7 +65,7 @@ flowiz view                                           # open the offline browser
 
 ## Browser viewer
 
-Drag a flow file onto **[georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/)** and inspect it per-pixel — u, v, magnitude and angle on hover, WebGL2 rendering, adjustable normalization, PNG export. Everything runs client-side; your files never leave the machine.
+Drag a flow file onto **[georgegach.github.io/flowiz](https://georgegach.github.io/flowiz/)** — or click a built-in example (a real sequence plus synthetic rotation/zoom/wave fields) — and inspect it per-pixel: u, v, magnitude and angle on hover, WebGL2 rendering, adjustable normalization, PNG export. Everything runs client-side; your files never leave the machine.
 
 ## Documentation
 

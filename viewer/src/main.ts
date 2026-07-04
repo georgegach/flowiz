@@ -1,6 +1,7 @@
 import "./style.css";
 import { FlowRenderer, type Mode } from "./render";
 import { parseByName, maxMagnitude, type FlowField } from "./flow";
+import { EXAMPLES } from "./examples";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -20,6 +21,10 @@ app.innerHTML = `
           <div class="big">Drop optical flow files here</div>
           <div class="sub">.flo · KITTI .png · .pfm · .npy — everything stays on your machine</div>
           <label class="pick">Choose files<input id="file" type="file" multiple accept=".flo,.png,.pfm,.npy" hidden /></label>
+          <div class="examples">
+            <span class="ex-label">or try an example</span>
+            <div id="examples" class="ex-buttons"></div>
+          </div>
         </div>
       </div>
       <canvas id="canvas" hidden></canvas>
@@ -137,6 +142,10 @@ async function handleFiles(fileList: FileList | File[]) {
     }
   }
   if (!parsed.length) return;
+  showFrames(parsed);
+}
+
+function showFrames(parsed: FlowField[]) {
   frames = parsed.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
   drop.hidden = true;
   canvas.hidden = false;
@@ -144,6 +153,27 @@ async function handleFiles(fileList: FileList | File[]) {
   buildFilmstrip();
   loadFrame(0);
   renderLegend();
+}
+
+// Shipped examples in the dropzone.
+const examplesEl = document.querySelector<HTMLDivElement>("#examples")!;
+for (const ex of EXAMPLES) {
+  const b = document.createElement("button");
+  b.className = "ex-btn";
+  b.textContent = ex.label;
+  b.onclick = async () => {
+    b.disabled = true;
+    b.classList.add("loading");
+    try {
+      showFrames(await ex.load());
+    } catch (e) {
+      showError((e as Error).message);
+    } finally {
+      b.disabled = false;
+      b.classList.remove("loading");
+    }
+  };
+  examplesEl.appendChild(b);
 }
 
 function showError(msg: string) {
