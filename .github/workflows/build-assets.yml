@@ -1,0 +1,80 @@
+name: Build flow-gen assets
+
+# One-off, manually dispatched. Produces the large binary assets the flow
+# generator needs (RAFT ONNX models, slim opencv.js) and commits them to master.
+# They are NOT in CI because they change rarely and take a long time to build.
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_raft:
+        description: "Fetch + validate RAFT ONNX models"
+        type: boolean
+        default: true
+      build_dis:
+        description: "Build slim opencv.js (DIS) — slow (~30-40 min)"
+        type: boolean
+        default: false
+      commit:
+        description: "Commit produced assets to master"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  raft:
+    if: ${{ inputs.build_raft }}
+    name: RAFT models
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install --upgrade "huggingface_hub>=0.23" onnx onnxruntime numpy
+      - name: Fetch + introspect + validate
+        run: python .github/scripts/fetch_raft_models.py ${{ inputs.commit && '--commit' || '' }}
+      - name: Commit models
+        if: ${{ inputs.commit }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- viewer/public/models; then
+            echo "No model changes to commit."
+            exit 0
+          fi
+          git add viewer/public/models
+          git commit -m "Assets: add RAFT ONNX models (flow-gen Optimal/Best tiers)"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin master && git push origin master && exit 0
+            echo "push race, retry $i"; sleep 3
+          done
+          echo "::error::could not push after retries"; exit 1
+
+  dis:
+    if: ${{ inputs.build_dis }}
+    name: opencv.js (DIS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build slim opencv.js
+        run: bash .github/scripts/build_opencv_dis.sh
+      - name: Commit opencv.js
+        if: ${{ inputs.commit }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- viewer/public/vendor/opencv; then
+            echo "No opencv changes to commit."
+            exit 0
+          fi
+          git add viewer/public/vendor/opencv
+          git commit -m "Assets: add slim opencv.js DIS build (flow-gen Fastest tier)"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin master && git push origin master && exit 0
+            echo "push race, retry $i"; sleep 3
+          done
+          echo "::error::could not push after retries"; exit 1
