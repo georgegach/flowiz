@@ -59,9 +59,7 @@ button, a, input, label { transition: background-color .15s, border-color .15s, 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-.brand { font-size: 18px; font-weight: 650; display: flex; align-items: center; gap: 9px; }
-.brand-i { width: 22px; height: 22px; color: var(--accent); }
-.brand .ver { color: var(--muted); font-size: 13px; font-weight: 400; margin-left: 2px; }
+.brand { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
 .topbar nav { display: flex; align-items: center; gap: 6px; }
 .topbar a {
   color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500;
@@ -179,13 +177,6 @@ button.primary:active { transform: translateY(1px); }
   background: var(--panel-2); padding: 2px 7px; border-radius: 6px; min-width: 52px; text-align: center;
 }
 
-.wheel-ctl { text-align: center; }
-.wheel-panel {
-  width: 128px; height: 128px; display: block; margin: 0 auto;
-  image-rendering: auto;
-}
-.wheel-note { color: var(--muted); font-size: 11px; margin-top: 8px; }
-
 .stats {
   display: grid; gap: 8px; font-size: 13px;
   background: var(--panel-2); border-radius: var(--radius-m); padding: 12px 14px;
@@ -229,10 +220,11 @@ button.primary:active { transform: translateY(1px); }
 
 /* ===== Learn panel ===== */
 .learn-trigger {
-  background: var(--accent-soft); border: none; color: var(--accent);
-  padding: 7px 15px; border-radius: 999px; cursor: pointer; font-size: 13.5px; font-weight: 600;
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 500;
+  padding: 6px 10px; border-radius: var(--radius-s);
 }
-.learn-trigger:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.learn-trigger:hover { color: var(--fg); background: var(--accent-soft); }
 .learn-hint {
   display: inline-block; margin-top: 22px; background: none; border: none;
   color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600;
@@ -255,8 +247,7 @@ button.primary:active { transform: translateY(1px); }
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-.learn-title { font-size: 17px; font-weight: 650; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; }
-.learn-title-i { width: 20px; height: 20px; color: var(--accent); }
+.learn-title { font-size: 17px; font-weight: 650; letter-spacing: -0.01em; }
 .learn-close {
   background: none; border: 1px solid var(--border); color: var(--fg);
   width: 36px; height: 36px; border-radius: var(--radius-s); cursor: pointer;

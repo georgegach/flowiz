@@ -39,7 +39,7 @@ function build(): HTMLElement {
 
   el.innerHTML = `
     <header class="learn-bar">
-      <span class="learn-title"><svg class="learn-title-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a2.4 2.4 0 1 0-2.4-2.4A4.8 4.8 0 1 0 14.4 14.4 7.2 7.2 0 1 1 7.2 7.2"/></svg>Understanding Optical Flow</span>
+      <span class="learn-title">Understanding Optical Flow</span>
       <button class="learn-close" aria-label="Close guide" title="Close (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </header>
     <div class="learn-body">

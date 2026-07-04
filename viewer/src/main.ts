@@ -11,7 +11,7 @@ const THEME_SVG = `<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
-    <div class="brand"><svg class="brand-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12a2.4 2.4 0 1 0-2.4-2.4A4.8 4.8 0 1 0 14.4 14.4 7.2 7.2 0 1 1 7.2 7.2"/></svg><strong>flowiz</strong> <span class="ver">viewer</span></div>
+    <div class="brand"><strong>flowiz</strong></div>
     <nav>
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
@@ -56,7 +56,7 @@ app.innerHTML = `
       </div>
       <div class="ctl row">
         <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
-        <label><input id="showlegend" type="checkbox" /> Overlay legend</label>
+        <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
         <label><input id="showarrows" type="checkbox" /> Arrows</label>
       </div>
 
@@ -71,12 +71,6 @@ app.innerHTML = `
 
       <div class="ctl">
         <button id="export" class="primary">Export PNG</button>
-      </div>
-
-      <div class="ctl wheel-ctl">
-        <label>Color wheel</label>
-        <canvas id="wheelpanel" class="wheel-panel" width="128" height="128"></canvas>
-        <div class="wheel-note">hue = direction · brightness = magnitude</div>
       </div>
 
       <div id="stats" class="stats"></div>
@@ -100,7 +94,6 @@ const playbackSection = document.querySelector<HTMLDivElement>("#playback")!;
 const playBtn = document.querySelector<HTMLButtonElement>("#play")!;
 const fpsInput = document.querySelector<HTMLInputElement>("#fps")!;
 const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
-const wheelPanel = document.querySelector<HTMLCanvasElement>("#wheelpanel")!;
 const stageEl = document.querySelector<HTMLElement>("#stage")!;
 const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
@@ -274,7 +267,7 @@ function showFrames(parsed: FlowField[]) {
   buildFilmstrip();
   loadFrame(0);
   renderLegend();
-  renderWheelPanel();
+  legendImg.hidden = !legendCb.checked;
 }
 
 // --- movie playback ---
@@ -381,17 +374,6 @@ function renderLegend() {
   paintWheel(c.getContext("2d")!, px).then(() => {
     legendImg.src = c.toDataURL();
   });
-}
-
-// Color wheel in the right-side panel (always visible while viewing).
-function renderWheelPanel() {
-  const css = 128;
-  const px = backingSize(css);
-  wheelPanel.width = px;
-  wheelPanel.height = px;
-  wheelPanel.style.width = `${css}px`;
-  wheelPanel.style.height = `${css}px`;
-  paintWheel(wheelPanel.getContext("2d")!, px);
 }
 
 // --- inspector: per-pixel readout on hover ---
