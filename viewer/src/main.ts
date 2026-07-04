@@ -38,6 +38,7 @@ app.innerHTML = `
       <canvas id="arrows" class="arrows" hidden></canvas>
       <div id="inspector" class="inspector" hidden></div>
       <img id="legend" class="legend" hidden alt="color wheel legend" />
+      <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
     </section>
 
     <aside id="controls" class="controls" hidden>
@@ -84,6 +85,7 @@ const drop = document.querySelector<HTMLDivElement>("#drop")!;
 const controls = document.querySelector<HTMLElement>("#controls")!;
 const inspector = document.querySelector<HTMLDivElement>("#inspector")!;
 const legendImg = document.querySelector<HTMLImageElement>("#legend")!;
+const legendArrow = document.querySelector<HTMLCanvasElement>("#legendarrow")!;
 const maxflow = document.querySelector<HTMLInputElement>("#maxflow")!;
 const maxval = document.querySelector<HTMLSpanElement>("#maxval")!;
 const maskCb = document.querySelector<HTMLInputElement>("#mask")!;
@@ -104,12 +106,15 @@ let current = 0;
 let mode: Mode = "rgb";
 let playTimer: number | null = null;
 
+let highlight: { u: number; v: number; radius: number } | null = null;
+
 function draw() {
   if (!renderer || !frames[current]) return;
   renderer.render({
     maxFlow: parseFloat(maxflow.value),
     mode,
     maskInvalid: maskCb.checked,
+    highlight,
   });
   updateStats();
   drawArrows();
@@ -196,6 +201,56 @@ function drawArrows() {
     }
   }
   ctx.globalAlpha = 1;
+}
+
+// Draw an arrow on the legend wheel from center to the hovered pixel's color.
+function drawLegendArrow(nu: number, nv: number) {
+  if (legendImg.hidden) {
+    legendArrow.hidden = true;
+    return;
+  }
+  const css = 96;
+  const ratio = Math.min(3, window.devicePixelRatio || 1);
+  legendArrow.width = Math.round(css * ratio);
+  legendArrow.height = Math.round(css * ratio);
+  legendArrow.style.width = `${css}px`;
+  legendArrow.style.height = `${css}px`;
+  legendArrow.hidden = false;
+  const ctx = legendArrow.getContext("2d")!;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, css, css);
+
+  const r = css / 2;
+  const rad = Math.hypot(nu, nv);
+  const s = rad > 1 ? 1 / rad : 1; // clamp onto the wheel
+  const x1 = r + nu * s * r;
+  const y1 = r + nv * s * r;
+  const a = Math.atan2(y1 - r, x1 - r);
+  const head = 5;
+  const trace = () => {
+    ctx.beginPath();
+    ctx.moveTo(r, r);
+    ctx.lineTo(x1, y1);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - head * Math.cos(a - 0.5), y1 - head * Math.sin(a - 0.5));
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - head * Math.cos(a + 0.5), y1 - head * Math.sin(a + 0.5));
+  };
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(0,0,0,0.55)";
+  ctx.lineWidth = 3;
+  trace();
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,0.95)";
+  ctx.lineWidth = 1.6;
+  trace();
+  ctx.stroke();
+  // dot at the tip
+  ctx.fillStyle = "rgba(255,255,255,0.95)";
+  ctx.beginPath();
+  ctx.arc(x1, y1, 1.8, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function loadFrame(i: number) {
@@ -396,8 +451,37 @@ canvas.addEventListener("mousemove", (e) => {
     <div>v <b>${v.toFixed(3)}</b></div>
     <div>|·| <b>${Math.hypot(u, v).toFixed(3)}</b></div>
     <div>∠ <b>${((Math.atan2(v, u) * 180) / Math.PI).toFixed(1)}°</b></div>`;
+  const mf = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
+  drawLegendArrow(u / mf, v / mf);
 });
-canvas.addEventListener("mouseleave", () => (inspector.hidden = true));
+canvas.addEventListener("mouseleave", () => {
+  inspector.hidden = true;
+  legendArrow.hidden = true;
+});
+
+// --- legend hover: isolate the hovered direction/speed in the flow image ---
+legendImg.addEventListener("mousemove", (e) => {
+  const rect = legendImg.getBoundingClientRect();
+  const r = rect.width / 2;
+  const tu = (e.clientX - rect.left - r) / r;
+  const tv = (e.clientY - rect.top - r) / r;
+  if (Math.hypot(tu, tv) > 1) {
+    // outside the wheel disk — no target
+    if (highlight) {
+      highlight = null;
+      draw();
+    }
+    return;
+  }
+  highlight = { u: tu, v: tv, radius: 4 / r }; // ~4px disk around the cursor
+  draw();
+});
+legendImg.addEventListener("mouseleave", () => {
+  if (highlight) {
+    highlight = null;
+    draw();
+  }
+});
 
 // --- controls wiring ---
 document.querySelector("#mode")!.addEventListener("click", (e) => {
@@ -413,7 +497,16 @@ maxflow.addEventListener("input", () => {
   draw();
 });
 maskCb.addEventListener("change", draw);
-legendCb.addEventListener("change", () => (legendImg.hidden = !legendCb.checked || !frames.length));
+legendCb.addEventListener("change", () => {
+  legendImg.hidden = !legendCb.checked || !frames.length;
+  if (legendImg.hidden) {
+    legendArrow.hidden = true;
+    if (highlight) {
+      highlight = null;
+      draw();
+    }
+  }
+});
 arrowsCb.addEventListener("change", drawArrows);
 window.addEventListener("resize", () => {
   if (frames.length) drawArrows();

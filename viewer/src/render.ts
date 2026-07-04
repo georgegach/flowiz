@@ -9,6 +9,8 @@ export interface RenderOptions {
   maxFlow: number;
   mode: Mode;
   maskInvalid: boolean;
+  /** Hover-isolate: keep pixels near this normalized (u,v) in color, dim the rest. */
+  highlight?: { u: number; v: number; radius: number } | null;
 }
 
 const VERT = `#version 300 es
@@ -30,6 +32,9 @@ uniform float u_maxFlow;
 uniform int u_mode;          // 0 rgb, 1 uv, 2 mag, 3 angle
 uniform bool u_mask;
 uniform float u_ncols;
+uniform bool u_highlight;    // hover-isolate active
+uniform vec2 u_hlTarget;     // target normalized (u,v)
+uniform float u_hlRadius;    // keep-radius in normalized units
 
 const float PI = 3.14159265358979;
 
@@ -77,6 +82,13 @@ void main() {
   vec3 col = mix(col0, col1, f);
   if (rad <= 1.0) col = 1.0 - rad * (1.0 - col);
   else col = col * 0.75;
+
+  if (u_highlight) {
+    float d = distance(vec2(nu, nv), u_hlTarget);
+    float keep = 1.0 - smoothstep(u_hlRadius, u_hlRadius + 0.05, d);
+    float g = dot(col, vec3(0.299, 0.587, 0.114));
+    col = mix(vec3(g) * 0.4, col, keep); // grayscale + darker outside the disk
+  }
   fragColor = vec4(col, 1.0);
 }`;
 
@@ -157,7 +169,7 @@ export class FlowRenderer {
 
   private cacheUniforms(): void {
     const gl = this.gl;
-    for (const n of ["u_flow", "u_wheel", "u_maxFlow", "u_mode", "u_mask", "u_ncols"]) {
+    for (const n of ["u_flow", "u_wheel", "u_maxFlow", "u_mode", "u_mask", "u_ncols", "u_highlight", "u_hlTarget", "u_hlRadius"]) {
       this.uniforms[n] = gl.getUniformLocation(this.program, n);
     }
   }
@@ -205,6 +217,13 @@ export class FlowRenderer {
     gl.uniform1i(this.uniforms.u_mode, { rgb: 0, uv: 1, mag: 2, angle: 3 }[opts.mode]);
     gl.uniform1i(this.uniforms.u_mask, opts.maskInvalid ? 1 : 0);
     gl.uniform1f(this.uniforms.u_ncols, NCOLS);
+
+    const hl = opts.highlight;
+    gl.uniform1i(this.uniforms.u_highlight, hl ? 1 : 0);
+    if (hl) {
+      gl.uniform2f(this.uniforms.u_hlTarget, hl.u, hl.v);
+      gl.uniform1f(this.uniforms.u_hlRadius, hl.radius);
+    }
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }

@@ -206,6 +206,11 @@ button.primary:active { transform: translateY(1px); }
 .legend {
   position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  cursor: crosshair; pointer-events: auto;
+}
+.legend-arrow {
+  position: absolute; right: 20px; bottom: 20px; width: 96px; height: 96px;
+  pointer-events: none;
 }
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
