@@ -225,10 +225,15 @@ function drawLegendArrow(nu: number, nv: number, selRadius?: number) {
   }
   const css = legendImg.clientWidth || 140;
   const ratio = Math.min(3, window.devicePixelRatio || 1);
-  legendArrow.width = Math.round(css * ratio);
-  legendArrow.height = Math.round(css * ratio);
-  legendArrow.style.width = `${css}px`;
-  legendArrow.style.height = `${css}px`;
+  const bw = Math.round(css * ratio);
+  // Only reallocate the backing store when the size actually changed —
+  // resizing a canvas clears it and causes flicker on every mousemove.
+  if (legendArrow.width !== bw || legendArrow.height !== bw) {
+    legendArrow.width = bw;
+    legendArrow.height = bw;
+    legendArrow.style.width = `${css}px`;
+    legendArrow.style.height = `${css}px`;
+  }
   legendArrow.hidden = false;
   const ctx = legendArrow.getContext("2d")!;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -242,30 +247,35 @@ function drawLegendArrow(nu: number, nv: number, selRadius?: number) {
 
   if (selRadius !== undefined) {
     const selPx = selRadius * r;
-    // Mute the wheel outside the selection disk: gray veil over the wheel
-    // circle with a punched-out hole at the cursor.
+    // Everything (veil + ring) stays inside the wheel disk; inset the clip
+    // slightly so strokes never poke past the anti-aliased wheel rim.
     ctx.save();
     ctx.beginPath();
-    ctx.arc(r, r, r, 0, Math.PI * 2);
+    ctx.arc(r, r, r - 0.75, 0, Math.PI * 2);
     ctx.clip();
-    const veil = new Path2D();
-    veil.rect(0, 0, css, css);
-    veil.arc(x1, y1, selPx, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(128,128,128,0.5)";
-    ctx.fill(veil, "evenodd");
-    ctx.restore();
+    // Mute outside the selection: radial gradient feathers the disk edge,
+    // mirroring the shader's smoothstep falloff.
+    const feather = Math.max(2, selPx * 0.15);
+    const g = ctx.createRadialGradient(
+      x1, y1, Math.max(0, selPx - feather / 2),
+      x1, y1, selPx + feather / 2,
+    );
+    g.addColorStop(0, "rgba(128,128,128,0)");
+    g.addColorStop(1, "rgba(128,128,128,0.5)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, css, css);
     // Ring marking the selection radius.
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "rgba(0,0,0,0.55)";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(x1, y1, selPx, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.arc(x1, y1, selPx, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
   }
   const a = Math.atan2(y1 - r, x1 - r);
   const head = 5;
@@ -545,8 +555,9 @@ legendImg.addEventListener(
   "wheel",
   (e) => {
     e.preventDefault(); // keep the page from scrolling while resizing
-    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-    hlRadius = Math.min(1.5, Math.max(0.02, hlRadius * factor));
+    // Exponential scaling proportional to the wheel delta — smooth on
+    // trackpads (many small deltas) and stepped on notched mouse wheels.
+    hlRadius = Math.min(1.5, Math.max(0.02, hlRadius * Math.exp(-e.deltaY * 0.005)));
     updateLegendHover(e.clientX, e.clientY);
   },
   { passive: false },
