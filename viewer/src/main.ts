@@ -536,7 +536,6 @@ function beginStream() {
 function appendFrame(flow: FlowField, src: ImageBitmap | null) {
   frames.push(flow);
   sourceFrames.push(src);
-  const idx = frames.length - 1;
   strip.appendFrame(flow);
   playbackSection.hidden = frames.length < 2;
   const hasSource = sourceFrames.some(Boolean);
