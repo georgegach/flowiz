@@ -22,6 +22,12 @@ range and output tensor to use. Commits nothing that fails the shift test.
 Tier -> file:
   Best    (raft-large) <- fp32 dynamic  -> raft-large-360x480.onnx
   Optimal (raft-small) <- int8 (ours)   -> raft-small-int8-360x480.onnx
+
+The runtime registry that decides which of these the viewer actually offers is
+viewer/src/flowgen/models.ts (RAFT_MODELS). Today it wires only raft-large; add
+a registry entry (id/file/inputW/H/pixelRange) to surface another model, and
+keep this script's filename(s) in sync with it. Each new resolution is a new
+filename, which doubles as a Cache Storage cache-buster.
 """
 
 from __future__ import annotations

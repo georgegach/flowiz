@@ -10,7 +10,12 @@ produced and verified by
 raft-large-360x480.onnx        # ~64 MB  fp32 — Best tier
 ```
 
-Fetched at runtime by `src/flowgen/raft.ts` (`BASE_URL + "models/..."`).
+Fetched at runtime by `src/flowgen/raft.ts` (`BASE_URL + "models/..."`), through
+the Cache Storage layer in `src/flowgen/asset-cache.ts` so repeat runs skip the
+download. The list of models the viewer offers lives in
+`src/flowgen/models.ts` (`RAFT_MODELS`) — add an entry there (with the matching
+`inputW/H` and `pixelRange`) to surface a new model; the filename encodes the
+resolution and doubles as a cache-buster.
 
 ## No int8 tier
 

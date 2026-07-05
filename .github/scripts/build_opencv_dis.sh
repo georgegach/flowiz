@@ -27,12 +27,17 @@ import re, sys
 p = sys.argv[1]
 src = open(p).read()
 
-# The viewer only needs DISOpticalFlow.create(preset) + the inherited calc().
-# calc() is declared on the DenseOpticalFlow base, so whitelist both — embind
-# wires the inheritance so dis.calc(...) resolves on the DIS instance.
+# The viewer needs DISOpticalFlow.create(preset) + the inherited calc(), plus
+# the tuning setters exposed in the Advanced panel (finest scale, gradient-
+# descent iterations, patch size, variational-refinement iterations). calc() is
+# declared on the DenseOpticalFlow base, so whitelist both — embind wires the
+# inheritance so dis.calc(...) resolves on the DIS instance. The viewer guards
+# each setter with a typeof check, so an older build without them still runs;
+# NOTE: after rebuilding with these, bump ASSET_CACHE_NAME in
+# viewer/src/flowgen/asset-cache.ts so the new wasm isn't served from cache.
 dis = (
     "        'DenseOpticalFlow': ['calc'],\n"
-    "        'DISOpticalFlow': ['create'],\n"
+    "        'DISOpticalFlow': ['create', 'setFinestScale', 'setGradientDescentIterations', 'setPatchSize', 'setVariationalRefinementIterations'],\n"
 )
 
 # The `video` module whitelist is a dict literal: `video = {  ... }`.
