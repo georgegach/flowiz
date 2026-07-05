@@ -12,7 +12,7 @@
 import * as ort from "onnxruntime-web";
 import type { ExecutionProvider, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
 import { planLetterbox, unletterboxFlow, type LetterboxPlan } from "./letterbox";
-import { fetchWithProgress } from "./fetch-progress";
+import { cachedFetch } from "./asset-cache";
 
 const INPUT_W = 480;
 const INPUT_H = 360;
@@ -49,11 +49,15 @@ export async function createRaft(
   const modelUrl = baseUrl + "models/" + spec.file;
 
   onProgress?.("Downloading RAFT model", 0, 0, "indeterminate");
-  const modelBytes = new Uint8Array(
-    await fetchWithProgress(modelUrl, (loaded, total) =>
-      onProgress?.("Downloading RAFT model", loaded, total, "bytes"),
+  const { buffer: modelBuf } = await cachedFetch(modelUrl, (loaded, total, fromCache) =>
+    onProgress?.(
+      fromCache ? "Loading RAFT model (cached)" : "Downloading RAFT model",
+      loaded,
+      total,
+      "bytes",
     ),
   );
+  const modelBytes = new Uint8Array(modelBuf);
 
   const wantGpu = ep !== "wasm" && typeof (self as any).navigator?.gpu !== "undefined";
   let session: ort.InferenceSession;

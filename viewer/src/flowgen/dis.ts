@@ -9,7 +9,7 @@
  */
 
 import type { DisPreset, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
-import { fetchWithProgress } from "./fetch-progress";
+import { cachedFetch } from "./asset-cache";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type CV = any;
@@ -27,11 +27,17 @@ export async function createDis(
   const jsUrl = baseUrl + "vendor/opencv/opencv-dis.js";
   const wasmUrl = baseUrl + "vendor/opencv/opencv-dis.wasm";
 
-  // Prefetch the wasm ourselves so we can report download progress, then hand
-  // the bytes to the emscripten factory via `wasmBinary`.
+  // Fetch the wasm ourselves (through the asset cache) so the download is
+  // visible and reused next time, then hand the bytes to the emscripten factory
+  // via `wasmBinary`.
   onProgress?.("Downloading DIS model", 0, 0, "indeterminate");
-  const wasmBinary = await fetchWithProgress(wasmUrl, (loaded, total) =>
-    onProgress?.("Downloading DIS model", loaded, total, "bytes"),
+  const { buffer: wasmBinary } = await cachedFetch(wasmUrl, (loaded, total, fromCache) =>
+    onProgress?.(
+      fromCache ? "Loading DIS model (cached)" : "Downloading DIS model",
+      loaded,
+      total,
+      "bytes",
+    ),
   );
 
   onProgress?.("Initializing OpenCV", 0, 0, "indeterminate");

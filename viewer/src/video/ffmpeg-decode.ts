@@ -16,7 +16,7 @@
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import type { VideoFrameSource, FrameSourceOptions, RGBAFrameData } from "./decode";
 import type { ProgressFn } from "../flowgen/types";
-import { fetchWithProgress } from "../flowgen/fetch-progress";
+import { cachedFetch } from "../flowgen/asset-cache";
 
 /** Read a PNG's pixel dimensions straight from its IHDR chunk (no decode). */
 function pngSize(u8: Uint8Array): { w: number; h: number } {
@@ -45,11 +45,19 @@ export async function openVideoFFmpeg(
   const stride = Math.max(1, Math.floor(opts.stride));
   const maxDim = Math.max(2, Math.floor(opts.maxDim));
 
-  // Prefetch the ~32 MB wasm ourselves so the download is visible; hand it to
-  // the core as a blob URL (emscripten locateFile picks it up via wasmURL).
-  const wasmBuf = await fetchWithProgress(
+  // Fetch the ~32 MB wasm ourselves (through the asset cache, so a second run
+  // skips the download) and hand it to the core as a blob URL — emscripten's
+  // locateFile picks it up via wasmURL. Serving cached bytes here also fixes the
+  // fresh-blob-URL-per-run that used to defeat the browser's HTTP cache.
+  const { buffer: wasmBuf } = await cachedFetch(
     `${baseUrl}vendor/ffmpeg/core/ffmpeg-core.wasm`,
-    (loaded, total) => onProgress("Downloading video engine (ffmpeg)", loaded, total, "bytes"),
+    (loaded, total, fromCache) =>
+      onProgress(
+        fromCache ? "Loading video engine (cached)" : "Downloading video engine (ffmpeg)",
+        loaded,
+        total,
+        "bytes",
+      ),
   );
   const wasmURL = URL.createObjectURL(new Blob([wasmBuf], { type: "application/wasm" }));
 
@@ -78,6 +86,9 @@ export async function openVideoFFmpeg(
     revoke();
     throw new Error(`Could not start the video engine (ffmpeg): ${(e as Error)?.message || e}`);
   }
+  // Wasm is compiled + instantiated now; free the ~32 MB blob so a long decode
+  // doesn't pin it. (close() also revokes — revokeObjectURL is idempotent.)
+  revoke();
 
   // Decode progress: ffmpeg's `progress` ratio drives the bar; `frame=` from the
   // logs gives the live frame count in the label.
