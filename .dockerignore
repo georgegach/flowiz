@@ -1,0 +1,37 @@
+# Keep the build context small — this image is the Python package only.
+.git
+.github
+viewer
+docs
+mkdocs.yml
+MIGRATION.md
+workplace
+examples
+
+# Python cruft
+**/__pycache__
+*.py[cod]
+*.egg-info
+.eggs
+build
+dist
+flowiz/viewer_assets
+
+# Test / coverage / tooling caches
+.pytest_cache
+.ruff_cache
+.mypy_cache
+htmlcov
+.coverage
+.coverage.*
+coverage.xml
+.hypothesis
+
+# Build/deploy artifacts + local junk
+_site
+_docs_site
+_opencv_build
+.DS_Store
+.vscode
+.idea
+out
