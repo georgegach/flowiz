@@ -13,6 +13,7 @@ import type { GenOptions, ModelTier, ProgressKind } from "../flowgen/types";
 import { FlowEngine } from "../flowgen/engine";
 import { openVideo, type VideoFrameSource } from "../video/decode";
 import { openVideoFFmpeg } from "../video/ffmpeg-decode";
+import { openModal, type ModalHandle } from "./modal";
 
 export interface GenerateContext {
   onFrames: (frames: FlowField[], source?: (ImageBitmap | null)[]) => void;
@@ -93,6 +94,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
   let cancelled = false;
   let running = false;
   let stopRequested = false;
+  let modal: ModalHandle | null = null;
 
   const syncWebgpuVisibility = () => {
     // WebGPU only matters for the RAFT (onnxruntime) tier.
@@ -157,6 +159,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
   const close = () => {
     cancelled = true;
     engine?.dispose();
+    modal?.release();
     root.remove();
   };
   cancelBtn.addEventListener("click", close);
@@ -245,6 +248,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
         // Completed, or stopped early with partial results — show what we have.
         engine.dispose();
         engine = null;
+        modal?.release();
         root.remove();
         ctx.onFrames(flows, srcFrames);
         if (stopRequested)
@@ -267,4 +271,12 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
 
   // Same button starts the run, then acts as the stop control while it runs.
   goBtn.addEventListener("click", () => (running ? requestStop() : run()));
+
+  // Escape / backdrop close — but never abandon an in-flight run via the
+  // backdrop; Escape during a run requests a graceful stop instead.
+  modal = openModal(root, {
+    onRequestClose: () => (running ? requestStop() : close()),
+    initialFocus: goBtn,
+    closeOnBackdrop: () => !running,
+  });
 }

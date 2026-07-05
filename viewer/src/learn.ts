@@ -8,13 +8,14 @@
 
 import { SECTIONS } from "./learn-content";
 import { mountFigure, type FigureHandle } from "./learn-figures";
+import { openModal, type ModalHandle } from "./ui/modal";
 
 let panel: HTMLElement | null = null;
 let article: HTMLElement | null = null;
 let tocLinks: HTMLAnchorElement[] = [];
 let figureHandles: FigureHandle[] = [];
 let figuresMounted = false;
-let lastFocus: HTMLElement | null = null;
+let modalHandle: ModalHandle | null = null;
 let spy: IntersectionObserver | null = null;
 
 function build(): HTMLElement {
@@ -64,15 +65,8 @@ function build(): HTMLElement {
     });
   });
 
-  // Keep global viewer key handlers (arrow-scrubbing) from firing while open.
-  el.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      closeLearn();
-      return;
-    }
-    e.stopPropagation();
-  });
+  // Escape-to-close, focus trap and focus restore are handled by openModal in
+  // openLearn(); global arrow-scrubbing is suspended via isModalOpen().
 
   // Scroll-spy for the TOC.
   spy = new IntersectionObserver(
@@ -116,7 +110,6 @@ export function openLearn(sectionId?: string) {
     panel = build();
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
   }
-  lastFocus = document.activeElement as HTMLElement;
   panel.hidden = false;
   document.documentElement.classList.add("learn-open");
   mountFigures(); // (re)build figures and (re)start any animations
@@ -126,7 +119,12 @@ export function openLearn(sectionId?: string) {
   else article?.scrollTo({ top: 0 });
 
   history.replaceState(null, "", sectionId ? `#learn/${sectionId}` : "#learn");
-  (panel.querySelector(".learn-close") as HTMLElement)?.focus();
+  modalHandle?.release();
+  modalHandle = openModal(panel, {
+    onRequestClose: () => closeLearn(),
+    initialFocus: panel.querySelector<HTMLElement>(".learn-close"),
+    closeOnBackdrop: false,
+  });
 }
 
 export function closeLearn() {
@@ -136,7 +134,8 @@ export function closeLearn() {
   stopFigures();
   figuresMounted = false;
   if (location.hash.startsWith("#learn")) history.replaceState(null, "", location.pathname + location.search);
-  lastFocus?.focus?.();
+  modalHandle?.release();
+  modalHandle = null;
 }
 
 /** Open on load if the URL points at the guide, e.g. #learn or #learn/the-math. */

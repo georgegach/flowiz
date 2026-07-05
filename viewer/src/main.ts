@@ -7,6 +7,7 @@ import { setupExportMenu } from "./ui/export-menu";
 import { setupConvertPanel, type ConvertPanel } from "./ui/convert-panel";
 import { openGeneratePanel } from "./ui/generate-panel";
 import { toast } from "./ui/toast";
+import { isModalOpen } from "./ui/modal";
 
 const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
 
@@ -691,9 +692,12 @@ setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
   notify: showError,
 });
 
-// keyboard scrubbing
+// keyboard scrubbing — suspended while a modal is open, and ignored when a form
+// control is focused (so arrows on a slider adjust it instead of scrubbing).
 window.addEventListener("keydown", (e) => {
-  if (!frames.length) return;
+  if (!frames.length || isModalOpen()) return;
+  const t = e.target as HTMLElement | null;
+  if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
   if (e.key === "ArrowRight") loadFrame((current + 1) % frames.length);
   if (e.key === "ArrowLeft") loadFrame((current - 1 + frames.length) % frames.length);
 });
