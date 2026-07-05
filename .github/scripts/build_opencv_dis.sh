@@ -60,7 +60,7 @@ docker run --rm \
     --build_wasm \
     --disable_single_file \
     --simd \
-    --cmake_option="-DBUILD_LIST=core,imgproc,video" \
+    --cmake_option="-DBUILD_LIST=core,imgproc,video,js" \
     --build_flags="-s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=cv -s ENVIRONMENT=web,worker "
 echo "::endgroup::"
 
