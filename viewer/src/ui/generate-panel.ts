@@ -11,7 +11,8 @@
 import type { FlowField } from "../flow";
 import type { GenOptions, ModelTier, ProgressKind } from "../flowgen/types";
 import { FlowEngine } from "../flowgen/engine";
-import { openVideo } from "../video/decode";
+import { openVideo, type VideoFrameSource } from "../video/decode";
+import { openVideoFFmpeg } from "../video/ffmpeg-decode";
 
 export interface GenerateContext {
   onFrames: (frames: FlowField[]) => void;
@@ -168,8 +169,19 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
     const opts: GenOptions = { tier, ep: useGpu ? "auto" : "wasm", disPreset: "fast" };
 
     try {
-      setProgress("Opening video", 0, 0, "indeterminate");
-      const src = await openVideo(file, { stride, maxDim });
+      // Normalise + downscale any input through ffmpeg.wasm (handles 4K, HEVC,
+      // .mov/.mkv, etc.) with real decode progress. Fall back to the browser's
+      // own <video> decoder if the engine can't load.
+      setProgress("Preparing video engine", 0, 0, "indeterminate");
+      let src: VideoFrameSource;
+      try {
+        src = await openVideoFFmpeg(file, { stride, maxDim }, setProgress, baseUrl());
+      } catch (ffErr) {
+        ctx.notify("ffmpeg unavailable — using the browser decoder.");
+        setProgress(`Opening video (browser decoder)`, 0, 0, "indeterminate");
+        console.warn("ffmpeg decode failed, falling back to <video>:", ffErr);
+        src = await openVideo(file, { stride, maxDim });
+      }
 
       engine = new FlowEngine();
       engine.onProgress = setProgress; // download + session-init phases
@@ -182,7 +194,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       const stem = file.name.replace(/\.[^.]+$/, "");
       const t0 = performance.now();
       let i = 0;
-      setProgress("Decoding video", 0, total, "count");
+      setProgress("Computing flow", 0, total, "count");
       for await (const frame of src.frames()) {
         if (cancelled) break;
         const flow = await engine.pushFrame(frame, i++);
