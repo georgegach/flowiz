@@ -33,7 +33,7 @@ motion, not flicker.
 A citation is appreciated (requested, not license-required):
 
 ```bibtex
-@software{gachechiladze_flowiz,
+@software{gach_flowiz,
   author  = {Giorgi Gachechiladze},
   title   = {flowiz: the optical flow visualization toolkit},
   url      = {https://github.com/georgegach/flowiz},

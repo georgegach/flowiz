@@ -84,7 +84,7 @@ Drag flow files onto **[georgegach.github.io/flowiz](https://georgegach.github.i
 If flowiz helped your research or figures, a citation is appreciated (it's requested, not required — the MIT license asks nothing):
 
 ```bibtex
-@software{gachechiladze_flowiz,
+@software{gach_flowiz,
   author  = {Giorgi Gachechiladze},
   title   = {flowiz: the optical flow visualization toolkit},
   url      = {https://github.com/georgegach/flowiz},
