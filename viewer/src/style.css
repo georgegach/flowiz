@@ -162,6 +162,13 @@ button.primary {
 button.primary:hover { background: var(--accent-hover); box-shadow: var(--shadow-md); }
 button.primary:active { transform: translateY(1px); }
 
+button.secondary {
+  width: 100%; background: var(--panel-2); color: var(--fg); border: 1px solid var(--border);
+  padding: 11px; border-radius: var(--radius-m); font-weight: 600; font-size: 13.5px; cursor: pointer;
+}
+button.secondary:hover { border-color: var(--border-strong); background: var(--panel); }
+button.secondary:active { transform: translateY(1px); }
+
 .play-row { display: flex; align-items: center; gap: 12px; }
 .play-btn {
   width: 36px; height: 36px; border-radius: 50%; flex: none;

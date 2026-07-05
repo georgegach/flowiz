@@ -47,7 +47,7 @@ async function pickCodec(w: number, h: number): Promise<string | null> {
 export function setupExportMenu(container: HTMLElement, ctx: ExportContext) {
   container.innerHTML = `
     <div class="export-menu">
-      <button id="export" class="primary">${DOWNLOAD_SVG}<span>Export</span></button>
+      <button id="export" class="secondary">${DOWNLOAD_SVG}<span>Export bundle</span></button>
       <div id="export-pop" class="export-pop" hidden>
         <button data-act="png">PNG — current frame</button>
         <button data-act="zip">Raw flow ZIP (.flo/.png/.pfm/.npy)</button>
