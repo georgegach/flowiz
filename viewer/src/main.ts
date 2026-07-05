@@ -4,6 +4,7 @@ import { parseByName, maxMagnitude, type FlowField } from "./flow";
 import { EXAMPLES } from "./examples";
 import { openLearn, initLearnFromHash } from "./learn";
 import { setupExportMenu } from "./ui/export-menu";
+import { setupConvertPanel, type ConvertPanel } from "./ui/convert-panel";
 import { openGeneratePanel } from "./ui/generate-panel";
 
 const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
@@ -81,6 +82,8 @@ app.innerHTML = `
         </div>
       </div>
 
+      <div class="ctl" id="convert-ctl"></div>
+
       <div class="ctl" id="export-ctl"></div>
 
       <div id="stats" class="stats"></div>
@@ -113,6 +116,7 @@ const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
 
 let renderer: FlowRenderer | null = null;
+let convertPanel: ConvertPanel | null = null;
 let frames: FlowField[] = [];
 let current = 0;
 let mode: Mode = "rgb";
@@ -312,6 +316,7 @@ function loadFrame(i: number) {
   maxval.textContent = mx.toFixed(2);
   draw();
   highlightStrip();
+  convertPanel?.update();
 }
 
 function updateStats() {
@@ -597,6 +602,11 @@ legendCb.addEventListener("change", () => {
 arrowsCb.addEventListener("change", drawArrows);
 window.addEventListener("resize", () => {
   if (frames.length) drawArrows();
+});
+convertPanel = setupConvertPanel(document.querySelector<HTMLDivElement>("#convert-ctl")!, {
+  getFrames: () => frames,
+  getCurrent: () => current,
+  notify: showError,
 });
 setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
   getFrames: () => frames,
