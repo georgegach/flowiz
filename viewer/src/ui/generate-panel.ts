@@ -116,11 +116,18 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
   const setProgress = (phase: string, done: number, total: number, kind: ProgressKind) => {
     progressWrap.hidden = false;
     errorEl.hidden = true;
-    if (kind === "bytes" && total > 0) {
+    if (kind === "bytes" && total > 0 && done <= total * 1.02) {
       const pct = Math.min(100, Math.round((done / total) * 100));
       barwrap.classList.remove("indeterminate");
       fill.style.width = `${pct}%`;
       meta.textContent = `${phase} — ${fmtMB(done)} / ${fmtMB(total)} (${pct}%)`;
+    } else if (kind === "bytes") {
+      // `total` is a gzip-compressed content-length (GitHub Pages) or unknown,
+      // so the stream delivers more (decompressed) bytes than `total` — show
+      // downloaded MB against an indeterminate bar instead of a bogus percent.
+      barwrap.classList.add("indeterminate");
+      fill.style.width = "40%";
+      meta.textContent = `${phase} — ${fmtMB(done)}`;
     } else if (kind === "count" && total > 0) {
       const pct = Math.min(100, Math.round((done / total) * 100));
       barwrap.classList.remove("indeterminate");
