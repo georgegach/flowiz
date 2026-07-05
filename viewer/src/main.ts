@@ -21,8 +21,8 @@ const THEME_SVG = `<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
-    <div class="brand"><strong>flowiz</strong></div>
-    <nav>
+    <div class="brand"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M3 15c2.5-5.5 15.5-5.5 18 0"/><path d="M3 9c2.5-5.5 15.5-5.5 18 0"/></g></svg><strong>flowiz</strong></div>
+    <nav aria-label="Primary">
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
       <a href="https://github.com/georgegach/flowiz" target="_blank" rel="noopener">GitHub</a>
@@ -71,6 +71,7 @@ app.innerHTML = `
       <div id="inspector" class="inspector" hidden></div>
       <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
       <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
+      <div id="stagebar" class="stagebar" hidden></div>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
           <div class="loader-title" id="loader-title">Loading files</div>
@@ -81,47 +82,56 @@ app.innerHTML = `
     </section>
 
     <aside id="controls" class="controls" hidden>
-      <div class="ctl">
-        <label>Encoding</label>
+      <section class="ctl-group">
+        <h3 class="ctl-group-t">Encoding</h3>
         <div class="segmented" id="mode" role="group" aria-label="Encoding">
           <button data-mode="rgb" class="active" aria-pressed="true">Color</button>
           <button data-mode="uv" aria-pressed="false">UV</button>
           <button data-mode="mag" aria-pressed="false">Magnitude</button>
           <button data-mode="angle" aria-pressed="false">Angle</button>
         </div>
-      </div>
-      <div class="ctl">
         <div class="maxflow-head"><label for="maxflow">Max flow</label><span id="maxval" class="val-chip"></span></div>
         <input id="maxflow" type="range" min="0.1" max="100" step="0.1" aria-label="Max flow (pixels)" />
-      </div>
-      <div class="ctl row">
-        <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
-        <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
-        <label><input id="showarrows" type="checkbox" /> Arrows</label>
-      </div>
-      <div class="ctl row" id="hlradius-ctl" hidden>
-        <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
-      </div>
+      </section>
 
-      <div class="ctl row" id="source-ctl" hidden>
-        <label><input id="showsource" type="checkbox" /> Source video</label>
-        <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" aria-label="Flow opacity over source video" /></label>
-      </div>
+      <section class="ctl-group">
+        <h3 class="ctl-group-t">Display</h3>
+        <div class="ctl-toggles">
+          <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
+          <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
+          <label><input id="showarrows" type="checkbox" /> Arrows</label>
+        </div>
+        <div id="hlradius-ctl" hidden>
+          <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
+        </div>
+        <div class="ctl-toggles" id="source-ctl" hidden>
+          <label><input id="showsource" type="checkbox" /> Source video</label>
+          <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" aria-label="Flow opacity over source video" /></label>
+        </div>
+      </section>
 
-      <div class="ctl playback" id="playback" hidden>
-        <label>Playback</label>
+      <section class="ctl-group" id="playback" hidden>
+        <h3 class="ctl-group-t">Playback</h3>
         <div class="play-row">
           <button id="play" class="play-btn" title="Play / pause" aria-label="Play / pause">${PLAY_SVG}</button>
           <input id="fps" type="range" min="1" max="30" step="1" value="8" aria-label="Playback speed (frames per second)" />
           <span id="fpsval" class="fps-val">8 fps</span>
         </div>
-      </div>
+      </section>
 
-      <div class="ctl" id="convert-ctl"></div>
+      <details class="ctl-group ctl-details" id="io-group" open>
+        <summary>Convert &amp; export</summary>
+        <div class="ctl-details-body">
+          <div class="ctl" id="convert-ctl"></div>
+          <div class="ctl" id="export-ctl"></div>
+        </div>
+      </details>
 
-      <div class="ctl" id="export-ctl"></div>
+      <section class="ctl-group">
+        <h3 class="ctl-group-t">Frame info</h3>
+        <div id="stats" class="stats"></div>
+      </section>
 
-      <div id="stats" class="stats"></div>
       <div id="filmstrip" class="filmstrip"></div>
     </aside>
   </main>
@@ -149,6 +159,7 @@ const playBtn = document.querySelector<HTMLButtonElement>("#play")!;
 const fpsInput = document.querySelector<HTMLInputElement>("#fps")!;
 const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
 const stageEl = document.querySelector<HTMLElement>("#stage")!;
+const stagebar = document.querySelector<HTMLDivElement>("#stagebar")!;
 const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
 const sourceCanvas = document.querySelector<HTMLCanvasElement>("#source")!;
@@ -398,13 +409,18 @@ function loadFrame(i: number) {
 
 function updateStats() {
   const f = frames[current];
-  if (!f) return;
+  if (!f) {
+    stagebar.hidden = true;
+    return;
+  }
   const mx = maxMagnitude(f);
   statsEl.innerHTML = `
     <div><span>Frame</span><b>${current + 1} / ${frames.length}</b></div>
     <div><span>Size</span><b>${f.width}×${f.height}</b></div>
     <div><span>Max |flow|</span><b>${mx.toFixed(3)} px</b></div>
     <div><span>File</span><b class="fname">${f.name}</b></div>`;
+  stagebar.textContent = `${f.name} · ${current + 1}/${frames.length}`;
+  stagebar.hidden = false;
 }
 
 const strip = setupFilmstrip(filmstrip, (i) => loadFrame(i));
@@ -503,6 +519,7 @@ function beginStream() {
   sourceFrames = [];
   current = 0;
   strip.setFrames([]);
+  stagebar.hidden = true;
   drop.hidden = true;
   sourceCtl.hidden = true;
   playbackSection.hidden = true;
@@ -833,6 +850,21 @@ setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
   getFps: () => parseInt(fpsInput.value, 10),
   canvas,
   notify: showError,
+});
+
+// Persist the Convert & export collapsible open/closed state.
+const ioGroup = document.querySelector<HTMLDetailsElement>("#io-group")!;
+try {
+  if (localStorage.getItem("flowiz.panel.io") === "0") ioGroup.open = false;
+} catch {
+  /* private mode */
+}
+ioGroup.addEventListener("toggle", () => {
+  try {
+    localStorage.setItem("flowiz.panel.io", ioGroup.open ? "1" : "0");
+  } catch {
+    /* private mode */
+  }
 });
 
 // --- background flow generation: status chip + job manager ---

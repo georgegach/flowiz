@@ -62,7 +62,8 @@ button, a, input, label { transition: background-color .15s, border-color .15s, 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-.brand { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+.brand-mark { width: 20px; height: 20px; color: var(--accent); flex: none; }
 .topbar nav { display: flex; align-items: center; gap: 6px; }
 .topbar a {
   color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500;
@@ -84,9 +85,21 @@ button, a, input, label { transition: background-color .15s, border-color .15s, 
 main { flex: 1; display: flex; min-height: 0; }
 .stage {
   flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
-  padding: 24px; overflow: hidden;
-  background: radial-gradient(1200px 600px at 50% -10%, var(--accent-soft), transparent);
+  padding: 32px; overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--accent-soft), transparent),
+    radial-gradient(color-mix(in srgb, var(--fg) 6%, transparent) 1px, transparent 1px);
+  background-size: auto, 22px 22px;
 }
+.stagebar {
+  position: absolute; top: 14px; left: 14px; z-index: 4; pointer-events: none;
+  font: 11.5px var(--font-mono); padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--border); color: var(--fg);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.stagebar[hidden] { display: none; }
 #canvas {
   max-width: 100%; max-height: 100%; image-rendering: pixelated;
   border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
@@ -138,9 +151,37 @@ main { flex: 1; display: flex; min-height: 0; }
 .ex-btn.loading { opacity: .6; cursor: progress; }
 
 .controls {
-  width: 320px; border-left: 1px solid var(--border); background: var(--panel);
-  padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px;
+  width: 340px; border-left: 1px solid var(--border); background: var(--bg);
+  padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
 }
+/* Carded control groups. Inner .ctl/.ctl.row styling below is still used by the
+   generate modal + convert/export panels, so it stays intact. */
+.ctl-group {
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-m);
+  padding: 14px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;
+}
+.ctl-group-t {
+  margin: 0; font-size: 11px; font-weight: 650; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted);
+}
+.ctl-toggles { display: flex; flex-direction: column; gap: 10px; }
+.ctl-toggles label {
+  display: flex; align-items: center; gap: 9px; font-size: 13.5px; color: var(--fg); white-space: nowrap;
+}
+.ctl-toggles input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+#hlradius-ctl { font-size: 13.5px; }
+.ctl-details { display: block; }
+.ctl-details > summary {
+  cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+}
+.ctl-details > summary::-webkit-details-marker { display: none; }
+.ctl-details > summary::after {
+  content: ""; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent;
+  border-top: 5px solid currentColor; transition: transform .15s;
+}
+.ctl-details[open] > summary::after { transform: rotate(180deg); }
+.ctl-details-body { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
 .ctl + .ctl { border-top: 1px solid var(--border); padding-top: 18px; }
 .ctl.row + .ctl { padding-top: 18px; }
 .ctl > label {
@@ -331,8 +372,10 @@ button.secondary:active { transform: translateY(1px); }
   .controls {
     width: 100%; border-left: none; border-top: 1px solid var(--border);
     overflow: visible;      /* scroll the page, not the panel */
+    padding: 10px;
   }
 
+  .stagebar { top: 10px; left: 10px; }
   .legend, .legend-arrow { right: 14px; bottom: 14px; width: 108px; height: 108px; }
   .toasts { bottom: 12px; width: calc(100vw - 24px); }
 }
