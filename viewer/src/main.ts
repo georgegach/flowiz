@@ -10,6 +10,7 @@ import { toast } from "./ui/toast";
 import { isModalOpen } from "./ui/modal";
 import { FlowJobManager } from "./flowgen/job-manager";
 import { createStatusChip } from "./ui/status-chip";
+import { setupFilmstrip } from "./ui/filmstrip";
 
 const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
 
@@ -364,7 +365,7 @@ function loadFrame(i: number) {
   maxflow.value = String(Math.max(0.1, mx));
   maxval.textContent = mx.toFixed(2);
   draw();
-  highlightStrip();
+  strip.setCurrent(current);
   convertPanel?.update();
 }
 
@@ -379,27 +380,7 @@ function updateStats() {
     <div><span>File</span><b class="fname">${f.name}</b></div>`;
 }
 
-function appendFilmstripButton(i: number) {
-  const f = frames[i];
-  const b = document.createElement("button");
-  b.className = "thumb";
-  b.textContent = String(i + 1);
-  b.title = f.name;
-  b.onclick = () => loadFrame(i);
-  filmstrip.appendChild(b);
-}
-
-function buildFilmstrip() {
-  filmstrip.innerHTML = "";
-  frames.forEach((_, i) => appendFilmstripButton(i));
-  filmstrip.hidden = frames.length < 2;
-}
-
-function highlightStrip() {
-  filmstrip.querySelectorAll(".thumb").forEach((el, i) =>
-    el.classList.toggle("active", i === current),
-  );
-}
+const strip = setupFilmstrip(filmstrip, (i) => loadFrame(i));
 
 function setLoader(done: number, total: number, name?: string) {
   loaderFill.style.width = `${Math.round((done / total) * 100)}%`;
@@ -478,7 +459,7 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   canvas.hidden = false;
   controls.hidden = false;
   playbackSection.hidden = frames.length < 2;
-  buildFilmstrip();
+  strip.setFrames(frames);
   loadFrame(0);
   renderLegend();
   legendImg.hidden = !legendCb.checked;
@@ -493,8 +474,7 @@ function beginStream() {
   frames = [];
   sourceFrames = [];
   current = 0;
-  filmstrip.innerHTML = "";
-  filmstrip.hidden = true;
+  strip.setFrames([]);
   drop.hidden = true;
   sourceCtl.hidden = true;
   playbackSection.hidden = true;
@@ -506,8 +486,7 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
   frames.push(flow);
   sourceFrames.push(src);
   const idx = frames.length - 1;
-  appendFilmstripButton(idx);
-  filmstrip.hidden = frames.length < 2;
+  strip.appendFrame(flow);
   playbackSection.hidden = frames.length < 2;
   const hasSource = sourceFrames.some(Boolean);
   sourceCtl.hidden = !hasSource;
@@ -524,7 +503,7 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
     loadFrame(idx);
   } else {
     updateStats();
-    highlightStrip();
+    strip.setCurrent(current);
   }
 }
 
