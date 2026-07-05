@@ -1,8 +1,14 @@
 /** Shared types + worker message protocol for flow generation. Imported by both sides. */
 
-export type ModelTier = "dis" | "raft-small" | "raft-large";
+export type ModelTier = "dis" | "raft-large";
 export type DisPreset = "ultrafast" | "fast" | "medium";
 export type ExecutionProvider = "wasm" | "webgpu";
+
+/** How a progress update's done/total should be read by the UI. */
+export type ProgressKind = "bytes" | "count" | "indeterminate";
+
+/** Worker-side progress reporter, threaded into model loaders. */
+export type ProgressFn = (phase: string, done: number, total: number, kind: ProgressKind) => void;
 
 export interface GenOptions {
   tier: ModelTier;
@@ -44,6 +50,6 @@ export type WorkerRequest =
 export type WorkerResponse =
   | { type: "ready"; id: number; ep: ExecutionProvider }
   | { type: "flow"; id: number; index: number; flow: SerializedFlow }
-  | { type: "progress"; id: number; phase: string; done: number; total: number }
+  | { type: "progress"; id: number; phase: string; done: number; total: number; kind?: ProgressKind }
   | { type: "blob"; id: number; buffer: ArrayBuffer; mime: string; filename: string }
   | { type: "error"; id: number; message: string };

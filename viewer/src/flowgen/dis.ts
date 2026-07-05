@@ -8,7 +8,8 @@
  * public/vendor/opencv/README.md) so this ES import resolves to a factory.
  */
 
-import type { DisPreset, RGBAFrame, SerializedFlow } from "./types";
+import type { DisPreset, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
+import { fetchWithProgress } from "./fetch-progress";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type CV = any;
@@ -18,17 +19,30 @@ export interface DisEngine {
   dispose(): void;
 }
 
-export async function createDis(baseUrl: string, preset: DisPreset): Promise<DisEngine> {
+export async function createDis(
+  baseUrl: string,
+  preset: DisPreset,
+  onProgress?: ProgressFn,
+): Promise<DisEngine> {
   const jsUrl = baseUrl + "vendor/opencv/opencv-dis.js";
   const wasmUrl = baseUrl + "vendor/opencv/opencv-dis.wasm";
-  const factory = (await import(/* @vite-ignore */ jsUrl)).default as (opts: any) => Promise<CV>;
-  const cv: CV = await factory({ locateFile: () => wasmUrl });
 
-  // DISOpticalFlow preset enum (video/tracking.hpp): ULTRAFAST=0, FAST=1,
-  // MEDIUM=2. Passed as a plain int to create() so we don't depend on how
-  // embind exposes the class-scoped enum names.
+  // Prefetch the wasm ourselves so we can report download progress, then hand
+  // the bytes to the emscripten factory via `wasmBinary`.
+  onProgress?.("Downloading DIS model", 0, 0, "indeterminate");
+  const wasmBinary = await fetchWithProgress(wasmUrl, (loaded, total) =>
+    onProgress?.("Downloading DIS model", loaded, total, "bytes"),
+  );
+
+  onProgress?.("Initializing OpenCV", 0, 0, "indeterminate");
+  const factory = (await import(/* @vite-ignore */ jsUrl)).default as (opts: any) => Promise<CV>;
+  const cv: CV = await factory({ wasmBinary, locateFile: () => wasmUrl });
+
+  // DISOpticalFlow::create returns a Ptr<>, which the opencv.js bindings expose
+  // as an embind CONSTRUCTOR (not a static .create). Preset enum: ULTRAFAST=0,
+  // FAST=1, MEDIUM=2 (video/tracking.hpp).
   const presetConst = preset === "ultrafast" ? 0 : preset === "medium" ? 2 : 1;
-  const dis = cv.DISOpticalFlow.create(presetConst);
+  const dis = new cv.DISOpticalFlow(presetConst);
 
   // Reused scratch Mats.
   let rgba: any = null;
@@ -54,9 +68,18 @@ export async function createDis(baseUrl: string, preset: DisPreset): Promise<Dis
         gray1 = new cv.Mat();
         flowMat = new cv.Mat();
       }
-      toGray(a, gray0);
-      toGray(b, gray1);
-      dis.calc(gray0, gray1, flowMat);
+      try {
+        toGray(a, gray0);
+        toGray(b, gray1);
+        dis.calc(gray0, gray1, flowMat);
+      } catch (e) {
+        // opencv.js throws C++ exceptions as raw numbers (a pointer); surface a
+        // readable message instead of a bare "undefined".
+        if (typeof e === "number" && typeof cv.exceptionFromPtr === "function") {
+          throw new Error(`OpenCV DIS failed: ${cv.exceptionFromPtr(e).msg}`);
+        }
+        throw typeof e === "number" ? new Error(`OpenCV DIS failed (code ${e})`) : e;
+      }
       // flowMat is CV_32FC2, interleaved u,v — copy out.
       const src = flowMat.data32F as Float32Array;
       const data = new Float32Array(w * h * 2);

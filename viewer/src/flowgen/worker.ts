@@ -4,7 +4,14 @@
  * transferred buffer twice), and runs the CPU-heavy exporters.
  */
 
-import type { GenOptions, RGBAFrame, SerializedFlow, WorkerRequest, WorkerResponse } from "./types";
+import type {
+  GenOptions,
+  ProgressKind,
+  RGBAFrame,
+  SerializedFlow,
+  WorkerRequest,
+  WorkerResponse,
+} from "./types";
 import { createDis, type DisEngine } from "./dis";
 import { createRaft, type RaftEngine } from "./raft";
 import { buildRawZip } from "../export/zip";
@@ -43,11 +50,13 @@ async function colorPng(f: FlowField, maxFlow: number): Promise<Uint8Array> {
 
 async function init(id: number, opts: GenOptions, baseUrl: string) {
   prev = null;
+  const onProgress = (phase: string, done: number, total: number, kind: ProgressKind) =>
+    post({ type: "progress", id, phase, done, total, kind });
   if (opts.tier === "dis") {
-    dis = await createDis(baseUrl, opts.disPreset ?? "fast");
+    dis = await createDis(baseUrl, opts.disPreset ?? "fast", onProgress);
     post({ type: "ready", id, ep: "wasm" });
   } else {
-    raft = await createRaft(baseUrl, opts.tier, opts.ep);
+    raft = await createRaft(baseUrl, opts.tier, opts.ep, onProgress);
     post({ type: "ready", id, ep: raft.ep });
   }
 }

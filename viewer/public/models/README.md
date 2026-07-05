@@ -1,29 +1,34 @@
-# RAFT ONNX models
+# RAFT ONNX model
 
-The **Optimal** and **Best** flow-generation tiers run RAFT via onnxruntime-web.
-Both files are produced and verified by
+The **Best** flow-generation tier runs RAFT via onnxruntime-web. The file is
+produced and verified by
 [`.github/scripts/fetch_raft_models.py`](../../../.github/scripts/fetch_raft_models.py)
 (run through the `Build flow-gen assets` workflow) and committed here plainly
 (**no Git LFS** — Pages branch deploys don't resolve LFS pointers):
 
 ```
 raft-large-360x480.onnx        # ~64 MB  fp32 — Best tier
-raft-small-int8-360x480.onnx   # ~49 MB  int8 — Optimal tier
 ```
 
-They are fetched at runtime by `src/flowgen/raft.ts` (`BASE_URL + "models/..."`).
+Fetched at runtime by `src/flowgen/raft.ts` (`BASE_URL + "models/..."`).
+
+## No int8 tier
+
+An int8 tier was intended and briefly shipped, but **removed**: quantizing this
+RAFT (dynamically or via the zoo's block-quantized file) yields `ConvInteger` /
+block-quant ops that **onnxruntime-web's wasm EP does not implement** — the model
+loads on desktop ORT but fails in-browser with
+`Could not find an implementation for ConvInteger(10) …`. Desktop-CPU validation
+is therefore *not* representative of the wasm EP. Until a browser-runnable
+quantization exists, only the fp32 model ships.
 
 ## Source & provenance
 
-Both files derive from the single architecture shipped by the OpenCV model zoo
-`optical_flow_estimation_raft` (RAFT, 2023-aug), mirrored on HuggingFace at
+The file is the OpenCV model zoo `optical_flow_estimation_raft` (RAFT, 2023-aug),
+mirrored on HuggingFace at
 [`opencv/optical_flow_estimation_raft`](https://huggingface.co/opencv/optical_flow_estimation_raft):
 
 - **raft-large** = the zoo's fp32 export `optical_flow_estimation_raft_2023aug.onnx`, verbatim.
-- **raft-small** = that fp32 model **re-quantized by us** with
-  `onnxruntime.quantization.quantize_dynamic(..., weight_type=QInt8)`.
-  The zoo's own int8 file (`..._int8bq.onnx`) is *block-quantized* and onnxruntime
-  **rejects** it (`block_size must be 0 for per-tensor quantization`), so it is not used.
 
 ## Signature (verified, do not assume)
 

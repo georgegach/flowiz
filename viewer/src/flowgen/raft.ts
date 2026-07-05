@@ -10,8 +10,9 @@
  */
 
 import * as ort from "onnxruntime-web";
-import type { ExecutionProvider, RGBAFrame, SerializedFlow } from "./types";
+import type { ExecutionProvider, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
 import { planLetterbox, unletterboxFlow, type LetterboxPlan } from "./letterbox";
+import { fetchWithProgress } from "./fetch-progress";
 
 const INPUT_W = 480;
 const INPUT_H = 360;
@@ -21,12 +22,11 @@ interface ModelSpec {
   pixelRange: "signed" | "raw"; // signed = 2*x/255-1 ; raw = x (0..255)
 }
 
-const MODELS: Record<"raft-small" | "raft-large", ModelSpec> = {
-  // Both tiers are the OpenCV-zoo RAFT (2023aug): raft-large = fp32, raft-small
-  // = our per-tensor int8 dynamic quantization of it. Both want [-1,1] input —
-  // verified empirically (0.04px EPE on a known translation) by
-  // .github/scripts/fetch_raft_models.py; do not change without re-running it.
-  "raft-small": { file: "raft-small-int8-360x480.onnx", pixelRange: "signed" },
+const MODELS: Record<"raft-large", ModelSpec> = {
+  // OpenCV-zoo RAFT (2023aug) fp32. Wants [-1,1] input — verified empirically
+  // (0.04px EPE on a known translation) by .github/scripts/fetch_raft_models.py.
+  // (An int8 tier was dropped: its ConvInteger ops aren't implemented in
+  //  onnxruntime-web's wasm EP, only in desktop ORT.)
   "raft-large": { file: "raft-large-360x480.onnx", pixelRange: "signed" },
 };
 
@@ -38,8 +38,9 @@ export interface RaftEngine {
 
 export async function createRaft(
   baseUrl: string,
-  tier: "raft-small" | "raft-large",
+  tier: "raft-large",
   ep: "auto" | ExecutionProvider,
+  onProgress?: ProgressFn,
 ): Promise<RaftEngine> {
   ort.env.wasm.wasmPaths = baseUrl + "vendor/ort/";
   ort.env.wasm.numThreads = 1; // no COOP/COEP on GitHub Pages
@@ -47,16 +48,26 @@ export async function createRaft(
   const spec = MODELS[tier];
   const modelUrl = baseUrl + "models/" + spec.file;
 
+  onProgress?.("Downloading RAFT model", 0, 0, "indeterminate");
+  const modelBytes = new Uint8Array(
+    await fetchWithProgress(modelUrl, (loaded, total) =>
+      onProgress?.("Downloading RAFT model", loaded, total, "bytes"),
+    ),
+  );
+
   const wantGpu = ep !== "wasm" && typeof (self as any).navigator?.gpu !== "undefined";
   let session: ort.InferenceSession;
   let usedEp: ExecutionProvider = "wasm";
   try {
-    session = await ort.InferenceSession.create(modelUrl, {
+    onProgress?.(`Initializing session (${wantGpu ? "WebGPU" : "WASM"})`, 0, 0, "indeterminate");
+    session = await ort.InferenceSession.create(modelBytes, {
       executionProviders: wantGpu ? ["webgpu", "wasm"] : ["wasm"],
     });
     usedEp = wantGpu ? "webgpu" : "wasm";
-  } catch {
-    session = await ort.InferenceSession.create(modelUrl, { executionProviders: ["wasm"] });
+  } catch (e) {
+    if (!wantGpu) throw e; // wasm already failed — nothing to fall back to
+    onProgress?.("WebGPU unavailable — falling back to WASM", 0, 0, "indeterminate");
+    session = await ort.InferenceSession.create(modelBytes, { executionProviders: ["wasm"] });
     usedEp = "wasm";
   }
 

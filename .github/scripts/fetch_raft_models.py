@@ -30,14 +30,12 @@ import argparse
 import json
 import shutil
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
 import onnx
 import onnxruntime as ort
 from huggingface_hub import hf_hub_download, list_repo_files
-from onnxruntime.quantization import QuantType, quantize_dynamic
 
 REPO_ID = "opencv/optical_flow_estimation_raft"
 MODELS_DIR = Path(__file__).resolve().parents[2] / "viewer" / "public" / "models"
@@ -146,20 +144,12 @@ def main() -> int:
     print(f"\n--- downloading {fp32_name} ---")
     fp32 = Path(hf_hub_download(REPO_ID, fp32_name))
 
-    # Dynamic per-tensor int8 quantization (onnxruntime-web compatible).
-    tmp = Path(tempfile.mkdtemp())
-    int8 = tmp / "raft-int8.onnx"
-    print(f"\n--- quantizing (dynamic, QInt8) -> {int8.name} ---")
-    try:
-        quantize_dynamic(str(fp32), str(int8), weight_type=QuantType.QInt8)
-        print(f"  int8 size: {int8.stat().st_size / 1e6:.1f} MB")
-    except Exception as e:  # noqa: BLE001
-        print(f"  [WARN] quantize_dynamic failed: {e}")
-        int8 = None
-
+    # NOTE: we intentionally ship ONLY the fp32 model. Quantizing this RAFT to
+    # int8 (dynamically, producing ConvInteger, or via the zoo's block-quant
+    # file) yields ops that onnxruntime-web's wasm EP cannot run in-browser —
+    # they pass desktop-CPU validation but fail at session-create time with
+    # "Could not find an implementation for ConvInteger". See models/README.md.
     targets = [(fp32, "raft-large-360x480.onnx", "signed?")]
-    if int8:
-        targets.append((int8, "raft-small-int8-360x480.onnx", "signed?"))
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     reconcile = {}

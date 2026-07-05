@@ -435,6 +435,33 @@ button.secondary:active { transform: translateY(1px); }
 .gen-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .gen-actions button { padding: 8px 16px; border-radius: var(--radius-s); border: 1px solid var(--border-strong); background: var(--panel); color: var(--fg); cursor: pointer; }
 .gen-actions button.primary { border-color: transparent; }
+.gen-actions button:disabled { opacity: 0.55; cursor: default; }
+
+.gen-opt {
+  display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--fg);
+  margin: 2px 0 10px; cursor: pointer;
+}
+.gen-opt input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.gen-progress { margin: 4px 0 2px; }
+
+/* Indeterminate bar — a sliding sweep for phases without a known total. */
+.loader-bar.indeterminate { position: relative; }
+.loader-bar.indeterminate .loader-fill {
+  width: 40% !important; border-radius: 999px;
+  animation: loader-sweep 1.1s ease-in-out infinite;
+}
+@keyframes loader-sweep {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(310%); }
+}
+
+.gen-error {
+  margin: 6px 0 2px; padding: 10px 12px; border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  color: var(--fg); font-size: 12.5px; line-height: 1.45;
+  word-break: break-word; white-space: pre-wrap;
+}
 
 .export-menu { position: relative; }
 .export-menu #export { display: inline-flex; align-items: center; gap: 7px; width: 100%; justify-content: center; }

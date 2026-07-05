@@ -9,6 +9,7 @@ import type { FlowField } from "../flow";
 import type {
   ExecutionProvider,
   GenOptions,
+  ProgressKind,
   RGBAFrame,
   SerializedFlow,
   WorkerRequest,
@@ -44,7 +45,7 @@ export class FlowEngine {
   private pendingFlow = new Map<number, (f: FlowField) => void>();
   private pendingBlob: ((b: Blob) => void) | null = null;
   private errored: ((e: Error) => void) | null = null;
-  onProgress?: (phase: string, done: number, total: number) => void;
+  onProgress?: (phase: string, done: number, total: number, kind: ProgressKind) => void;
 
   constructor() {
     this.worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
@@ -75,7 +76,7 @@ export class FlowEngine {
         break;
       }
       case "progress":
-        this.onProgress?.(msg.phase, msg.done, msg.total);
+        this.onProgress?.(msg.phase, msg.done, msg.total, msg.kind ?? "indeterminate");
         break;
       case "blob":
         this.pendingBlob?.(new Blob([msg.buffer], { type: msg.mime }));
