@@ -15,9 +15,9 @@ export interface GenerateContext {
 }
 
 const TIERS: { id: ModelTier; label: string; size: string }[] = [
-  { id: "dis", label: "Fastest — DIS", size: "~3 MB" },
-  { id: "raft-small", label: "Optimal — RAFT-small", size: "~5 MB" },
-  { id: "raft-large", label: "Best — RAFT-large", size: "~20 MB" },
+  { id: "dis", label: "Fastest — DIS", size: "~4 MB" },
+  { id: "raft-small", label: "Optimal — RAFT (int8)", size: "~48 MB" },
+  { id: "raft-large", label: "Best — RAFT (fp32)", size: "~61 MB" },
 ];
 
 function baseUrl(): string {
