@@ -15,7 +15,7 @@ import { openVideo, type VideoFrameSource } from "../video/decode";
 import { openVideoFFmpeg } from "../video/ffmpeg-decode";
 
 export interface GenerateContext {
-  onFrames: (frames: FlowField[]) => void;
+  onFrames: (frames: FlowField[], source?: (ImageBitmap | null)[]) => void;
   notify: (msg: string) => void;
 }
 
@@ -208,6 +208,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       badge.textContent = `Backend: ${ep.toUpperCase()}`;
 
       const flows: FlowField[] = [];
+      const srcFrames: (ImageBitmap | null)[] = []; // real frames, aligned to flows
       const total = Math.max(1, src.frameCount - 1);
       const stem = file.name.replace(/\.[^.]+$/, "");
       const t0 = performance.now();
@@ -215,10 +216,16 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       setProgress("Computing flow", 0, total, "count");
       for await (const frame of src.frames()) {
         if (cancelled || stopRequested) break;
+        // Snapshot the frame before pushFrame transfers its pixel buffer, so we
+        // can later show the real footage behind the flow in the viewer.
+        const snap = createImageBitmap(
+          new ImageData(new Uint8ClampedArray(frame.data.slice(0)), frame.width, frame.height),
+        ).catch(() => null);
         const flow = await engine.pushFrame(frame, i++);
         if (flow) {
           flow.name = `${stem}_${String(flows.length + 1).padStart(4, "0")}.flo`;
           flows.push(flow);
+          srcFrames.push(await snap);
           const secs = (performance.now() - t0) / 1000;
           const per = secs / flows.length;
           setProgress(
@@ -227,6 +234,9 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
             total,
             "count",
           );
+        } else {
+          // First frame yields no flow (needs a pair) — drop its snapshot.
+          (await snap)?.close();
         }
       }
       src.close();
@@ -236,7 +246,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
         engine.dispose();
         engine = null;
         root.remove();
-        ctx.onFrames(flows);
+        ctx.onFrames(flows, srcFrames);
         if (stopRequested)
           ctx.notify(`Stopped — showing ${flows.length} frame${flows.length > 1 ? "s" : ""} generated so far.`);
         return;

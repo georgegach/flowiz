@@ -39,6 +39,7 @@ app.innerHTML = `
           <button id="learn-link" class="learn-hint">New to optical flow? Start here →</button>
         </div>
       </div>
+      <canvas id="source" class="source" hidden></canvas>
       <canvas id="canvas" hidden></canvas>
       <canvas id="arrows" class="arrows" hidden></canvas>
       <div id="inspector" class="inspector" hidden></div>
@@ -71,6 +72,11 @@ app.innerHTML = `
         <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
         <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
         <label><input id="showarrows" type="checkbox" /> Arrows</label>
+      </div>
+
+      <div class="ctl row" id="source-ctl" hidden>
+        <label><input id="showsource" type="checkbox" /> Source video</label>
+        <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" /></label>
       </div>
 
       <div class="ctl playback" id="playback" hidden>
@@ -114,10 +120,16 @@ const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
 const stageEl = document.querySelector<HTMLElement>("#stage")!;
 const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
+const sourceCanvas = document.querySelector<HTMLCanvasElement>("#source")!;
+const sourceCtl = document.querySelector<HTMLDivElement>("#source-ctl")!;
+const showSourceCb = document.querySelector<HTMLInputElement>("#showsource")!;
+const flowOpRow = document.querySelector<HTMLLabelElement>("#flowop-row")!;
+const flowOp = document.querySelector<HTMLInputElement>("#flowop")!;
 
 let renderer: FlowRenderer | null = null;
 let convertPanel: ConvertPanel | null = null;
 let frames: FlowField[] = [];
+let sourceFrames: (ImageBitmap | null)[] = []; // real video frames, aligned to `frames`
 let current = 0;
 let mode: Mode = "rgb";
 let playTimer: number | null = null;
@@ -134,6 +146,37 @@ function draw() {
   });
   updateStats();
   drawArrows();
+  drawSource();
+}
+
+// Draw the real video frame directly behind the flow, sized/positioned to
+// exactly overlay the flow canvas, and dim the flow so the footage shows
+// through. Toggled by "Source video"; only available for video-generated flows.
+function drawSource() {
+  const bmp = sourceFrames[current];
+  const on = showSourceCb.checked && !canvas.hidden && !!bmp;
+  if (!on) {
+    sourceCanvas.hidden = true;
+    canvas.style.opacity = "1";
+    return;
+  }
+  const cr = canvas.getBoundingClientRect();
+  const sr = stageEl.getBoundingClientRect();
+  const cssW = cr.width;
+  const cssH = cr.height;
+  const ratio = Math.min(3, window.devicePixelRatio || 1);
+  sourceCanvas.hidden = false;
+  sourceCanvas.width = Math.round(cssW * ratio);
+  sourceCanvas.height = Math.round(cssH * ratio);
+  sourceCanvas.style.width = `${cssW}px`;
+  sourceCanvas.style.height = `${cssH}px`;
+  sourceCanvas.style.left = `${cr.left - sr.left}px`;
+  sourceCanvas.style.top = `${cr.top - sr.top}px`;
+  const ctx = sourceCanvas.getContext("2d")!;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+  ctx.drawImage(bmp!, 0, 0, cssW, cssH);
+  canvas.style.opacity = String((parseFloat(flowOp.value) || 0) / 100);
 }
 
 // --- swirl indicator: sparse directional arrows over the flow ---
@@ -386,9 +429,19 @@ async function handleFiles(fileList: FileList | File[]) {
   showFrames(parsed);
 }
 
-function showFrames(parsed: FlowField[]) {
+function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   stopPlayback();
-  frames = parsed.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  // Sort flows by name; carry the matching source frame with each so the two
+  // stay aligned after sorting.
+  const order = parsed
+    .map((f, i) => ({ f, s: source?.[i] ?? null }))
+    .sort((a, b) => a.f.name.localeCompare(b.f.name, undefined, { numeric: true }));
+  frames = order.map((o) => o.f);
+  for (const b of sourceFrames) b?.close?.();
+  sourceFrames = source ? order.map((o) => o.s) : [];
+  const hasSource = sourceFrames.some(Boolean);
+  sourceCtl.hidden = !hasSource;
+  flowOpRow.hidden = !hasSource || !showSourceCb.checked;
   drop.hidden = true;
   canvas.hidden = false;
   controls.hidden = false;
@@ -600,8 +653,16 @@ legendCb.addEventListener("change", () => {
   }
 });
 arrowsCb.addEventListener("change", drawArrows);
+showSourceCb.addEventListener("change", () => {
+  flowOpRow.hidden = !showSourceCb.checked || sourceCtl.hidden;
+  drawSource();
+});
+flowOp.addEventListener("input", drawSource);
 window.addEventListener("resize", () => {
-  if (frames.length) drawArrows();
+  if (frames.length) {
+    drawArrows();
+    drawSource();
+  }
 });
 convertPanel = setupConvertPanel(document.querySelector<HTMLDivElement>("#convert-ctl")!, {
   getFrames: () => frames,

@@ -87,6 +87,14 @@ main { flex: 1; display: flex; min-height: 0; }
 #canvas {
   max-width: 100%; max-height: 100%; image-rendering: pixelated;
   border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  position: relative; z-index: 2; /* above the source video, below the arrows */
+}
+/* Source video frame drawn directly behind the flow (see "Source video" toggle);
+   flow canvas opacity is dialled down so the real footage shows through. */
+.source {
+  position: absolute; pointer-events: none; z-index: 1;
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  image-rendering: auto;
 }
 
 .dropzone {
@@ -202,8 +210,11 @@ button.secondary:active { transform: translateY(1px); }
 .thumb.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 .arrows {
-  position: absolute; pointer-events: none; border-radius: var(--radius-m);
+  position: absolute; pointer-events: none; border-radius: var(--radius-m); z-index: 3;
 }
+/* Inline "Flow" opacity slider shown next to the Source-video toggle. */
+.op-inline { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.op-inline input[type="range"] { flex: 1; min-width: 90px; }
 .inspector {
   position: absolute; pointer-events: none; background: rgba(0, 0, 0, 0.82); color: #fff;
   padding: 8px 10px; border-radius: var(--radius-s); font: 12px/1.35 var(--font-mono);
