@@ -34,9 +34,30 @@ app.innerHTML = `
     <section id="stage" class="stage">
       <div id="drop" class="dropzone">
         <div class="drop-inner">
-          <div class="big">Drop optical flow files here</div>
-          <div class="sub">.flo · KITTI .png · .pfm · .npy — or drop a video to generate flow — everything stays on your machine</div>
-          <label class="pick">Choose files<input id="file" type="file" multiple accept=".flo,.png,.pfm,.npy,.mp4,.webm,.mov,.mkv,.avi" hidden /></label>
+          <div class="drop-illo" aria-hidden="true">
+            <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="12" y="16" width="66" height="46" rx="6" stroke="currentColor" stroke-width="2.5"/>
+              <rect x="30" y="26" width="66" height="46" rx="6" fill="var(--panel)" stroke="currentColor" stroke-width="2.5"/>
+              <g stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M44 56c5-11 24-12 34-5"/>
+                <path d="M72 45l7 6-9 3"/>
+              </g>
+            </svg>
+          </div>
+          <h1 class="drop-title">Visualize optical flow in your browser</h1>
+          <p class="drop-sub">Drop files anywhere — everything runs locally, nothing is uploaded.</p>
+          <div class="drop-paths">
+            <div class="drop-path">
+              <h2>View flow files</h2>
+              <p>.flo · KITTI .png · .pfm · .npy</p>
+              <label class="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v5h5M14 3l6 6v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/></svg>Choose files<input id="file" type="file" multiple accept=".flo,.png,.pfm,.npy" hidden /></label>
+            </div>
+            <div class="drop-path">
+              <h2>Generate from video</h2>
+              <p>.mp4 · .webm · .mov — computed on-device</p>
+              <label class="pick pick-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M16 10l4-2v8l-4-2"/></svg>Choose video<input id="video-file" type="file" accept="video/*,.mkv,.avi,.m4v,.ogv" hidden /></label>
+            </div>
+          </div>
           <div class="examples">
             <span class="ex-label">or try an example</span>
             <div id="examples" class="ex-buttons"></div>
@@ -45,10 +66,10 @@ app.innerHTML = `
         </div>
       </div>
       <canvas id="source" class="source" hidden></canvas>
-      <canvas id="canvas" hidden></canvas>
+      <canvas id="canvas" tabindex="0" aria-label="Flow visualization — click a pixel to pin its readout" hidden></canvas>
       <canvas id="arrows" class="arrows" hidden></canvas>
       <div id="inspector" class="inspector" hidden></div>
-      <img id="legend" class="legend" hidden alt="color wheel legend" />
+      <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
       <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
@@ -62,33 +83,36 @@ app.innerHTML = `
     <aside id="controls" class="controls" hidden>
       <div class="ctl">
         <label>Encoding</label>
-        <div class="segmented" id="mode">
-          <button data-mode="rgb" class="active">Color</button>
-          <button data-mode="uv">UV</button>
-          <button data-mode="mag">Magnitude</button>
-          <button data-mode="angle">Angle</button>
+        <div class="segmented" id="mode" role="group" aria-label="Encoding">
+          <button data-mode="rgb" class="active" aria-pressed="true">Color</button>
+          <button data-mode="uv" aria-pressed="false">UV</button>
+          <button data-mode="mag" aria-pressed="false">Magnitude</button>
+          <button data-mode="angle" aria-pressed="false">Angle</button>
         </div>
       </div>
       <div class="ctl">
-        <div class="maxflow-head"><label>Max flow</label><span id="maxval" class="val-chip"></span></div>
-        <input id="maxflow" type="range" min="0.1" max="100" step="0.1" />
+        <div class="maxflow-head"><label for="maxflow">Max flow</label><span id="maxval" class="val-chip"></span></div>
+        <input id="maxflow" type="range" min="0.1" max="100" step="0.1" aria-label="Max flow (pixels)" />
       </div>
       <div class="ctl row">
         <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
         <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
         <label><input id="showarrows" type="checkbox" /> Arrows</label>
       </div>
+      <div class="ctl row" id="hlradius-ctl" hidden>
+        <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
+      </div>
 
       <div class="ctl row" id="source-ctl" hidden>
         <label><input id="showsource" type="checkbox" /> Source video</label>
-        <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" /></label>
+        <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" aria-label="Flow opacity over source video" /></label>
       </div>
 
       <div class="ctl playback" id="playback" hidden>
         <label>Playback</label>
         <div class="play-row">
           <button id="play" class="play-btn" title="Play / pause" aria-label="Play / pause">${PLAY_SVG}</button>
-          <input id="fps" type="range" min="1" max="30" step="1" value="8" />
+          <input id="fps" type="range" min="1" max="30" step="1" value="8" aria-label="Playback speed (frames per second)" />
           <span id="fpsval" class="fps-val">8 fps</span>
         </div>
       </div>
@@ -132,6 +156,8 @@ const sourceCtl = document.querySelector<HTMLDivElement>("#source-ctl")!;
 const showSourceCb = document.querySelector<HTMLInputElement>("#showsource")!;
 const flowOpRow = document.querySelector<HTMLLabelElement>("#flowop-row")!;
 const flowOp = document.querySelector<HTMLInputElement>("#flowop")!;
+const hlRadiusInput = document.querySelector<HTMLInputElement>("#hlradius")!;
+const hlRadiusCtl = document.querySelector<HTMLDivElement>("#hlradius-ctl")!;
 
 let renderer: FlowRenderer | null = null;
 let convertPanel: ConvertPanel | null = null;
@@ -154,6 +180,7 @@ function draw() {
   updateStats();
   drawArrows();
   drawSource();
+  if (inspectorPin) renderInspector(inspectorPin.fx, inspectorPin.fy, inspectorPin.left, inspectorPin.top);
 }
 
 // Draw the real video frame directly behind the flow, sized/positioned to
@@ -463,6 +490,7 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   loadFrame(0);
   renderLegend();
   legendImg.hidden = !legendCb.checked;
+  hlRadiusCtl.hidden = legendImg.hidden;
 }
 
 // --- background generation: frames stream in one at a time ---
@@ -497,6 +525,7 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
     loadFrame(0);
     renderLegend();
     legendImg.hidden = !legendCb.checked;
+    hlRadiusCtl.hidden = legendImg.hidden;
   } else if (playTimer === null && current === idx - 1) {
     // Follow the newest frame only if the user is sitting on the previous last
     // frame and not playing — don't yank the view if they navigated away.
@@ -609,36 +638,90 @@ function renderLegend() {
   });
 }
 
-// --- inspector: per-pixel readout on hover ---
-canvas.addEventListener("mousemove", (e) => {
+// --- inspector: per-pixel readout on hover; click to pin ---
+// Pinned readout persists after the cursor leaves and re-renders as frames
+// change. left/top are stage-relative CSS px (the box is stage-absolute, so
+// positioning from the stage rect — not the canvas rect — keeps it aligned).
+let inspectorPin: { fx: number; fy: number; left: number; top: number } | null = null;
+
+function renderInspector(fx: number, fy: number, left: number, top: number) {
   const f = frames[current];
-  if (!f) return;
-  const rect = canvas.getBoundingClientRect();
-  const x = Math.floor(((e.clientX - rect.left) / rect.width) * f.width);
-  const y = Math.floor(((e.clientY - rect.top) / rect.height) * f.height);
-  if (x < 0 || y < 0 || x >= f.width || y >= f.height) return;
-  const i = (y * f.width + x) * 2;
+  if (!f || fx < 0 || fy < 0 || fx >= f.width || fy >= f.height) {
+    inspector.hidden = true;
+    return;
+  }
+  const i = (fy * f.width + fx) * 2;
   const u = f.data[i];
   const v = f.data[i + 1];
   inspector.hidden = false;
-  inspector.style.left = `${e.clientX - rect.left + 14}px`;
-  inspector.style.top = `${e.clientY - rect.top + 14}px`;
+  inspector.style.left = `${left}px`;
+  inspector.style.top = `${top}px`;
   inspector.innerHTML = `
-    <div>x,y <b>${x},${y}</b></div>
+    ${inspectorPin ? '<div class="ins-pin">pinned · click to release</div>' : ""}
+    <div>x,y <b>${fx},${fy}</b></div>
     <div>u <b>${u.toFixed(3)}</b></div>
     <div>v <b>${v.toFixed(3)}</b></div>
     <div>|·| <b>${Math.hypot(u, v).toFixed(3)}</b></div>
     <div>∠ <b>${((Math.atan2(v, u) * 180) / Math.PI).toFixed(1)}°</b></div>`;
   const mf = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
   drawLegendArrow(u / mf, v / mf);
-});
-canvas.addEventListener("mouseleave", () => {
+}
+
+function pixelAt(e: MouseEvent, f: FlowField) {
+  const rect = canvas.getBoundingClientRect();
+  const sr = stageEl.getBoundingClientRect();
+  return {
+    fx: Math.floor(((e.clientX - rect.left) / rect.width) * f.width),
+    fy: Math.floor(((e.clientY - rect.top) / rect.height) * f.height),
+    left: e.clientX - sr.left + 14,
+    top: e.clientY - sr.top + 14,
+  };
+}
+
+function unpinInspector() {
+  inspectorPin = null;
   inspector.hidden = true;
   legendArrow.hidden = true;
+}
+
+canvas.addEventListener("mousemove", (e) => {
+  if (inspectorPin) return; // frozen on the pinned pixel
+  const f = frames[current];
+  if (!f) return;
+  const p = pixelAt(e, f);
+  renderInspector(p.fx, p.fy, p.left, p.top);
+});
+canvas.addEventListener("mouseleave", () => {
+  if (inspectorPin) return;
+  inspector.hidden = true;
+  legendArrow.hidden = true;
+});
+canvas.addEventListener("click", (e) => {
+  const f = frames[current];
+  if (!f) return;
+  if (inspectorPin) {
+    unpinInspector();
+    return;
+  }
+  const p = pixelAt(e, f);
+  if (p.fx < 0 || p.fy < 0 || p.fx >= f.width || p.fy >= f.height) return;
+  inspectorPin = p;
+  renderInspector(p.fx, p.fy, p.left, p.top);
 });
 
 // --- legend hover: isolate the hovered direction/speed in the flow image ---
 let hlRadius = 0.06; // selection radius in normalized units (wheel radius = 1)
+let legendPinned = false; // click-to-pin keeps the isolation after the cursor leaves
+
+function unpinLegend() {
+  legendPinned = false;
+  legendImg.classList.remove("pinned");
+  legendArrow.hidden = true;
+  if (highlight) {
+    highlight = null;
+    draw();
+  }
+}
 
 function updateLegendHover(clientX: number, clientY: number) {
   const rect = legendImg.getBoundingClientRect();
@@ -660,6 +743,17 @@ function updateLegendHover(clientX: number, clientY: number) {
 }
 
 legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
+legendImg.addEventListener("click", () => {
+  legendPinned = !legendPinned;
+  legendImg.classList.toggle("pinned", legendPinned);
+});
+legendImg.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    legendPinned = !legendPinned;
+    legendImg.classList.toggle("pinned", legendPinned);
+  }
+});
 legendImg.addEventListener(
   "wheel",
   (e) => {
@@ -667,14 +761,29 @@ legendImg.addEventListener(
     // Exponential scaling proportional to the wheel delta — smooth on
     // trackpads (many small deltas) and stepped on notched mouse wheels.
     hlRadius = Math.min(1.5, Math.max(0.02, hlRadius * Math.exp(-e.deltaY * 0.005)));
+    syncHlRadiusInput();
     updateLegendHover(e.clientX, e.clientY);
   },
   { passive: false },
 );
 legendImg.addEventListener("mouseleave", () => {
+  if (legendPinned) return; // keep the isolation while pinned
   legendArrow.hidden = true;
   if (highlight) {
     highlight = null;
+    draw();
+  }
+});
+
+// Highlight-radius slider — the keyboard/touch equivalent of the wheel-resize.
+function syncHlRadiusInput() {
+  hlRadiusInput.value = String(Math.min(0.6, Math.max(0.02, hlRadius)));
+}
+hlRadiusInput.addEventListener("input", () => {
+  hlRadius = parseFloat(hlRadiusInput.value);
+  if (highlight) {
+    highlight = { ...highlight, radius: hlRadius };
+    drawLegendArrow(highlight.u, highlight.v, hlRadius);
     draw();
   }
 });
@@ -684,8 +793,11 @@ document.querySelector("#mode")!.addEventListener("click", (e) => {
   const btn = (e.target as HTMLElement).closest("button");
   if (!btn) return;
   mode = btn.dataset.mode as Mode;
-  document.querySelectorAll("#mode button").forEach((b) => b.classList.remove("active"));
-  btn.classList.add("active");
+  document.querySelectorAll("#mode button").forEach((b) => {
+    const on = b === btn;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
   draw();
 });
 maxflow.addEventListener("input", () => {
@@ -695,13 +807,8 @@ maxflow.addEventListener("input", () => {
 maskCb.addEventListener("change", draw);
 legendCb.addEventListener("change", () => {
   legendImg.hidden = !legendCb.checked || !frames.length;
-  if (legendImg.hidden) {
-    legendArrow.hidden = true;
-    if (highlight) {
-      highlight = null;
-      draw();
-    }
-  }
+  hlRadiusCtl.hidden = legendImg.hidden;
+  if (legendImg.hidden) unpinLegend();
 });
 arrowsCb.addEventListener("change", drawArrows);
 showSourceCb.addEventListener("change", () => {
@@ -749,7 +856,20 @@ jobManager = new FlowJobManager({
 // keyboard scrubbing — suspended while a modal is open, and ignored when a form
 // control is focused (so arrows on a slider adjust it instead of scrubbing).
 window.addEventListener("keydown", (e) => {
-  if (!frames.length || isModalOpen()) return;
+  if (isModalOpen()) return;
+  if (e.key === "Escape") {
+    let acted = false;
+    if (legendPinned) {
+      unpinLegend();
+      acted = true;
+    }
+    if (inspectorPin) {
+      unpinInspector();
+      acted = true;
+    }
+    if (acted) return;
+  }
+  if (!frames.length) return;
   const t = e.target as HTMLElement | null;
   if (t && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
   if (e.key === "ArrowRight") loadFrame((current + 1) % frames.length);
@@ -794,6 +914,10 @@ window.addEventListener("drop", (e) => {
   if (e.dataTransfer?.files.length) handleFiles(e.dataTransfer.files);
 });
 document.querySelector<HTMLInputElement>("#file")!.addEventListener("change", (e) => {
+  const input = e.target as HTMLInputElement;
+  if (input.files) handleFiles(input.files);
+});
+document.querySelector<HTMLInputElement>("#video-file")!.addEventListener("change", (e) => {
   const input = e.target as HTMLInputElement;
   if (input.files) handleFiles(input.files);
 });

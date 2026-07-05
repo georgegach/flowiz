@@ -37,17 +37,17 @@ export function setupConvertPanel(container: HTMLElement, ctx: ConvertContext): 
     <label>Convert format</label>
     <div class="convert">
       <div class="convert-from">from <b id="cv-from">—</b> to</div>
-      <div class="segmented formats" id="cv-fmt">
+      <div class="segmented formats" id="cv-fmt" role="group" aria-label="Target format">
         ${FORMATS.map(
           (m) =>
-            `<button data-fmt="${m.id}" title="${m.desc}" class="${m.id === fmt ? "active" : ""}">
+            `<button data-fmt="${m.id}" title="${m.desc}" aria-pressed="${m.id === fmt}" class="${m.id === fmt ? "active" : ""}">
                <span class="fmt-name">${m.label}</span><span class="fmt-sub">${m.sub}</span>
              </button>`,
         ).join("")}
       </div>
-      <div class="segmented scope" id="cv-scope" hidden>
-        <button data-scope="one">This frame</button>
-        <button data-scope="all">All frames</button>
+      <div class="segmented scope" id="cv-scope" role="group" aria-label="Scope" hidden>
+        <button data-scope="one" aria-pressed="false">This frame</button>
+        <button data-scope="all" aria-pressed="false">All frames</button>
       </div>
       <p class="convert-note" id="cv-note" hidden></p>
       <button id="cv-go" class="primary"><span class="cv-ico">${DL_SVG}</span><span id="cv-go-label">Download</span></button>
@@ -76,12 +76,16 @@ export function setupConvertPanel(container: HTMLElement, ctx: ConvertContext): 
     const cur = frames[ctx.getCurrent()];
     fromEl.textContent = cur ? sourceLabel(cur.name) : "—";
 
-    fmtBox.querySelectorAll("button").forEach((b) =>
-      b.classList.toggle("active", (b as HTMLElement).dataset.fmt === fmt),
-    );
-    scopeBox.querySelectorAll("button").forEach((b) =>
-      b.classList.toggle("active", (b as HTMLElement).dataset.scope === scope),
-    );
+    fmtBox.querySelectorAll("button").forEach((b) => {
+      const on = (b as HTMLElement).dataset.fmt === fmt;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    scopeBox.querySelectorAll("button").forEach((b) => {
+      const on = (b as HTMLElement).dataset.scope === scope;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
     scopeBox.querySelector<HTMLButtonElement>('[data-scope="all"]')!.textContent =
       `All ${frames.length} frames`;
 

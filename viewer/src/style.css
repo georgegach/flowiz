@@ -109,13 +109,24 @@ main { flex: 1; display: flex; min-height: 0; }
   border-color: var(--accent); background: var(--panel-2);
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
-.drop-inner .big { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
-.drop-inner .sub { color: var(--muted); margin: 8px 0 22px; }
-.pick {
-  display: inline-block; background: var(--accent); color: #fff; padding: 10px 18px;
-  border-radius: var(--radius-m); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm);
+.drop-illo svg { width: 120px; height: 80px; color: var(--muted); transition: color .15s; }
+.dropzone.hover .drop-illo svg { color: var(--accent); }
+.drop-title { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 12px 0 4px; }
+.drop-sub { color: var(--muted); margin: 0 0 22px; }
+.drop-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 6px; text-align: center; }
+.drop-path {
+  border: 1px solid var(--border); border-radius: var(--radius-m); padding: 18px 16px; background: var(--panel-2);
 }
+.drop-path h2 { font-size: 14px; margin: 0 0 2px; }
+.drop-path p { color: var(--muted); font-size: 12.5px; margin: 0 0 12px; }
+.pick {
+  display: inline-flex; align-items: center; background: var(--accent); color: var(--accent-contrast);
+  padding: 10px 18px; border-radius: var(--radius-m); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm);
+}
+.pick svg { width: 15px; height: 15px; margin-right: 7px; }
 .pick:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.pick-alt { background: var(--panel); color: var(--fg); border: 1px solid var(--border-strong); box-shadow: none; }
+.pick-alt:hover { background: var(--panel-2); }
 .examples { margin-top: 26px; }
 .ex-label { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-bottom: 12px; }
 .ex-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -236,6 +247,11 @@ button.secondary:active { transform: translateY(1px); }
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
   cursor: crosshair; pointer-events: auto;
 }
+.legend.pinned { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 50%; }
+.inspector .ins-pin {
+  color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 4px; font-family: var(--font-sans);
+}
 .legend-arrow {
   position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
   pointer-events: none;
@@ -308,8 +324,9 @@ button.secondary:active { transform: translateY(1px); }
     min-height: 46vh;
   }
   .dropzone { width: 100%; padding: 34px 18px; }
-  .drop-inner .big { font-size: 19px; }
-  .drop-inner .sub { margin: 8px 0 18px; }
+  .drop-title { font-size: 19px; }
+  .drop-sub { margin: 0 0 18px; }
+  .drop-paths { grid-template-columns: 1fr; }
 
   .controls {
     width: 100%; border-left: none; border-top: 1px solid var(--border);
