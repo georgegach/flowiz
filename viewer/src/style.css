@@ -45,6 +45,9 @@ body {
   color: var(--fg);
   font: 14px/1.5 var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Disable the double-tap-to-zoom gesture (and its 300ms delay) while keeping
+     scroll + pinch-zoom. */
+  touch-action: manipulation;
 }
 #app { display: flex; flex-direction: column; height: 100vh; }
 
@@ -62,8 +65,7 @@ button, a, input, label { transition: background-color .15s, border-color .15s, 
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-.brand { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
-.brand-mark { width: 20px; height: 20px; color: var(--accent); flex: none; }
+.brand { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
 .topbar nav { display: flex; align-items: center; gap: 6px; }
 .topbar a {
   color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500;
@@ -283,20 +285,18 @@ button.secondary:active { transform: translateY(1px); }
   min-width: 120px; box-shadow: var(--shadow-md);
 }
 .inspector b { float: right; }
+.legend-wrap { position: relative; width: 140px; height: 140px; margin: 0 auto; }
 .legend {
-  position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-  cursor: crosshair; pointer-events: auto;
+  display: block; width: 100%; height: 100%; cursor: crosshair; pointer-events: auto;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
 }
+.legend[hidden] { display: none; }
 .legend.pinned { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 50%; }
 .inspector .ins-pin {
   color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
   margin-bottom: 4px; font-family: var(--font-sans);
 }
-.legend-arrow {
-  position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
-  pointer-events: none;
-}
+.legend-arrow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .toasts {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 60;
@@ -376,7 +376,6 @@ button.secondary:active { transform: translateY(1px); }
   }
 
   .stagebar { top: 10px; left: 10px; }
-  .legend, .legend-arrow { right: 14px; bottom: 14px; width: 108px; height: 108px; }
   .toasts { bottom: 12px; width: calc(100vw - 24px); }
 }
 
@@ -627,8 +626,8 @@ button.secondary:active { transform: translateY(1px); }
 .gen-cache-clear:hover:not(:disabled) { border-color: var(--border-strong); }
 .gen-cache-clear:disabled { opacity: 0.5; cursor: default; }
 
-/* --- topbar status chip (background generation) --- */
-.statuschip { position: relative; }
+/* --- status chip (background generation) — floats just under the topbar --- */
+.statuschip { position: fixed; top: 66px; right: 18px; z-index: 25; }
 .statuschip[hidden] { display: none; }
 .statuschip-btn {
   display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft);

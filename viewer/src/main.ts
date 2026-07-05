@@ -21,7 +21,7 @@ const THEME_SVG = `<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
-    <div class="brand"><svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"><g stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M3 15c2.5-5.5 15.5-5.5 18 0"/><path d="M3 9c2.5-5.5 15.5-5.5 18 0"/></g></svg><strong>flowiz</strong></div>
+    <div class="brand"><strong>flowiz</strong></div>
     <nav aria-label="Primary">
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
@@ -69,8 +69,6 @@ app.innerHTML = `
       <canvas id="canvas" tabindex="0" aria-label="Flow visualization — click a pixel to pin its readout" hidden></canvas>
       <canvas id="arrows" class="arrows" hidden></canvas>
       <div id="inspector" class="inspector" hidden></div>
-      <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
-      <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
       <div id="stagebar" class="stagebar" hidden></div>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
@@ -98,15 +96,23 @@ app.innerHTML = `
         <h3 class="ctl-group-t">Display</h3>
         <div class="ctl-toggles">
           <label><input id="mask" type="checkbox" checked /> Mask invalid</label>
-          <label><input id="showlegend" type="checkbox" checked /> Overlay legend</label>
+          <label><input id="showlegend" type="checkbox" checked /> Show legend</label>
           <label><input id="showarrows" type="checkbox" /> Arrows</label>
-        </div>
-        <div id="hlradius-ctl" hidden>
-          <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
         </div>
         <div class="ctl-toggles" id="source-ctl" hidden>
           <label><input id="showsource" type="checkbox" /> Source video</label>
           <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" aria-label="Flow opacity over source video" /></label>
+        </div>
+      </section>
+
+      <section class="ctl-group" id="legend-card" hidden>
+        <h3 class="ctl-group-t">Color wheel</h3>
+        <div class="legend-wrap">
+          <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
+          <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
+        </div>
+        <div id="hlradius-ctl" hidden>
+          <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
         </div>
       </section>
 
@@ -143,6 +149,7 @@ const controls = document.querySelector<HTMLElement>("#controls")!;
 const inspector = document.querySelector<HTMLDivElement>("#inspector")!;
 const legendImg = document.querySelector<HTMLImageElement>("#legend")!;
 const legendArrow = document.querySelector<HTMLCanvasElement>("#legendarrow")!;
+const legendCard = document.querySelector<HTMLElement>("#legend-card")!;
 const loaderEl = document.querySelector<HTMLDivElement>("#loader")!;
 const loaderFill = document.querySelector<HTMLDivElement>("#loader-fill")!;
 const loaderMeta = document.querySelector<HTMLDivElement>("#loader-meta")!;
@@ -505,8 +512,7 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   strip.setFrames(frames);
   loadFrame(0);
   renderLegend();
-  legendImg.hidden = !legendCb.checked;
-  hlRadiusCtl.hidden = legendImg.hidden;
+  setLegendVisible(legendCb.checked);
 }
 
 // --- background generation: frames stream in one at a time ---
@@ -541,13 +547,10 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
     controls.hidden = false;
     loadFrame(0);
     renderLegend();
-    legendImg.hidden = !legendCb.checked;
-    hlRadiusCtl.hidden = legendImg.hidden;
-  } else if (playTimer === null && current === idx - 1) {
-    // Follow the newest frame only if the user is sitting on the previous last
-    // frame and not playing — don't yank the view if they navigated away.
-    loadFrame(idx);
+    setLegendVisible(legendCb.checked);
   } else {
+    // Never jump to a newly generated frame — leave the user on whatever frame
+    // they're inspecting; only refresh the frame count + strip highlight.
     updateStats();
     strip.setCurrent(current);
   }
@@ -644,7 +647,17 @@ function backingSize(cssSize: number): number {
   return Math.round(cssSize * ratio);
 }
 
-// Floating on-canvas legend (opt-in via the checkbox).
+// Show/hide the in-panel color-wheel card (opt-in via the checkbox), keeping
+// legendImg.hidden as the source of truth the hover/pin code reads.
+function setLegendVisible(on: boolean) {
+  const show = on && frames.length > 0;
+  legendImg.hidden = !show;
+  legendCard.hidden = !show;
+  hlRadiusCtl.hidden = !show;
+  if (!show) unpinLegend();
+}
+
+// The color-wheel legend (opt-in via the checkbox), rendered in the sidebar.
 function renderLegend() {
   const css = 140;
   const px = backingSize(css);
@@ -822,11 +835,7 @@ maxflow.addEventListener("input", () => {
   draw();
 });
 maskCb.addEventListener("change", draw);
-legendCb.addEventListener("change", () => {
-  legendImg.hidden = !legendCb.checked || !frames.length;
-  hlRadiusCtl.hidden = legendImg.hidden;
-  if (legendImg.hidden) unpinLegend();
-});
+legendCb.addEventListener("change", () => setLegendVisible(legendCb.checked));
 arrowsCb.addEventListener("change", drawArrows);
 showSourceCb.addEventListener("change", () => {
   flowOpRow.hidden = !showSourceCb.checked || sourceCtl.hidden;
@@ -873,9 +882,8 @@ const statusChip = createStatusChip({
   stop: (id) => jobManager.stop(id),
   cancel: (id) => jobManager.cancel(id),
 });
-document
-  .querySelector("header nav")!
-  .insertBefore(statusChip.el, document.querySelector("#theme"));
+// Floats just under the topbar (CSS positions it) rather than crowding the nav.
+document.body.appendChild(statusChip.el);
 jobManager = new FlowJobManager({
   onStreamStart: () => beginStream(),
   onFrame: (_job, flow, src) => appendFrame(flow, src),
