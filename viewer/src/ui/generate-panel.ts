@@ -92,6 +92,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
   let engine: FlowEngine | null = null;
   let cancelled = false;
   let running = false;
+  let stopRequested = false;
 
   const syncWebgpuVisibility = () => {
     // WebGPU only matters for the RAFT (onnxruntime) tier.
@@ -160,14 +161,24 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
   };
   cancelBtn.addEventListener("click", close);
 
+  // Early stop: halt the compute loop but keep whatever frames are already done.
+  const requestStop = () => {
+    if (!running || stopRequested) return;
+    stopRequested = true;
+    goBtn.textContent = "Stopping…";
+    goBtn.disabled = true;
+  };
+
   const run = async () => {
     if (running) return;
     running = true;
     cancelled = false;
+    stopRequested = false;
     errorEl.hidden = true;
     badge.hidden = true;
-    goBtn.disabled = true;
-    goBtn.textContent = "Generate";
+    // The primary button becomes the stop control while a run is in flight.
+    goBtn.disabled = false;
+    goBtn.textContent = "Stop & show";
     tierBox.style.pointerEvents = "none";
 
     const stride = parseInt(strideSel.value, 10);
@@ -203,7 +214,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       let i = 0;
       setProgress("Computing flow", 0, total, "count");
       for await (const frame of src.frames()) {
-        if (cancelled) break;
+        if (cancelled || stopRequested) break;
         const flow = await engine.pushFrame(frame, i++);
         if (flow) {
           flow.name = `${stem}_${String(flows.length + 1).padStart(4, "0")}.flo`;
@@ -220,16 +231,27 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       }
       src.close();
       if (cancelled) return;
-      if (!flows.length) throw new Error("No flow frames were produced (video too short for this stride?).");
-      engine.dispose();
-      engine = null;
-      root.remove();
-      ctx.onFrames(flows);
+      if (flows.length) {
+        // Completed, or stopped early with partial results — show what we have.
+        engine.dispose();
+        engine = null;
+        root.remove();
+        ctx.onFrames(flows);
+        if (stopRequested)
+          ctx.notify(`Stopped — showing ${flows.length} frame${flows.length > 1 ? "s" : ""} generated so far.`);
+        return;
+      }
+      if (stopRequested) {
+        close(); // stopped before any frame was computed — nothing to show
+        return;
+      }
+      throw new Error("No flow frames were produced (video too short for this stride?).");
     } catch (err) {
       if (cancelled) return;
       showError((err as Error)?.message || String(err) || "Generation failed.");
     }
   };
 
-  goBtn.addEventListener("click", run);
+  // Same button starts the run, then acts as the stop control while it runs.
+  goBtn.addEventListener("click", () => (running ? requestStop() : run()));
 }

@@ -246,7 +246,9 @@ button.secondary:active { transform: translateY(1px); }
 }
 .loader-meta {
   margin-top: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Wrap long status strings instead of letting them force the card wider
+     (nowrap here made the modal grow/overflow on phones as phases changed). */
+  overflow-wrap: anywhere; min-height: 1.1em;
 }
 
 @media (max-width: 720px) {
@@ -434,7 +436,12 @@ button.secondary:active { transform: translateY(1px); }
   background: rgba(12, 14, 18, 0.55); backdrop-filter: blur(3px);
   overflow-y: auto; padding: 20px; /* scroll + never clip a tall card on short screens */
 }
-.gen-card { width: min(440px, 92%); max-height: none; }
+.gen-card {
+  /* min-width:0 stops the grid item from growing to its widest child's
+     min-content; box-sizing keeps padding inside the width. Together these
+     pin the card to a stable width so status updates never resize it. */
+  width: min(440px, 100%); min-width: 0; max-height: none; box-sizing: border-box;
+}
 .gen-file {
   font-family: var(--font-mono); font-size: 12px; color: var(--muted);
   margin-bottom: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
