@@ -10,10 +10,19 @@ export type ProgressKind = "bytes" | "count" | "indeterminate";
 /** Worker-side progress reporter, threaded into model loaders. */
 export type ProgressFn = (phase: string, done: number, total: number, kind: ProgressKind) => void;
 
+/** Optional DIS knobs (OpenCV setters). Omitted fields keep the preset defaults. */
+export interface DisTuning {
+  finestScale?: number; // dis.setFinestScale
+  gradientDescentIterations?: number; // dis.setGradientDescentIterations
+  patchSize?: number; // dis.setPatchSize
+  variationalRefinement?: boolean; // false → setVariationalRefinementIterations(0)
+}
+
 export interface GenOptions {
   tier: ModelTier;
   raftModelId?: string; // registry id (models.ts) — RAFT only; resolved via raftModelById()
   disPreset?: DisPreset; // DIS only
+  disTuning?: DisTuning; // DIS only
   ep: "auto" | ExecutionProvider; // default "auto"
 }
 

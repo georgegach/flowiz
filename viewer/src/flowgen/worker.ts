@@ -54,7 +54,7 @@ async function init(id: number, opts: GenOptions, baseUrl: string) {
   const onProgress = (phase: string, done: number, total: number, kind: ProgressKind) =>
     post({ type: "progress", id, phase, done, total, kind });
   if (opts.tier === "dis") {
-    dis = await createDis(baseUrl, opts.disPreset ?? "fast", onProgress);
+    dis = await createDis(baseUrl, opts.disPreset ?? "fast", opts.disTuning, onProgress);
     post({ type: "ready", id, ep: "wasm" });
   } else {
     raft = await createRaft(baseUrl, raftModelById(opts.raftModelId), opts.ep, onProgress);

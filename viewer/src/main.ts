@@ -8,6 +8,8 @@ import { setupConvertPanel, type ConvertPanel } from "./ui/convert-panel";
 import { openGeneratePanel } from "./ui/generate-panel";
 import { toast } from "./ui/toast";
 import { isModalOpen } from "./ui/modal";
+import { FlowJobManager } from "./flowgen/job-manager";
+import { createStatusChip } from "./ui/status-chip";
 
 const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
 
@@ -377,16 +379,19 @@ function updateStats() {
     <div><span>File</span><b class="fname">${f.name}</b></div>`;
 }
 
+function appendFilmstripButton(i: number) {
+  const f = frames[i];
+  const b = document.createElement("button");
+  b.className = "thumb";
+  b.textContent = String(i + 1);
+  b.title = f.name;
+  b.onclick = () => loadFrame(i);
+  filmstrip.appendChild(b);
+}
+
 function buildFilmstrip() {
   filmstrip.innerHTML = "";
-  frames.forEach((f, i) => {
-    const b = document.createElement("button");
-    b.className = "thumb";
-    b.textContent = String(i + 1);
-    b.title = f.name;
-    b.onclick = () => loadFrame(i);
-    filmstrip.appendChild(b);
-  });
+  frames.forEach((_, i) => appendFilmstripButton(i));
   filmstrip.hidden = frames.length < 2;
 }
 
@@ -403,9 +408,17 @@ function setLoader(done: number, total: number, name?: string) {
 
 async function handleFiles(fileList: FileList | File[]) {
   const all = Array.from(fileList);
-  const video = all.find((f) => f.type.startsWith("video/") || VIDEO_RE.test(f.name));
-  if (video) {
-    openGeneratePanel(video, { onFrames: showFrames, notify: showError });
+  const videos = all.filter((f) => f.type.startsWith("video/") || VIDEO_RE.test(f.name));
+  if (videos.length) {
+    // One settings dialog configures every dropped video; they queue and stream
+    // into the viewer one after another in the background.
+    openGeneratePanel(videos, {
+      enqueue: (fs, settings) => fs.forEach((f) => jobManager.enqueue(f, settings)),
+      notify: showError,
+    });
+    if (all.length > videos.length) {
+      showError("Flow files ignored — generating from the dropped video(s).", "info");
+    }
     return;
   }
   const files = all;
@@ -469,6 +482,50 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   loadFrame(0);
   renderLegend();
   legendImg.hidden = !legendCb.checked;
+}
+
+// --- background generation: frames stream in one at a time ---
+// Reset the viewer for a new generation job (fired just before its first frame,
+// so a job that dies while downloading never blanks the current results).
+function beginStream() {
+  stopPlayback();
+  for (const b of sourceFrames) b?.close?.();
+  frames = [];
+  sourceFrames = [];
+  current = 0;
+  filmstrip.innerHTML = "";
+  filmstrip.hidden = true;
+  drop.hidden = true;
+  sourceCtl.hidden = true;
+  playbackSection.hidden = true;
+}
+
+// Append one freshly computed frame. Never routes through showFrames (which
+// sorts + replaces + closes prior bitmaps); auto-range stays per-frame.
+function appendFrame(flow: FlowField, src: ImageBitmap | null) {
+  frames.push(flow);
+  sourceFrames.push(src);
+  const idx = frames.length - 1;
+  appendFilmstripButton(idx);
+  filmstrip.hidden = frames.length < 2;
+  playbackSection.hidden = frames.length < 2;
+  const hasSource = sourceFrames.some(Boolean);
+  sourceCtl.hidden = !hasSource;
+  flowOpRow.hidden = !hasSource || !showSourceCb.checked;
+  if (frames.length === 1) {
+    canvas.hidden = false;
+    controls.hidden = false;
+    loadFrame(0);
+    renderLegend();
+    legendImg.hidden = !legendCb.checked;
+  } else if (playTimer === null && current === idx - 1) {
+    // Follow the newest frame only if the user is sitting on the previous last
+    // frame and not playing — don't yank the view if they navigated away.
+    loadFrame(idx);
+  } else {
+    updateStats();
+    highlightStrip();
+  }
 }
 
 // --- movie playback ---
@@ -689,6 +746,24 @@ setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
   getCurrent: () => current,
   getFps: () => parseInt(fpsInput.value, 10),
   canvas,
+  notify: showError,
+});
+
+// --- background flow generation: status chip + job manager ---
+let jobManager!: FlowJobManager;
+const statusChip = createStatusChip({
+  stop: (id) => jobManager.stop(id),
+  cancel: (id) => jobManager.cancel(id),
+});
+document
+  .querySelector("header nav")!
+  .insertBefore(statusChip.el, document.querySelector("#theme"));
+jobManager = new FlowJobManager({
+  onStreamStart: () => beginStream(),
+  onFrame: (_job, flow, src) => appendFrame(flow, src),
+  onStreamEnd: () => {},
+  onJobUpdate: (active, queue) => statusChip.update(active, queue),
+  onProgress: (job, phase, done, total, kind) => statusChip.progress(job, phase, done, total, kind),
   notify: showError,
 });
 

@@ -16,6 +16,14 @@ import type {
   WorkerResponse,
 } from "./types";
 
+/** Thrown to pending promises when the engine is disposed mid-flight (Cancel). */
+export class CancelledError extends Error {
+  constructor() {
+    super("cancelled");
+    this.name = "CancelledError";
+  }
+}
+
 function serialize(f: FlowField): SerializedFlow {
   // Copy so the main-thread frame survives (worker receives a structured clone).
   return {
@@ -40,9 +48,10 @@ function deserialize(s: SerializedFlow): FlowField {
 export class FlowEngine {
   private worker: Worker;
   private nextId = 1;
-  private readyResolve: ((ep: ExecutionProvider) => void) | null = null;
+  private disposed = false;
   private readyReject: ((e: Error) => void) | null = null;
-  private pendingFlow = new Map<number, (f: FlowField) => void>();
+  private readyResolve: ((ep: ExecutionProvider) => void) | null = null;
+  private pendingFlow = new Map<number, { resolve: (f: FlowField) => void; reject: (e: Error) => void }>();
   private pendingBlob: ((b: Blob) => void) | null = null;
   private errored: ((e: Error) => void) | null = null;
   onProgress?: (phase: string, done: number, total: number, kind: ProgressKind) => void;
@@ -59,19 +68,21 @@ export class FlowEngine {
   }
 
   private send(msg: WorkerRequest, transfer: Transferable[] = []) {
+    if (this.disposed) throw new CancelledError();
     this.worker.postMessage(msg, transfer);
   }
 
   private onMessage(msg: WorkerResponse) {
+    if (this.disposed) return; // ignore a message already queued before terminate()
     switch (msg.type) {
       case "ready":
         this.readyResolve?.(msg.ep);
         break;
       case "flow": {
-        const resolve = this.pendingFlow.get(msg.index);
-        if (resolve) {
+        const pending = this.pendingFlow.get(msg.index);
+        if (pending) {
           this.pendingFlow.delete(msg.index);
-          resolve(deserialize(msg.flow));
+          pending.resolve(deserialize(msg.flow));
         }
         break;
       }
@@ -108,7 +119,7 @@ export class FlowEngine {
     }
     return new Promise((resolve, reject) => {
       this.errored = reject;
-      this.pendingFlow.set(index, resolve);
+      this.pendingFlow.set(index, { resolve, reject });
       this.send({ type: "frame", id, index, frame }, [frame.data]);
     });
   }
@@ -152,11 +163,23 @@ export class FlowEngine {
   }
 
   dispose() {
+    if (this.disposed) return;
+    this.disposed = true;
     try {
-      this.send({ type: "dispose" });
+      this.worker.postMessage({ type: "dispose" });
     } catch {
       /* ignore */
     }
     this.worker.terminate();
+    // Reject everything still in flight so awaiters (the job loop) unwind
+    // instead of hanging forever now that the worker is gone.
+    const err = new CancelledError();
+    this.readyReject?.(err);
+    this.readyReject = this.readyResolve = null;
+    for (const { reject } of this.pendingFlow.values()) reject(err);
+    this.pendingFlow.clear();
+    this.errored?.(err);
+    this.errored = null;
+    this.pendingBlob = null;
   }
 }

@@ -1,28 +1,23 @@
 /**
- * "Generate flow from video" modal. Picks a model tier + options, decodes the
- * video frame by frame, runs each pair through the worker, and hands the
- * resulting FlowField[] to the existing showFrames pipeline.
- *
- * Gives detailed async feedback throughout: model download (MB / %), session
- * init, per-frame compute with timing, the active backend, and inline errors
- * (the panel stays open so the message is readable and retryable).
+ * "Generate flow from video" settings dialog. Picks a model + options and hands
+ * the video(s) to the background job manager via ctx.enqueue — then closes
+ * immediately. It no longer runs anything itself: decode, download and compute
+ * happen in the job manager and stream into the viewer, with progress on the
+ * topbar status chip.
  */
 
-import type { FlowField } from "../flow";
-import type { GenOptions, ModelTier, ProgressKind } from "../flowgen/types";
+import type { DisPreset, DisTuning, GenOptions, ModelTier } from "../flowgen/types";
+import type { JobSettings } from "../flowgen/job-manager";
 import { RAFT_MODELS } from "../flowgen/models";
-import { FlowEngine } from "../flowgen/engine";
-import { openVideo, type VideoFrameSource } from "../video/decode";
-import { openVideoFFmpeg } from "../video/ffmpeg-decode";
+import { baseUrl } from "../flowgen/base-url";
+import { isCached, clearAssetCache, assetCacheUsage } from "../flowgen/asset-cache";
 import { openModal, type ModalHandle } from "./modal";
 
 export interface GenerateContext {
-  onFrames: (frames: FlowField[], source?: (ImageBitmap | null)[]) => void;
+  enqueue: (files: File[], settings: JobSettings) => void;
   notify: (msg: string, kind?: "error" | "info") => void;
 }
 
-// One picker entry per selectable engine: DIS plus every RAFT model in the
-// registry. `id` is the persisted selection ("dis" or a RAFT model id).
 interface GenModelOption {
   id: string;
   tier: ModelTier;
@@ -42,43 +37,56 @@ const OPTIONS: GenModelOption[] = [
   })),
 ];
 const fmtSize = (bytes: number) => `~${Math.round(bytes / 1e6)} MB`;
+const fmtMB = (bytes: number) => `${(bytes / 1e6).toFixed(1)} MB`;
+
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6"/></svg>`;
+
+const lsGet = (k: string): string | null => {
+  try {
+    return localStorage.getItem(k);
+  } catch {
+    return null;
+  }
+};
+const lsSet = (k: string, v: string) => {
+  try {
+    localStorage.setItem(k, v);
+  } catch {
+    /* ignore */
+  }
+};
 
 /** Persisted selection, migrating the legacy `flowiz.tier` value. */
 function loadSelectedId(): string {
-  const saved = localStorage.getItem("flowiz.model");
+  const saved = lsGet("flowiz.model");
   if (saved && OPTIONS.some((o) => o.id === saved)) return saved;
-  const legacy = localStorage.getItem("flowiz.tier");
+  const legacy = lsGet("flowiz.tier");
   const migrated =
     legacy === "raft-large" ? "raft-large-360x480" : legacy === "dis" ? "dis" : null;
   if (migrated && OPTIONS.some((o) => o.id === migrated)) return migrated;
   return OPTIONS[0].id;
 }
 
-function baseUrl(): string {
-  return new URL(import.meta.env.BASE_URL, location.href).href;
-}
-
-const fmtMB = (b: number) => `${(b / 1e6).toFixed(1)} MB`;
-const fmtDur = (s: number) => (s >= 1 ? `${s.toFixed(1)} s` : `${Math.round(s * 1000)} ms`);
-
-export function openGeneratePanel(file: File, ctx: GenerateContext) {
+export function openGeneratePanel(files: File[], ctx: GenerateContext) {
+  if (!files.length) return;
   let selectedId = loadSelectedId();
   const currentOption = (): GenModelOption =>
     OPTIONS.find((o) => o.id === selectedId) ?? OPTIONS[0];
-  const webgpuSaved = localStorage.getItem("flowiz.webgpu") === "1";
+  const webgpuSaved = lsGet("flowiz.webgpu") === "1";
+  const fileLabel = files.length === 1 ? files[0].name : `${files.length} videos`;
 
   const root = document.createElement("div");
   root.className = "gen-modal";
   root.innerHTML = `
     <div class="gen-card loader-card">
       <div class="loader-title">Generate optical flow</div>
-      <div class="gen-file">${file.name}</div>
+      <div class="gen-file">${fileLabel}</div>
       <div class="ctl">
         <label>Model</label>
-        <div class="segmented" id="gen-tier">
+        <div class="segmented" id="gen-tier" role="group" aria-label="Model">
           ${OPTIONS.map(
             (o) =>
-              `<button data-id="${o.id}" class="${o.id === selectedId ? "active" : ""}">${o.label}<small>${fmtSize(o.bytes)} download</small></button>`,
+              `<button data-id="${o.id}" aria-pressed="${o.id === selectedId}" class="${o.id === selectedId ? "active" : ""}">${o.label}<small>${fmtSize(o.bytes)} download</small></button>`,
           ).join("")}
         </div>
       </div>
@@ -93,12 +101,32 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       <label class="gen-opt" id="gen-webgpu-row" title="WebGPU can be much faster for RAFT but support varies by browser/GPU. Off = the reliable WASM backend.">
         <input type="checkbox" id="gen-webgpu" ${webgpuSaved ? "checked" : ""}/> Try WebGPU for RAFT (experimental)
       </label>
-      <div class="gen-badge" id="gen-badge" hidden></div>
-      <div class="gen-progress" id="gen-progress" hidden>
-        <div class="loader-bar" id="gen-barwrap"><div class="loader-fill" id="gen-fill"></div></div>
-        <div class="loader-meta" id="gen-meta"></div>
-      </div>
-      <div class="gen-error" id="gen-error" hidden></div>
+      <details class="gen-advanced" id="gen-advanced">
+        <summary>Advanced</summary>
+        <div class="gen-adv-body">
+          <div class="gen-dis-tuning" id="gen-dis-tuning">
+            <label class="gen-adv-field">DIS preset
+              <select id="gen-dis-preset">
+                <option value="ultrafast">Ultrafast</option>
+                <option value="fast" selected>Fast</option>
+                <option value="medium">Medium</option>
+              </select>
+            </label>
+            <div class="gen-dis-knobs">
+              <label class="gen-adv-field">Finest scale<input id="dis-finest" type="number" min="0" step="1" placeholder="preset" /></label>
+              <label class="gen-adv-field">Descent iters<input id="dis-gd" type="number" min="1" step="1" placeholder="preset" /></label>
+              <label class="gen-adv-field">Patch size<input id="dis-patch" type="number" min="4" step="1" placeholder="preset" /></label>
+            </div>
+            <label class="gen-opt"><input type="checkbox" id="dis-varref" checked /> Variational refinement</label>
+            <p class="gen-adv-note">Blank = preset default. Tuning needs a recent DIS build; older ones ignore it.</p>
+          </div>
+          <div class="gen-cache" id="gen-cache">
+            <div class="gen-cache-row" id="gen-cache-model"></div>
+            <div class="gen-cache-row" id="gen-cache-ffmpeg"></div>
+            <button class="gen-cache-clear" id="gen-cache-clear" type="button">Clear cached downloads</button>
+          </div>
+        </div>
+      </details>
       <div class="gen-actions">
         <button id="gen-cancel">Cancel</button>
         <button id="gen-go" class="primary">Generate</button>
@@ -106,213 +134,152 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
     </div>`;
   document.body.appendChild(root);
 
-  const tierBox = root.querySelector<HTMLDivElement>("#gen-tier")!;
-  const badge = root.querySelector<HTMLDivElement>("#gen-badge")!;
-  const progressWrap = root.querySelector<HTMLDivElement>("#gen-progress")!;
-  const barwrap = root.querySelector<HTMLDivElement>("#gen-barwrap")!;
-  const fill = root.querySelector<HTMLDivElement>("#gen-fill")!;
-  const meta = root.querySelector<HTMLDivElement>("#gen-meta")!;
-  const errorEl = root.querySelector<HTMLDivElement>("#gen-error")!;
-  const goBtn = root.querySelector<HTMLButtonElement>("#gen-go")!;
-  const cancelBtn = root.querySelector<HTMLButtonElement>("#gen-cancel")!;
-  const strideSel = root.querySelector<HTMLSelectElement>("#gen-stride")!;
-  const resSel = root.querySelector<HTMLSelectElement>("#gen-res")!;
-  const webgpuCb = root.querySelector<HTMLInputElement>("#gen-webgpu")!;
-  const webgpuRow = root.querySelector<HTMLLabelElement>("#gen-webgpu-row")!;
+  const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+  const tierBox = q<HTMLDivElement>("#gen-tier");
+  const goBtn = q<HTMLButtonElement>("#gen-go");
+  const cancelBtn = q<HTMLButtonElement>("#gen-cancel");
+  const strideSel = q<HTMLSelectElement>("#gen-stride");
+  const resSel = q<HTMLSelectElement>("#gen-res");
+  const webgpuCb = q<HTMLInputElement>("#gen-webgpu");
+  const webgpuRow = q<HTMLLabelElement>("#gen-webgpu-row");
+  const disTuningBox = q<HTMLDivElement>("#gen-dis-tuning");
+  const disPresetSel = q<HTMLSelectElement>("#gen-dis-preset");
+  const disFinest = q<HTMLInputElement>("#dis-finest");
+  const disGd = q<HTMLInputElement>("#dis-gd");
+  const disPatch = q<HTMLInputElement>("#dis-patch");
+  const disVarRef = q<HTMLInputElement>("#dis-varref");
+  const cacheModelRow = q<HTMLDivElement>("#gen-cache-model");
+  const cacheFfmpegRow = q<HTMLDivElement>("#gen-cache-ffmpeg");
+  const cacheClearBtn = q<HTMLButtonElement>("#gen-cache-clear");
 
-  let engine: FlowEngine | null = null;
-  let cancelled = false;
-  let running = false;
-  let stopRequested = false;
   let modal: ModalHandle | null = null;
 
-  const syncWebgpuVisibility = () => {
-    // WebGPU only matters for the RAFT (onnxruntime) tier.
-    webgpuRow.hidden = currentOption().tier !== "raft";
+  // Restore persisted prefs.
+  const savedStride = lsGet("flowiz.stride");
+  if (savedStride) strideSel.value = savedStride;
+  const savedRes = lsGet("flowiz.res");
+  if (savedRes) resSel.value = savedRes;
+  const savedPreset = lsGet("flowiz.dis.preset");
+  if (savedPreset) disPresetSel.value = savedPreset;
+  disFinest.value = lsGet("flowiz.dis.finest") ?? "";
+  disGd.value = lsGet("flowiz.dis.gd") ?? "";
+  disPatch.value = lsGet("flowiz.dis.patch") ?? "";
+  disVarRef.checked = lsGet("flowiz.dis.varref") !== "0";
+
+  const modelUrl = (): string => {
+    const opt = currentOption();
+    return opt.tier === "dis"
+      ? `${baseUrl()}vendor/opencv/opencv-dis.wasm`
+      : `${baseUrl()}models/${RAFT_MODELS.find((m) => m.id === opt.raftModelId)!.file}`;
   };
-  syncWebgpuVisibility();
+  const ffmpegUrl = () => `${baseUrl()}vendor/ffmpeg/core/ffmpeg-core.wasm`;
+
+  const cacheLine = (label: string, cached: boolean, sizeBytes: number) =>
+    cached
+      ? `<span class="gen-cache-ok">${CHECK_SVG}</span> ${label} cached`
+      : `<span class="gen-cache-dl"></span> ${label} — ${fmtSize(sizeBytes)} download`;
+
+  async function refreshCache() {
+    const opt = currentOption();
+    const [modelHit, ffHit, usage] = await Promise.all([
+      isCached(modelUrl()),
+      isCached(ffmpegUrl()),
+      assetCacheUsage(),
+    ]);
+    cacheModelRow.innerHTML = cacheLine("Model", modelHit, opt.bytes);
+    cacheFfmpegRow.innerHTML = cacheLine("Video engine", ffHit, 32_000_000);
+    cacheClearBtn.textContent =
+      usage != null ? `Clear cached downloads (${fmtMB(usage)})` : "Clear cached downloads";
+  }
+
+  const syncVisibility = () => {
+    const isRaft = currentOption().tier === "raft";
+    webgpuRow.hidden = !isRaft;
+    disTuningBox.hidden = isRaft;
+  };
+  syncVisibility();
+  void refreshCache();
 
   tierBox.addEventListener("click", (e) => {
-    if (running) return;
     const b = (e.target as HTMLElement).closest("button");
     if (!b) return;
     selectedId = b.dataset.id!;
-    localStorage.setItem("flowiz.model", selectedId);
-    tierBox.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    syncWebgpuVisibility();
+    lsSet("flowiz.model", selectedId);
+    tierBox.querySelectorAll("button").forEach((x) => {
+      const on = x === b;
+      x.classList.toggle("active", on);
+      x.setAttribute("aria-pressed", String(on));
+    });
+    syncVisibility();
+    void refreshCache();
   });
+
   webgpuCb.addEventListener("change", () =>
-    localStorage.setItem("flowiz.webgpu", webgpuCb.checked ? "1" : "0"),
+    lsSet("flowiz.webgpu", webgpuCb.checked ? "1" : "0"),
   );
 
-  const setProgress = (phase: string, done: number, total: number, kind: ProgressKind) => {
-    progressWrap.hidden = false;
-    errorEl.hidden = true;
-    if (kind === "bytes" && total > 0 && done <= total * 1.02) {
-      const pct = Math.min(100, Math.round((done / total) * 100));
-      barwrap.classList.remove("indeterminate");
-      fill.style.width = `${pct}%`;
-      meta.textContent = `${phase} — ${fmtMB(done)} / ${fmtMB(total)} (${pct}%)`;
-    } else if (kind === "bytes") {
-      // `total` is a gzip-compressed content-length (GitHub Pages) or unknown,
-      // so the stream delivers more (decompressed) bytes than `total` — show
-      // downloaded MB against an indeterminate bar instead of a bogus percent.
-      barwrap.classList.add("indeterminate");
-      fill.style.width = "40%";
-      meta.textContent = `${phase} — ${fmtMB(done)}`;
-    } else if (kind === "count" && total > 0) {
-      const pct = Math.min(100, Math.round((done / total) * 100));
-      barwrap.classList.remove("indeterminate");
-      fill.style.width = `${pct}%`;
-      meta.textContent = phase;
-    } else {
-      barwrap.classList.add("indeterminate");
-      fill.style.width = "40%";
-      meta.textContent = `${phase}…`;
-    }
-  };
-
-  const showError = (message: string) => {
-    progressWrap.hidden = true;
-    badge.hidden = true;
-    errorEl.hidden = false;
-    errorEl.textContent = message;
-    goBtn.disabled = false;
-    goBtn.textContent = "Try again";
-    tierBox.style.pointerEvents = "";
-    running = false;
-    engine?.dispose();
-    engine = null;
-  };
+  cacheClearBtn.addEventListener("click", async () => {
+    cacheClearBtn.disabled = true;
+    await clearAssetCache();
+    await refreshCache();
+    cacheClearBtn.disabled = false;
+    ctx.notify("Cleared cached model downloads.", "info");
+  });
 
   const close = () => {
-    cancelled = true;
-    engine?.dispose();
     modal?.release();
     root.remove();
   };
   cancelBtn.addEventListener("click", close);
 
-  // Early stop: halt the compute loop but keep whatever frames are already done.
-  const requestStop = () => {
-    if (!running || stopRequested) return;
-    stopRequested = true;
-    goBtn.textContent = "Stopping…";
-    goBtn.disabled = true;
+  const readDisTuning = (): DisTuning | undefined => {
+    const t: DisTuning = {};
+    const num = (el: HTMLInputElement) => {
+      const v = parseFloat(el.value);
+      return Number.isFinite(v) ? v : undefined;
+    };
+    const fs = num(disFinest);
+    if (fs != null) t.finestScale = fs;
+    const gd = num(disGd);
+    if (gd != null) t.gradientDescentIterations = gd;
+    const ps = num(disPatch);
+    if (ps != null) t.patchSize = ps;
+    if (!disVarRef.checked) t.variationalRefinement = false;
+    return Object.keys(t).length ? t : undefined;
   };
 
-  const run = async () => {
-    if (running) return;
-    running = true;
-    cancelled = false;
-    stopRequested = false;
-    errorEl.hidden = true;
-    badge.hidden = true;
-    // The primary button becomes the stop control while a run is in flight.
-    goBtn.disabled = false;
-    goBtn.textContent = "Stop & show";
-    tierBox.style.pointerEvents = "none";
-
+  goBtn.addEventListener("click", () => {
+    const opt = currentOption();
     const stride = parseInt(strideSel.value, 10);
     const maxDim = parseInt(resSel.value, 10);
-    const opt = currentOption();
     const useGpu = opt.tier === "raft" && webgpuCb.checked;
     const opts: GenOptions = {
       tier: opt.tier,
       raftModelId: opt.raftModelId,
       ep: useGpu ? "auto" : "wasm",
-      disPreset: "fast",
     };
-
-    try {
-      // Normalise + downscale any input through ffmpeg.wasm (handles 4K, HEVC,
-      // .mov/.mkv, etc.) with real decode progress. Fall back to the browser's
-      // own <video> decoder if the engine can't load.
-      setProgress("Preparing video engine", 0, 0, "indeterminate");
-      let src: VideoFrameSource;
-      try {
-        src = await openVideoFFmpeg(file, { stride, maxDim }, setProgress, baseUrl());
-      } catch (ffErr) {
-        ctx.notify("ffmpeg unavailable — using the browser decoder.", "info");
-        setProgress(`Opening video (browser decoder)`, 0, 0, "indeterminate");
-        console.warn("ffmpeg decode failed, falling back to <video>:", ffErr);
-        src = await openVideo(file, { stride, maxDim });
-      }
-
-      engine = new FlowEngine();
-      engine.onProgress = setProgress; // download + session-init phases
-      const ep = await engine.init(opts, baseUrl());
-      badge.hidden = false;
-      badge.textContent = `Backend: ${ep.toUpperCase()}`;
-
-      const flows: FlowField[] = [];
-      const srcFrames: (ImageBitmap | null)[] = []; // real frames, aligned to flows
-      const total = Math.max(1, src.frameCount - 1);
-      const stem = file.name.replace(/\.[^.]+$/, "");
-      const t0 = performance.now();
-      let i = 0;
-      setProgress("Computing flow", 0, total, "count");
-      for await (const frame of src.frames()) {
-        if (cancelled || stopRequested) break;
-        // Snapshot the frame before pushFrame transfers its pixel buffer, so we
-        // can later show the real footage behind the flow in the viewer.
-        const snap = createImageBitmap(
-          new ImageData(new Uint8ClampedArray(frame.data.slice(0)), frame.width, frame.height),
-        ).catch(() => null);
-        const flow = await engine.pushFrame(frame, i++);
-        if (flow) {
-          flow.name = `${stem}_${String(flows.length + 1).padStart(4, "0")}.flo`;
-          flows.push(flow);
-          srcFrames.push(await snap);
-          const secs = (performance.now() - t0) / 1000;
-          const per = secs / flows.length;
-          setProgress(
-            `Computing flow ${flows.length} / ${total} · ${fmtDur(per)}/frame`,
-            flows.length,
-            total,
-            "count",
-          );
-        } else {
-          // First frame yields no flow (needs a pair) — drop its snapshot.
-          (await snap)?.close();
-        }
-      }
-      src.close();
-      if (cancelled) return;
-      if (flows.length) {
-        // Completed, or stopped early with partial results — show what we have.
-        engine.dispose();
-        engine = null;
-        modal?.release();
-        root.remove();
-        ctx.onFrames(flows, srcFrames);
-        if (stopRequested)
-          ctx.notify(
-            `Stopped — showing ${flows.length} frame${flows.length > 1 ? "s" : ""} generated so far.`,
-            "info",
-          );
-        return;
-      }
-      if (stopRequested) {
-        close(); // stopped before any frame was computed — nothing to show
-        return;
-      }
-      throw new Error("No flow frames were produced (video too short for this stride?).");
-    } catch (err) {
-      if (cancelled) return;
-      showError((err as Error)?.message || String(err) || "Generation failed.");
+    if (opt.tier === "dis") {
+      opts.disPreset = disPresetSel.value as DisPreset;
+      const tuning = readDisTuning();
+      if (tuning) opts.disTuning = tuning;
     }
-  };
 
-  // Same button starts the run, then acts as the stop control while it runs.
-  goBtn.addEventListener("click", () => (running ? requestStop() : run()));
+    // Persist prefs.
+    lsSet("flowiz.stride", strideSel.value);
+    lsSet("flowiz.res", resSel.value);
+    lsSet("flowiz.dis.preset", disPresetSel.value);
+    lsSet("flowiz.dis.finest", disFinest.value);
+    lsSet("flowiz.dis.gd", disGd.value);
+    lsSet("flowiz.dis.patch", disPatch.value);
+    lsSet("flowiz.dis.varref", disVarRef.checked ? "1" : "0");
 
-  // Escape / backdrop close — but never abandon an in-flight run via the
-  // backdrop; Escape during a run requests a graceful stop instead.
+    ctx.enqueue(files, { opts, stride, maxDim });
+    close();
+  });
+
   modal = openModal(root, {
-    onRequestClose: () => (running ? requestStop() : close()),
+    onRequestClose: close,
     initialFocus: goBtn,
-    closeOnBackdrop: () => !running,
+    closeOnBackdrop: true,
   });
 }

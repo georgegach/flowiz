@@ -8,7 +8,7 @@
  * public/vendor/opencv/README.md) so this ES import resolves to a factory.
  */
 
-import type { DisPreset, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
+import type { DisPreset, DisTuning, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
 import { cachedFetch } from "./asset-cache";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -22,6 +22,7 @@ export interface DisEngine {
 export async function createDis(
   baseUrl: string,
   preset: DisPreset,
+  tuning?: DisTuning,
   onProgress?: ProgressFn,
 ): Promise<DisEngine> {
   const jsUrl = baseUrl + "vendor/opencv/opencv-dis.js";
@@ -49,6 +50,29 @@ export async function createDis(
   // FAST=1, MEDIUM=2 (video/tracking.hpp).
   const presetConst = preset === "ultrafast" ? 0 : preset === "medium" ? 2 : 1;
   const dis = new cv.DISOpticalFlow(presetConst);
+
+  // Apply optional tuning. The slim opencv build may not export these setters
+  // (they must be whitelisted in build_opencv_dis.sh); guard each so an older
+  // wasm silently degrades to the preset defaults instead of throwing.
+  const apply = (name: string, run: () => void) => {
+    if (typeof dis[name] !== "function") return;
+    try {
+      run();
+    } catch {
+      /* ignore a rejected value */
+    }
+  };
+  if (tuning) {
+    const t = tuning;
+    if (t.finestScale != null) apply("setFinestScale", () => dis.setFinestScale(t.finestScale));
+    if (t.gradientDescentIterations != null)
+      apply("setGradientDescentIterations", () =>
+        dis.setGradientDescentIterations(t.gradientDescentIterations),
+      );
+    if (t.patchSize != null) apply("setPatchSize", () => dis.setPatchSize(t.patchSize));
+    if (t.variationalRefinement === false)
+      apply("setVariationalRefinementIterations", () => dis.setVariationalRefinementIterations(0));
+  }
 
   // Reused scratch Mats.
   let rgba: any = null;
