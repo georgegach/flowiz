@@ -37,11 +37,17 @@ Then make the output an ES module and copy it here:
 - `cp opencv/build_js/bin/opencv.js  opencv-dis.js`
 - `cp opencv/build_js/bin/opencv_js.wasm  opencv-dis.wasm`
 
-**Verify** before committing:
+**Verify** before committing (the class name lives in the wasm data section,
+NOT the JS glue — grepping the .js gives a false negative):
 
 ```bash
-grep -c DISOpticalFlow opencv-dis.js   # must be > 0
+strings opencv-dis.wasm | grep -c DISOpticalFlow   # must be > 0
+grep -c 'export default' opencv-dis.js             # must be > 0 (ES module)
 ```
+
+Note: install the raw emscripten module `opencv_js.js` (MODULARIZE + EXPORT_ES6,
+default export = factory), NOT the UMD `opencv.js` that `make_umd.py` also emits.
+This is all automated in `.github/scripts/build_opencv_dis.sh`.
 
 ## Pitfalls
 

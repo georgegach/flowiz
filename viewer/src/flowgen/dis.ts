@@ -24,12 +24,10 @@ export async function createDis(baseUrl: string, preset: DisPreset): Promise<Dis
   const factory = (await import(/* @vite-ignore */ jsUrl)).default as (opts: any) => Promise<CV>;
   const cv: CV = await factory({ locateFile: () => wasmUrl });
 
-  const presetConst =
-    preset === "ultrafast"
-      ? cv.DISOPTICAL_FLOW_PRESET_ULTRAFAST
-      : preset === "medium"
-        ? cv.DISOPTICAL_FLOW_PRESET_MEDIUM
-        : cv.DISOPTICAL_FLOW_PRESET_FAST;
+  // DISOpticalFlow preset enum (video/tracking.hpp): ULTRAFAST=0, FAST=1,
+  // MEDIUM=2. Passed as a plain int to create() so we don't depend on how
+  // embind exposes the class-scoped enum names.
+  const presetConst = preset === "ultrafast" ? 0 : preset === "medium" ? 2 : 1;
   const dis = cv.DISOpticalFlow.create(presetConst);
 
   // Reused scratch Mats.

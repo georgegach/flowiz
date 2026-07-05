@@ -27,9 +27,12 @@ import re, sys
 p = sys.argv[1]
 src = open(p).read()
 
+# The viewer only needs DISOpticalFlow.create(preset) + the inherited calc().
+# calc() is declared on the DenseOpticalFlow base, so whitelist both — embind
+# wires the inheritance so dis.calc(...) resolves on the DIS instance.
 dis = (
-    "        'DISOpticalFlow': ['create', 'calc', 'setFinestScale', 'setPatchSize', "
-    "'setPatchStride', 'setGradientDescentIterations', 'setVariationalRefinementIterations'],\n"
+    "        'DenseOpticalFlow': ['calc'],\n"
+    "        'DISOpticalFlow': ['create'],\n"
 )
 
 # The `video` module whitelist is a dict literal: `video = {  ... }`.
@@ -65,19 +68,23 @@ docker run --rm \
 echo "::endgroup::"
 
 echo "::group::Locate + verify build artifacts"
-JS="$(find "$WORK/opencv/build_js" -name 'opencv.js' | head -1)"
-WASM="$(find "$WORK/opencv/build_js" -name 'opencv_js.wasm' -o -name 'opencv.wasm' | head -1)"
+# Use the raw emscripten MODULARIZE+EXPORT_ES6 module (opencv_js.js), NOT the
+# UMD wrapper opencv.js that make_umd.py emits — dis.ts does `import(url).default`.
+JS="$(find "$WORK/opencv/build_js" -name 'opencv_js.js' | head -1)"
+WASM="$(find "$WORK/opencv/build_js" -name 'opencv_js.wasm' | head -1)"
 echo "js=$JS"
 echo "wasm=$WASM"
 [ -n "$JS" ] && [ -n "$WASM" ] || { echo "::error::build artifacts not found"; exit 1; }
 
-DIS_HITS="$(grep -c DISOpticalFlow "$JS" || true)"
-echo "DISOpticalFlow occurrences in opencv.js: $DIS_HITS"
-[ "$DIS_HITS" -gt 0 ] || { echo "::error::DISOpticalFlow missing from build"; exit 1; }
+# embind class-name strings live in the WASM data section, not the JS glue —
+# so verify DISOpticalFlow in the .wasm (grepping the JS gives a false negative).
+DIS_HITS="$(strings "$WASM" | grep -c DISOpticalFlow || true)"
+echo "DISOpticalFlow occurrences in opencv_js.wasm: $DIS_HITS"
+[ "$DIS_HITS" -gt 0 ] || { echo "::error::DISOpticalFlow missing from build (whitelist not applied?)"; exit 1; }
 
-# Confirm it really is an ES module (default export factory).
+# Confirm the JS really is an ES module (default export factory).
 if ! grep -qE 'export default|export\s*\{' "$JS"; then
-  echo "::error::opencv.js is not an ES module (no export). EXPORT_ES6 flag ignored?"
+  echo "::error::opencv_js.js is not an ES module (no export). EXPORT_ES6 ignored?"
   exit 1
 fi
 echo "::endgroup::"
