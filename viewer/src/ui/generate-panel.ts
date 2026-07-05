@@ -10,6 +10,7 @@
 
 import type { FlowField } from "../flow";
 import type { GenOptions, ModelTier, ProgressKind } from "../flowgen/types";
+import { RAFT_MODELS } from "../flowgen/models";
 import { FlowEngine } from "../flowgen/engine";
 import { openVideo, type VideoFrameSource } from "../video/decode";
 import { openVideoFFmpeg } from "../video/ffmpeg-decode";
@@ -20,10 +21,38 @@ export interface GenerateContext {
   notify: (msg: string, kind?: "error" | "info") => void;
 }
 
-const TIERS: { id: ModelTier; label: string; size: string }[] = [
-  { id: "dis", label: "Fastest — DIS", size: "~4 MB" },
-  { id: "raft-large", label: "Best — RAFT (fp32)", size: "~61 MB" },
+// One picker entry per selectable engine: DIS plus every RAFT model in the
+// registry. `id` is the persisted selection ("dis" or a RAFT model id).
+interface GenModelOption {
+  id: string;
+  tier: ModelTier;
+  label: string;
+  bytes: number;
+  raftModelId?: string;
+}
+// DIS on-disk size = opencv-dis.wasm (4,412,489) + opencv-dis.js (139,157).
+const OPTIONS: GenModelOption[] = [
+  { id: "dis", tier: "dis", label: "Fastest — DIS", bytes: 4_551_646 },
+  ...RAFT_MODELS.map((m): GenModelOption => ({
+    id: m.id,
+    tier: "raft",
+    label: m.label,
+    bytes: m.bytes,
+    raftModelId: m.id,
+  })),
 ];
+const fmtSize = (bytes: number) => `~${Math.round(bytes / 1e6)} MB`;
+
+/** Persisted selection, migrating the legacy `flowiz.tier` value. */
+function loadSelectedId(): string {
+  const saved = localStorage.getItem("flowiz.model");
+  if (saved && OPTIONS.some((o) => o.id === saved)) return saved;
+  const legacy = localStorage.getItem("flowiz.tier");
+  const migrated =
+    legacy === "raft-large" ? "raft-large-360x480" : legacy === "dis" ? "dis" : null;
+  if (migrated && OPTIONS.some((o) => o.id === migrated)) return migrated;
+  return OPTIONS[0].id;
+}
 
 function baseUrl(): string {
   return new URL(import.meta.env.BASE_URL, location.href).href;
@@ -33,8 +62,9 @@ const fmtMB = (b: number) => `${(b / 1e6).toFixed(1)} MB`;
 const fmtDur = (s: number) => (s >= 1 ? `${s.toFixed(1)} s` : `${Math.round(s * 1000)} ms`);
 
 export function openGeneratePanel(file: File, ctx: GenerateContext) {
-  let tier: ModelTier = (localStorage.getItem("flowiz.tier") as ModelTier) || "dis";
-  if (!TIERS.some((t) => t.id === tier)) tier = "dis";
+  let selectedId = loadSelectedId();
+  const currentOption = (): GenModelOption =>
+    OPTIONS.find((o) => o.id === selectedId) ?? OPTIONS[0];
   const webgpuSaved = localStorage.getItem("flowiz.webgpu") === "1";
 
   const root = document.createElement("div");
@@ -46,9 +76,9 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       <div class="ctl">
         <label>Model</label>
         <div class="segmented" id="gen-tier">
-          ${TIERS.map(
-            (t) =>
-              `<button data-tier="${t.id}" class="${t.id === tier ? "active" : ""}">${t.label}<small>${t.size}</small></button>`,
+          ${OPTIONS.map(
+            (o) =>
+              `<button data-id="${o.id}" class="${o.id === selectedId ? "active" : ""}">${o.label}<small>${fmtSize(o.bytes)} download</small></button>`,
           ).join("")}
         </div>
       </div>
@@ -57,7 +87,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
           <select id="gen-stride"><option>1</option><option selected>2</option><option>4</option><option>8</option></select>
         </label>
         <label>Resolution
-          <select id="gen-res"><option value="360">360p</option><option value="480" selected>480p</option><option value="720">720p</option><option value="1080">native</option></select>
+          <select id="gen-res"><option value="360">360p</option><option value="480" selected>480p</option><option value="720">720p</option><option value="1080">1080p</option></select>
         </label>
       </div>
       <label class="gen-opt" id="gen-webgpu-row" title="WebGPU can be much faster for RAFT but support varies by browser/GPU. Off = the reliable WASM backend.">
@@ -98,7 +128,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
 
   const syncWebgpuVisibility = () => {
     // WebGPU only matters for the RAFT (onnxruntime) tier.
-    webgpuRow.hidden = tier !== "raft-large";
+    webgpuRow.hidden = currentOption().tier !== "raft";
   };
   syncWebgpuVisibility();
 
@@ -106,8 +136,8 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
     if (running) return;
     const b = (e.target as HTMLElement).closest("button");
     if (!b) return;
-    tier = b.dataset.tier as ModelTier;
-    localStorage.setItem("flowiz.tier", tier);
+    selectedId = b.dataset.id!;
+    localStorage.setItem("flowiz.model", selectedId);
     tierBox.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
     syncWebgpuVisibility();
@@ -186,8 +216,14 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
 
     const stride = parseInt(strideSel.value, 10);
     const maxDim = parseInt(resSel.value, 10);
-    const useGpu = tier === "raft-large" && webgpuCb.checked;
-    const opts: GenOptions = { tier, ep: useGpu ? "auto" : "wasm", disPreset: "fast" };
+    const opt = currentOption();
+    const useGpu = opt.tier === "raft" && webgpuCb.checked;
+    const opts: GenOptions = {
+      tier: opt.tier,
+      raftModelId: opt.raftModelId,
+      ep: useGpu ? "auto" : "wasm",
+      disPreset: "fast",
+    };
 
     try {
       // Normalise + downscale any input through ffmpeg.wasm (handles 4K, HEVC,

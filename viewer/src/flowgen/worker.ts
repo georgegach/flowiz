@@ -14,6 +14,7 @@ import type {
 } from "./types";
 import { createDis, type DisEngine } from "./dis";
 import { createRaft, type RaftEngine } from "./raft";
+import { raftModelById } from "./models";
 import { buildRawZip } from "../export/zip";
 import { encodeGif } from "../export/gif";
 import { encodeMp4 } from "../export/mp4";
@@ -56,7 +57,7 @@ async function init(id: number, opts: GenOptions, baseUrl: string) {
     dis = await createDis(baseUrl, opts.disPreset ?? "fast", onProgress);
     post({ type: "ready", id, ep: "wasm" });
   } else {
-    raft = await createRaft(baseUrl, opts.tier, opts.ep, onProgress);
+    raft = await createRaft(baseUrl, raftModelById(opts.raftModelId), opts.ep, onProgress);
     post({ type: "ready", id, ep: raft.ep });
   }
 }

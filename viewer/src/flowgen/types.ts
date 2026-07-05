@@ -1,6 +1,6 @@
 /** Shared types + worker message protocol for flow generation. Imported by both sides. */
 
-export type ModelTier = "dis" | "raft-large";
+export type ModelTier = "dis" | "raft";
 export type DisPreset = "ultrafast" | "fast" | "medium";
 export type ExecutionProvider = "wasm" | "webgpu";
 
@@ -12,8 +12,8 @@ export type ProgressFn = (phase: string, done: number, total: number, kind: Prog
 
 export interface GenOptions {
   tier: ModelTier;
+  raftModelId?: string; // registry id (models.ts) — RAFT only; resolved via raftModelById()
   disPreset?: DisPreset; // DIS only
-  raftIters?: number; // RAFT only, if the export accepts it
   ep: "auto" | ExecutionProvider; // default "auto"
 }
 

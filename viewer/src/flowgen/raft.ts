@@ -13,22 +13,7 @@ import * as ort from "onnxruntime-web";
 import type { ExecutionProvider, ProgressFn, RGBAFrame, SerializedFlow } from "./types";
 import { planLetterbox, unletterboxFlow, type LetterboxPlan } from "./letterbox";
 import { cachedFetch } from "./asset-cache";
-
-const INPUT_W = 480;
-const INPUT_H = 360;
-
-interface ModelSpec {
-  file: string;
-  pixelRange: "signed" | "raw"; // signed = 2*x/255-1 ; raw = x (0..255)
-}
-
-const MODELS: Record<"raft-large", ModelSpec> = {
-  // OpenCV-zoo RAFT (2023aug) fp32. Wants [-1,1] input — verified empirically
-  // (0.04px EPE on a known translation) by .github/scripts/fetch_raft_models.py.
-  // (An int8 tier was dropped: its ConvInteger ops aren't implemented in
-  //  onnxruntime-web's wasm EP, only in desktop ORT.)
-  "raft-large": { file: "raft-large-360x480.onnx", pixelRange: "signed" },
-};
+import type { RaftModelSpec } from "./models";
 
 export interface RaftEngine {
   compute(a: RGBAFrame, b: RGBAFrame): Promise<SerializedFlow>;
@@ -38,14 +23,15 @@ export interface RaftEngine {
 
 export async function createRaft(
   baseUrl: string,
-  tier: "raft-large",
+  spec: RaftModelSpec,
   ep: "auto" | ExecutionProvider,
   onProgress?: ProgressFn,
 ): Promise<RaftEngine> {
   ort.env.wasm.wasmPaths = baseUrl + "vendor/ort/";
   ort.env.wasm.numThreads = 1; // no COOP/COEP on GitHub Pages
 
-  const spec = MODELS[tier];
+  const INPUT_W = spec.inputW;
+  const INPUT_H = spec.inputH;
   const modelUrl = baseUrl + "models/" + spec.file;
 
   onProgress?.("Downloading RAFT model", 0, 0, "indeterminate");
