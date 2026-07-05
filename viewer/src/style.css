@@ -18,9 +18,12 @@
   --radius-l: 16px;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --accent-contrast: #ffffff;
+  color-scheme: light;
 }
 :root.dark {
-  --bg: #0c0e12;
+  color-scheme: dark;
+  --bg: #0b0d11;
   --panel: #14161c;
   --panel-2: #1c1f27;
   --fg: #e7e9ee;
@@ -230,11 +233,33 @@ button.secondary:active { transform: translateY(1px); }
   position: absolute; right: 20px; bottom: 20px; width: 140px; height: 140px;
   pointer-events: none;
 }
-.toast {
+.toasts {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  background: var(--danger); color: #fff; padding: 10px 16px; border-radius: var(--radius-m);
-  box-shadow: var(--shadow-md); z-index: 60;
+  display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 60;
+  pointer-events: none;
 }
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--border);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  max-width: min(480px, calc(100vw - 32px));
+  animation: toast-in .18s ease-out;
+}
+.toast-error { border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.toast-error .toast-ico { color: var(--danger); }
+.toast-info .toast-ico { color: var(--accent); }
+.toast-ico { display: inline-flex; flex: none; }
+.toast-ico svg { width: 18px; height: 18px; }
+.toast-msg { flex: 1; font-size: 13px; line-height: 1.4; }
+.toast-x {
+  flex: none; background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 2px; display: inline-flex; border-radius: var(--radius-s);
+}
+.toast-x svg { width: 15px; height: 15px; }
+.toast-x:hover { color: var(--fg); background: var(--panel-2); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
 .loader {
   position: absolute; inset: 0; z-index: 40;
@@ -285,6 +310,7 @@ button.secondary:active { transform: translateY(1px); }
   }
 
   .legend, .legend-arrow { right: 14px; bottom: 14px; width: 108px; height: 108px; }
+  .toasts { bottom: 12px; width: calc(100vw - 24px); }
 }
 
 /* ===== Learn panel ===== */

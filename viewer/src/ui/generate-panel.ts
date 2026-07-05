@@ -16,7 +16,7 @@ import { openVideoFFmpeg } from "../video/ffmpeg-decode";
 
 export interface GenerateContext {
   onFrames: (frames: FlowField[], source?: (ImageBitmap | null)[]) => void;
-  notify: (msg: string) => void;
+  notify: (msg: string, kind?: "error" | "info") => void;
 }
 
 const TIERS: { id: ModelTier; label: string; size: string }[] = [
@@ -195,7 +195,7 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
       try {
         src = await openVideoFFmpeg(file, { stride, maxDim }, setProgress, baseUrl());
       } catch (ffErr) {
-        ctx.notify("ffmpeg unavailable — using the browser decoder.");
+        ctx.notify("ffmpeg unavailable — using the browser decoder.", "info");
         setProgress(`Opening video (browser decoder)`, 0, 0, "indeterminate");
         console.warn("ffmpeg decode failed, falling back to <video>:", ffErr);
         src = await openVideo(file, { stride, maxDim });
@@ -248,7 +248,10 @@ export function openGeneratePanel(file: File, ctx: GenerateContext) {
         root.remove();
         ctx.onFrames(flows, srcFrames);
         if (stopRequested)
-          ctx.notify(`Stopped — showing ${flows.length} frame${flows.length > 1 ? "s" : ""} generated so far.`);
+          ctx.notify(
+            `Stopped — showing ${flows.length} frame${flows.length > 1 ? "s" : ""} generated so far.`,
+            "info",
+          );
         return;
       }
       if (stopRequested) {

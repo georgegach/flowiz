@@ -6,6 +6,7 @@ import { openLearn, initLearnFromHash } from "./learn";
 import { setupExportMenu } from "./ui/export-menu";
 import { setupConvertPanel, type ConvertPanel } from "./ui/convert-panel";
 import { openGeneratePanel } from "./ui/generate-panel";
+import { toast } from "./ui/toast";
 
 const VIDEO_RE = /\.(mp4|webm|mov|mkv|avi|m4v|ogv)$/i;
 
@@ -47,8 +48,8 @@ app.innerHTML = `
       <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
-          <div class="loader-title">Loading files</div>
-          <div class="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
+          <div class="loader-title" id="loader-title">Loading files</div>
+          <div class="loader-bar" id="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
           <div id="loader-meta" class="loader-meta"></div>
         </div>
       </div>
@@ -107,6 +108,8 @@ const legendArrow = document.querySelector<HTMLCanvasElement>("#legendarrow")!;
 const loaderEl = document.querySelector<HTMLDivElement>("#loader")!;
 const loaderFill = document.querySelector<HTMLDivElement>("#loader-fill")!;
 const loaderMeta = document.querySelector<HTMLDivElement>("#loader-meta")!;
+const loaderBar = document.querySelector<HTMLDivElement>("#loader-bar")!;
+const loaderTitle = document.querySelector<HTMLDivElement>("#loader-title")!;
 const maxflow = document.querySelector<HTMLInputElement>("#maxflow")!;
 const maxval = document.querySelector<HTMLSpanElement>("#maxval")!;
 const maskCb = document.querySelector<HTMLInputElement>("#mask")!;
@@ -407,24 +410,39 @@ async function handleFiles(fileList: FileList | File[]) {
   const files = all;
   const total = files.length;
   const parsed: FlowField[] = [];
-  const showBar = total > 1;
-  if (showBar) {
+  const single = total === 1;
+  // Multi-file loads get a determinate bar; a single file shows an indeterminate
+  // sweep so a large parse doesn't sit with no feedback. Reveal is delayed so a
+  // tiny file never flashes the overlay.
+  loaderTitle.textContent = "Loading files";
+  loaderBar.classList.toggle("indeterminate", single);
+  if (single) {
+    loaderFill.style.width = "40%";
+    loaderMeta.textContent = files[0].name;
+  } else {
     setLoader(0, total);
+  }
+  const reveal = window.setTimeout(() => {
     loaderEl.hidden = false;
-  }
-  for (let i = 0; i < total; i++) {
-    const file = files[i];
-    if (showBar) setLoader(i, total, file.name); // "about to load" i-th
-    try {
-      // arrayBuffer() awaits, letting the browser paint the bar between files
-      const buf = await file.arrayBuffer();
-      parsed.push(parseByName(buf, file.name));
-    } catch (e) {
-      showError((e as Error).message);
+  }, single ? 150 : 0);
+  try {
+    for (let i = 0; i < total; i++) {
+      const file = files[i];
+      if (!single) setLoader(i, total, file.name); // "about to load" i-th
+      try {
+        // arrayBuffer() awaits, letting the browser paint the bar between files
+        const buf = await file.arrayBuffer();
+        parsed.push(parseByName(buf, file.name));
+      } catch (e) {
+        showError((e as Error).message);
+      }
+      if (!single) setLoader(i + 1, total, file.name);
     }
-    if (showBar) setLoader(i + 1, total, file.name);
+  } finally {
+    clearTimeout(reveal);
+    loaderBar.classList.remove("indeterminate");
+    loaderEl.hidden = true;
   }
-  loaderEl.hidden = true;
   if (!parsed.length) return;
   showFrames(parsed);
 }
@@ -507,12 +525,8 @@ for (const ex of EXAMPLES) {
   examplesEl.appendChild(b);
 }
 
-function showError(msg: string) {
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 4000);
+function showError(msg: string, kind: "error" | "info" = "error") {
+  toast(msg, kind);
 }
 
 // --- color wheel painter: supersampled backing store + edge anti-aliasing ---
@@ -684,10 +698,25 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") loadFrame((current - 1 + frames.length) % frames.length);
 });
 
-// theme toggle
+// theme toggle — persists the explicit choice; follows the OS until one is made
 const themeBtn = document.querySelector<HTMLButtonElement>("#theme")!;
 themeBtn.addEventListener("click", () => {
-  document.documentElement.classList.toggle("dark");
+  const dark = document.documentElement.classList.toggle("dark");
+  try {
+    localStorage.setItem("flowiz.theme", dark ? "dark" : "light");
+  } catch {
+    /* private mode */
+  }
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem("flowiz.theme");
+  } catch {
+    /* private mode */
+  }
+  if (stored) return; // an explicit choice wins over the system preference
+  document.documentElement.classList.toggle("dark", e.matches);
 });
 
 // drag & drop

@@ -8,8 +8,22 @@
       name="description"
       content="Drag & drop optical flow files (.flo, KITTI PNG, .pfm, .npy) to visualize them in your browser. No upload, fully offline."
     />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%80%3C/text%3E%3C/svg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234f46e5'/%3E%3Cg fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M9 20c2-5 12-5 14 0'/%3E%3Cpath d='M9 14c2-5 12-5 14 0'/%3E%3C/g%3E%3C/svg%3E" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <script>
+      // Apply the saved (or system-preferred) theme during parse, before the
+      // module bundle loads — a deferred module script would flash the wrong
+      // theme first. Classic inline scripts run synchronously here.
+      (function () {
+        try {
+          var t = localStorage.getItem("flowiz.theme");
+          var dark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+          if (dark) document.documentElement.classList.add("dark");
+        } catch (e) {
+          /* private mode — leave default light */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

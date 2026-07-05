@@ -13,7 +13,7 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" s
 export interface ConvertContext {
   getFrames: () => FlowField[];
   getCurrent: () => number;
-  notify: (msg: string) => void;
+  notify: (msg: string, kind?: "error" | "info") => void;
 }
 
 export interface ConvertPanel {

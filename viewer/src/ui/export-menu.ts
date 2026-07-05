@@ -14,7 +14,7 @@ export interface ExportContext {
   getCurrent: () => number;
   getFps: () => number;
   canvas: HTMLCanvasElement;
-  notify: (msg: string) => void;
+  notify: (msg: string, kind?: "error" | "info") => void;
 }
 
 const DOWNLOAD_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>`;
