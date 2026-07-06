@@ -888,15 +888,14 @@ function updateLegendHover(clientX: number, clientY: number) {
 
 legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
 // Touch: drag on the wheel isolates that direction (persists after lifting). The
-// target sits slightly ABOVE the fingertip so the finger doesn't cover it — same
-// idea as the image pixel-peeker, and touch-only (the mouse path is exact).
-const LEGEND_PEEK_OFFSET = 68; // px above the finger
+// target sits above the fingertip by the SAME distance as the image pixel-peeker
+// (PEEK_OFFSET) so the finger doesn't cover it — touch-only (the mouse is exact).
 const legendTouch = (e: TouchEvent) => {
   const t = e.touches[0];
   if (!t) return;
   legendPinned = true;
   legendImg.classList.add("pinned");
-  updateLegendHover(t.clientX, t.clientY - LEGEND_PEEK_OFFSET);
+  updateLegendHover(t.clientX, t.clientY - PEEK_OFFSET);
   e.preventDefault();
 };
 legendImg.addEventListener("touchstart", legendTouch, { passive: false });
