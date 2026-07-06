@@ -437,6 +437,10 @@ button.secondary:active { transform: translateY(1px); }
     padding: 20px 14px;
     min-height: 46vh;
   }
+  /* Cap the image at half the viewport height no matter how tall it is, so a
+     portrait flow never eats the screen — the base `max-height:100%` is 100% of
+     the growing stage, which doesn't bound it. Overlays track the canvas rect. */
+  #canvas { max-height: 50vh; }
   .dropzone { width: 100%; padding: 34px 18px; }
   .drop-title { font-size: 19px; }
   .drop-sub { margin: 0 0 18px; }
