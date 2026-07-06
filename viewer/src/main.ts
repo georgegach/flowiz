@@ -22,7 +22,10 @@ const THEME_SVG = `<svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
   <header class="topbar">
-    <div class="brand"><strong>flowiz</strong></div>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bm-top" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a84ff"/><stop offset="1" stop-color="#5e5ce6"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#bm-top)"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M9 20c2-5 12-5 14 0"/><path d="M9 14c2-5 12-5 14 0"/></g></svg></span>
+      <strong>flowiz</strong>
+    </div>
     <nav aria-label="Primary">
       <button id="learn-btn" class="learn-trigger">Learn</button>
       <a href="./docs/" target="_blank" rel="noopener">Docs</a>
@@ -36,15 +39,8 @@ app.innerHTML = `
     <section id="stage" class="stage">
       <div id="drop" class="dropzone">
         <div class="drop-inner">
-          <div class="drop-illo" aria-hidden="true">
-            <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="12" y="16" width="66" height="46" rx="6" stroke="currentColor" stroke-width="2.5"/>
-              <rect x="30" y="26" width="66" height="46" rx="6" fill="var(--panel)" stroke="currentColor" stroke-width="2.5"/>
-              <g stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M44 56c5-11 24-12 34-5"/>
-                <path d="M72 45l7 6-9 3"/>
-              </g>
-            </svg>
+          <div class="drop-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bm-hero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a84ff"/><stop offset="1" stop-color="#5e5ce6"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#bm-hero)"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M9 20c2-5 12-5 14 0"/><path d="M9 14c2-5 12-5 14 0"/></g></svg>
           </div>
           <h1 class="drop-title">Visualize optical flow in your browser</h1>
           <p class="drop-sub">Drop files anywhere — everything runs locally, nothing is uploaded.</p>
@@ -59,6 +55,11 @@ app.innerHTML = `
               <p>.mp4 · .webm · .mov — computed on-device</p>
               <label class="pick pick-alt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M16 10l4-2v8l-4-2"/></svg>Choose video<input id="video-file" type="file" accept="video/*,.mkv,.avi,.m4v,.ogv" hidden /></label>
             </div>
+          </div>
+          <div class="drop-badges" aria-label="Privacy and capability highlights">
+            <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>No upload</span>
+            <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>Runs on-device</span>
+            <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v10"/><path d="M8 9l4 4 4-4"/><path d="M4 17a8 8 0 0 0 16 0"/></svg>Works offline</span>
           </div>
           <div class="examples">
             <span class="ex-label">or try an example</span>
