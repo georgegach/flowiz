@@ -137,7 +137,12 @@ export function setupFilmstrip(el: HTMLElement, onSelect: (i: number) => void): 
     currentBtn = b ?? null;
     if (b) {
       b.setAttribute("aria-current", "true");
-      b.scrollIntoView({ block: "nearest", inline: "nearest" });
+      // Scroll ONLY the strip's own horizontal scroll to reveal the active
+      // thumb — never scrollIntoView, which scrolls the whole page and yanks the
+      // viewport off the image (e.g. during playback).
+      const target = b.offsetLeft - (el.clientWidth - b.clientWidth) / 2;
+      const max = el.scrollWidth - el.clientWidth;
+      el.scrollLeft = Math.max(0, Math.min(max, target));
     }
   }
 

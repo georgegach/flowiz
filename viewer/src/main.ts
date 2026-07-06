@@ -68,8 +68,11 @@ app.innerHTML = `
       <canvas id="source" class="source" hidden></canvas>
       <canvas id="canvas" tabindex="0" aria-label="Flow visualization — click a pixel to pin its readout" hidden></canvas>
       <canvas id="arrows" class="arrows" hidden></canvas>
+      <div id="peekdot" class="peekdot" hidden></div>
       <div id="inspector" class="inspector" hidden></div>
       <div id="stagebar" class="stagebar" hidden></div>
+      <button id="prevframe" class="framenav framenav-prev" aria-label="Previous frame" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button id="nextframe" class="framenav framenav-next" aria-label="Next frame" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
           <div class="loader-title" id="loader-title">Loading files</div>
@@ -80,6 +83,17 @@ app.innerHTML = `
     </section>
 
     <aside id="controls" class="controls" hidden>
+      <section class="ctl-group" id="legend-card" hidden>
+        <h3 class="ctl-group-t">Color wheel</h3>
+        <div class="legend-wrap">
+          <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
+          <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
+        </div>
+        <div id="hlradius-ctl" hidden>
+          <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
+        </div>
+      </section>
+
       <section class="ctl-group">
         <h3 class="ctl-group-t">Encoding</h3>
         <div class="segmented" id="mode" role="group" aria-label="Encoding">
@@ -102,17 +116,6 @@ app.innerHTML = `
         <div class="ctl-toggles" id="source-ctl" hidden>
           <label><input id="showsource" type="checkbox" /> Source video</label>
           <label class="op-inline" id="flowop-row" hidden>Flow <input id="flowop" type="range" min="0" max="100" step="1" value="55" aria-label="Flow opacity over source video" /></label>
-        </div>
-      </section>
-
-      <section class="ctl-group" id="legend-card" hidden>
-        <h3 class="ctl-group-t">Color wheel</h3>
-        <div class="legend-wrap">
-          <img id="legend" class="legend" hidden alt="Color wheel legend — hover to isolate a direction, click to pin" tabindex="0" role="button" />
-          <canvas id="legendarrow" class="legend-arrow" hidden></canvas>
-        </div>
-        <div id="hlradius-ctl" hidden>
-          <label class="op-inline">Highlight radius <input id="hlradius" type="range" min="0.02" max="0.6" step="0.01" value="0.06" aria-label="Direction highlight radius" /></label>
         </div>
       </section>
 
@@ -167,6 +170,9 @@ const fpsInput = document.querySelector<HTMLInputElement>("#fps")!;
 const fpsVal = document.querySelector<HTMLSpanElement>("#fpsval")!;
 const stageEl = document.querySelector<HTMLElement>("#stage")!;
 const stagebar = document.querySelector<HTMLDivElement>("#stagebar")!;
+const peekDot = document.querySelector<HTMLDivElement>("#peekdot")!;
+const prevBtn = document.querySelector<HTMLButtonElement>("#prevframe")!;
+const nextBtn = document.querySelector<HTMLButtonElement>("#nextframe")!;
 const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
 const sourceCanvas = document.querySelector<HTMLCanvasElement>("#source")!;
@@ -418,6 +424,7 @@ function updateStats() {
   const f = frames[current];
   if (!f) {
     stagebar.hidden = true;
+    prevBtn.hidden = nextBtn.hidden = true;
     return;
   }
   const mx = maxMagnitude(f);
@@ -428,7 +435,15 @@ function updateStats() {
     <div><span>File</span><b class="fname">${f.name}</b></div>`;
   stagebar.textContent = `${f.name} · ${current + 1}/${frames.length}`;
   stagebar.hidden = false;
+  prevBtn.hidden = nextBtn.hidden = frames.length < 2;
 }
+
+function gotoFrame(delta: number) {
+  if (frames.length < 2) return;
+  loadFrame((current + delta + frames.length) % frames.length);
+}
+prevBtn.addEventListener("click", () => gotoFrame(-1));
+nextBtn.addEventListener("click", () => gotoFrame(1));
 
 const strip = setupFilmstrip(filmstrip, (i) => loadFrame(i));
 
@@ -736,6 +751,97 @@ canvas.addEventListener("click", (e) => {
   if (p.fx < 0 || p.fy < 0 || p.fx >= f.width || p.fy >= f.height) return;
   inspectorPin = p;
   renderInspector(p.fx, p.fy, p.left, p.top);
+});
+
+// --- touch: pixel peeker (dot above the finger, readout above the dot, clamped
+// to the stage) + horizontal-flick swipe to change frames ---
+const PEEK_OFFSET = 54; // px the sample point sits above the fingertip
+
+function showTouchPeek(clientX: number, clientY: number) {
+  const f = frames[current];
+  if (!f) {
+    hideTouchPeek();
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const sr = stageEl.getBoundingClientRect();
+  const peekX = clientX;
+  const peekY = clientY - PEEK_OFFSET;
+  const fx = Math.max(0, Math.min(f.width - 1, Math.floor(((peekX - rect.left) / rect.width) * f.width)));
+  const fy = Math.max(0, Math.min(f.height - 1, Math.floor(((peekY - rect.top) / rect.height) * f.height)));
+  const i = (fy * f.width + fx) * 2;
+  const u = f.data[i];
+  const v = f.data[i + 1];
+
+  const dotLeft = peekX - sr.left;
+  const dotTop = peekY - sr.top;
+  peekDot.style.left = `${dotLeft}px`;
+  peekDot.style.top = `${dotTop}px`;
+  peekDot.hidden = false;
+
+  inspector.hidden = false;
+  inspector.innerHTML = `
+    <div>x,y <b>${fx},${fy}</b></div>
+    <div>u <b>${u.toFixed(3)}</b></div>
+    <div>v <b>${v.toFixed(3)}</b></div>
+    <div>|·| <b>${Math.hypot(u, v).toFixed(3)}</b></div>
+    <div>∠ <b>${((Math.atan2(v, u) * 180) / Math.PI).toFixed(1)}°</b></div>`;
+  const iw = inspector.offsetWidth;
+  const ih = inspector.offsetHeight;
+  const left = Math.max(6, Math.min(sr.width - iw - 6, dotLeft - iw / 2));
+  const top = Math.max(6, dotTop - ih - 14);
+  inspector.style.left = `${left}px`;
+  inspector.style.top = `${top}px`;
+
+  const mf = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
+  drawLegendArrow(u / mf, v / mf);
+}
+
+function hideTouchPeek() {
+  peekDot.hidden = true;
+  inspector.hidden = true;
+  legendArrow.hidden = true;
+}
+
+let touchStart: { x: number; y: number; t: number } | null = null;
+canvas.addEventListener(
+  "touchstart",
+  (e) => {
+    if (!frames.length) return;
+    const t = e.touches[0];
+    touchStart = { x: t.clientX, y: t.clientY, t: performance.now() };
+    showTouchPeek(t.clientX, t.clientY);
+    e.preventDefault(); // no scroll, and suppress the synthetic mouse events
+  },
+  { passive: false },
+);
+canvas.addEventListener(
+  "touchmove",
+  (e) => {
+    if (!frames.length) return;
+    const t = e.touches[0];
+    showTouchPeek(t.clientX, t.clientY);
+    e.preventDefault();
+  },
+  { passive: false },
+);
+canvas.addEventListener("touchend", (e) => {
+  const start = touchStart;
+  touchStart = null;
+  hideTouchPeek();
+  if (!start || !frames.length) return;
+  const ch = e.changedTouches[0];
+  if (!ch) return;
+  const dx = ch.clientX - start.x;
+  const dy = ch.clientY - start.y;
+  // A quick horizontal flick pages frames; a slow drag just peeks.
+  if (performance.now() - start.t < 400 && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+    gotoFrame(dx < 0 ? 1 : -1);
+  }
+});
+canvas.addEventListener("touchcancel", () => {
+  touchStart = null;
+  hideTouchPeek();
 });
 
 // --- legend hover: isolate the hovered direction/speed in the flow image ---

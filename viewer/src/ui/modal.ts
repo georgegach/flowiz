@@ -35,7 +35,7 @@ export function openModal(root: HTMLElement, opts: ModalOptions): ModalHandle {
 
   const first = opts.initialFocus ?? focusables()[0] ?? root;
   if (first === root && !root.hasAttribute("tabindex")) root.tabIndex = -1;
-  first.focus?.();
+  first.focus?.({ preventScroll: true });
 
   const onKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -93,7 +93,8 @@ export function openModal(root: HTMLElement, opts: ModalOptions): ModalHandle {
       document.removeEventListener("keydown", onKeydown, true);
       root.removeEventListener("mousedown", onMousedown);
       root.removeEventListener("click", onClick);
-      if (previouslyFocused && previouslyFocused.isConnected) previouslyFocused.focus?.();
+      if (previouslyFocused && previouslyFocused.isConnected)
+        previouslyFocused.focus?.({ preventScroll: true });
     },
   };
 }

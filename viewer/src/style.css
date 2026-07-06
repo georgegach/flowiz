@@ -39,16 +39,19 @@
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; height: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
 body {
   background: var(--bg);
   color: var(--fg);
   font: 14px/1.5 var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  /* Disable the double-tap-to-zoom gesture (and its 300ms delay) while keeping
-     scroll + pinch-zoom. */
-  touch-action: manipulation;
+  /* No sideways page drag and no double-tap zoom; keep vertical scroll + pinch. */
+  touch-action: pan-y pinch-zoom;
+  /* Long-press/drag on chrome shouldn't select text or pop the iOS callout. */
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
+/* Prose in the Learn guide stays selectable. */
+.learn-article, .learn-section { user-select: text; -webkit-user-select: text; }
 #app { display: flex; flex-direction: column; height: 100vh; }
 
 button, a, input, label { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .1s; }
@@ -102,10 +105,33 @@ main { flex: 1; display: flex; min-height: 0; }
   max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .stagebar[hidden] { display: none; }
+
+/* Touch pixel-peeker dot — sits at the sampled point above the fingertip. */
+.peekdot {
+  position: absolute; z-index: 5; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+  border-radius: 50%; border: 2px solid #fff; background: var(--accent); pointer-events: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, .45), 0 1px 5px rgba(0, 0, 0, .5);
+}
+.peekdot[hidden] { display: none; }
+
+/* Prev/next frame chevrons over the image edges. */
+.framenav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+  width: 34px; height: 46px; display: flex; align-items: center; justify-content: center;
+  color: var(--fg); border: 1px solid var(--border); border-radius: var(--radius-m); cursor: pointer;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.framenav[hidden] { display: none; }
+.framenav svg { width: 18px; height: 18px; }
+.framenav:hover { background: var(--panel); }
+.framenav-prev { left: 12px; }
+.framenav-next { right: 12px; }
 #canvas {
   max-width: 100%; max-height: 100%; image-rendering: pixelated;
   border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
   position: relative; z-index: 2; /* above the source video, below the arrows */
+  touch-action: none; /* we handle touch (peek + swipe) ourselves */
 }
 /* Source video frame drawn directly behind the flow (see "Source video" toggle);
    flow canvas opacity is dialled down so the real footage shows through. */
@@ -258,7 +284,7 @@ button.secondary:active { transform: translateY(1px); }
 .stats b { font-family: var(--font-mono); font-size: 12.5px; }
 .stats .fname { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.filmstrip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px; }
+.filmstrip { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px; touch-action: pan-x; }
 .filmstrip[hidden] { display: none; }
 .thumb {
   position: relative; flex: none; width: 64px; height: 40px; padding: 0; overflow: hidden;
@@ -280,7 +306,7 @@ button.secondary:active { transform: translateY(1px); }
 .op-inline { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .op-inline input[type="range"] { flex: 1; min-width: 90px; }
 .inspector {
-  position: absolute; pointer-events: none; background: rgba(0, 0, 0, 0.82); color: #fff;
+  position: absolute; z-index: 6; pointer-events: none; background: rgba(0, 0, 0, 0.82); color: #fff;
   padding: 8px 10px; border-radius: var(--radius-s); font: 12px/1.35 var(--font-mono);
   min-width: 120px; box-shadow: var(--shadow-md);
 }
