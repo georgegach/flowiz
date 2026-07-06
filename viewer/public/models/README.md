@@ -1,6 +1,6 @@
-# RAFT ONNX model
+# RAFT ONNX models
 
-The **Best** flow-generation tier runs RAFT via onnxruntime-web. The file is
+The neural flow-generation tiers run RAFT via onnxruntime-web. The files are
 produced and verified by
 [`.github/scripts/fetch_raft_models.py`](../../../.github/scripts/fetch_raft_models.py)
 (run through the `Build flow-gen assets` workflow) and committed here plainly
@@ -8,6 +8,7 @@ produced and verified by
 
 ```
 raft-large-360x480.onnx        # ~64 MB  fp32 — Best tier
+raft-small-360x480.onnx        # ~a few MB fp32 — Balanced tier
 ```
 
 Fetched at runtime by `src/flowgen/raft.ts` (`BASE_URL + "models/..."`), through
@@ -29,11 +30,21 @@ quantization exists, only the fp32 model ships.
 
 ## Source & provenance
 
-The file is the OpenCV model zoo `optical_flow_estimation_raft` (RAFT, 2023-aug),
-mirrored on HuggingFace at
-[`opencv/optical_flow_estimation_raft`](https://huggingface.co/opencv/optical_flow_estimation_raft):
+- **raft-large** = the OpenCV model zoo `optical_flow_estimation_raft` (RAFT,
+  2023-aug) fp32 export `optical_flow_estimation_raft_2023aug.onnx`, mirrored on
+  HuggingFace at
+  [`opencv/optical_flow_estimation_raft`](https://huggingface.co/opencv/optical_flow_estimation_raft),
+  shipped verbatim.
+- **raft-small** = exported by the script from
+  [`torchvision.models.optical_flow.raft_small`](https://pytorch.org/vision/stable/models/raft.html)
+  (`Raft_Small_Weights.C_T_V2`) to ONNX opset 16 — single full-res output, 12
+  iterations baked. ~1M params, so a much smaller/faster net than large.
 
-- **raft-large** = the zoo's fp32 export `optical_flow_estimation_raft_2023aug.onnx`, verbatim.
+> **wasm caveat:** raft-small emits an ONNX `GridSample` op (grid_sample in the
+> correlation lookup). It passes desktop-CPU ORT in the script's shift test, but
+> that is *not* proof it runs on onnxruntime-web's wasm EP. Verify in a browser
+> before trusting the Balanced tier — the removed int8 model is the cautionary
+> tale (green on desktop, `ConvInteger` failure in-browser).
 
 ## Signature (verified, do not assume)
 

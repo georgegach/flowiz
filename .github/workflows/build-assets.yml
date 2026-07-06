@@ -34,8 +34,11 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install deps
-        run: pip install --upgrade "huggingface_hub>=0.23" onnx onnxruntime numpy
-      - name: Fetch + introspect + validate
+        run: |
+          pip install --upgrade "huggingface_hub>=0.23" onnx onnxruntime numpy
+          # CPU-only torch/torchvision to export raft_small (no CUDA wheels).
+          pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch torchvision
+      - name: Fetch + export + introspect + validate
         run: python .github/scripts/fetch_raft_models.py ${{ inputs.commit && '--commit' || '' }}
       - name: Commit models
         if: ${{ inputs.commit }}

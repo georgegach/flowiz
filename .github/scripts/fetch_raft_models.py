@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """
 Produce, verify and install the RAFT ONNX models behind the viewer's flow-gen
-"Optimal" (int8) and "Best" (fp32) tiers.
+"Balanced" (raft-small) and "Best" (raft-large) tiers.
 
-Source: OpenCV model zoo `optical_flow_estimation_raft` (mirrored on HuggingFace).
-Ships one architecture: fp32 (`..._2023aug.onnx`) plus a *block-quantized* int8
-that onnxruntime rejects (`block_size must be 0 for per-tensor quantization`) —
-so we ignore the shipped int8 and dynamically quantize the fp32 ourselves into an
-onnxruntime-web-compatible per-tensor int8.
+Sources:
+  * raft-large — OpenCV model zoo `optical_flow_estimation_raft` fp32
+    (`..._2023aug.onnx`), mirrored on HuggingFace, shipped verbatim. (Its shipped
+    block-quantized int8 is ignored — onnxruntime-web's wasm EP can't run it.)
+  * raft-small — exported here from torchvision's `raft_small` (C_T_V2 weights) to
+    ONNX opset 16, single full-res output, iteration count baked. ~1M params →
+    a much smaller/faster neural tier than large.
 
 Everything is verified against ground truth before committing:
-  * Output selection — the model emits BOTH a 1/8-res and a full-res flow; we
-    pick the full-res tensor by spatial size (never by index).
+  * Output selection — large emits BOTH a 1/8-res and a full-res flow; we pick
+    the full-res tensor by spatial size (never by index). small emits one.
   * Pixel range — determined *empirically* by running a known-shift image pair
     through both candidate normalizations ([0,255] raw vs [-1,1] signed) and
     keeping whichever recovers the known displacement (lowest EPE).
@@ -20,14 +22,18 @@ Prints a RECONCILE block telling the runtime code (raft.ts) exactly which pixel
 range and output tensor to use. Commits nothing that fails the shift test.
 
 Tier -> file:
-  Best    (raft-large) <- fp32 dynamic  -> raft-large-360x480.onnx
-  Optimal (raft-small) <- int8 (ours)   -> raft-small-int8-360x480.onnx
+  Best     (raft-large) <- OpenCV zoo fp32       -> raft-large-360x480.onnx
+  Balanced (raft-small) <- torchvision fp32 (ours) -> raft-small-360x480.onnx
 
 The runtime registry that decides which of these the viewer actually offers is
-viewer/src/flowgen/models.ts (RAFT_MODELS). Today it wires only raft-large; add
-a registry entry (id/file/inputW/H/pixelRange) to surface another model, and
-keep this script's filename(s) in sync with it. Each new resolution is a new
-filename, which doubles as a Cache Storage cache-buster.
+viewer/src/flowgen/models.ts (RAFT_MODELS): add a registry entry (id/file/
+inputW/H/pixelRange, matching the RECONCILE block) to surface a model, and keep
+this script's filename(s) in sync with it. Each new resolution is a new filename,
+which doubles as a Cache Storage cache-buster.
+
+IMPORTANT: raft-small uses ONNX GridSample. It passes desktop-CPU ORT here, but
+that is NOT proof it runs on onnxruntime-web's wasm EP — verify in a browser
+before trusting the tier (same lesson as the removed int8 model).
 """
 
 from __future__ import annotations
@@ -36,6 +42,8 @@ import argparse
 import json
 import shutil
 import sys
+import tempfile
+import traceback
 from pathlib import Path
 
 import numpy as np
@@ -134,6 +142,61 @@ def verify_model(path: Path) -> tuple[bool, str, float]:
     return ok, best, results[best]
 
 
+def build_raft_small(out_dir: Path) -> Path | None:
+    """Export torchvision's raft_small to ONNX at (H,W), NCHW, two image inputs,
+    a single full-res [1,2,H,W] flow output (the final refinement iteration).
+
+    Returns the .onnx path, or None if torch/torchvision isn't installed (a local
+    run without the heavy deps) — the caller still ships raft-large in that case.
+    Raises on an actual export failure so the CI job surfaces it.
+
+    Notes:
+      * raft_small's forward returns a list of per-iteration flows (all upsampled
+        to full res); we take the last one. Iteration count is BAKED (unrolled) —
+        exactly like the zoo's raft-large — so there's no runtime iters knob.
+      * grid_sample -> ONNX GridSample needs opset >= 16. onnxruntime-web's wasm
+        EP has a CPU GridSample kernel, so this runs in-browser (verify there!).
+      * Inputs are named '0','1' to mirror raft-large; raft.ts feeds by index and
+        picks the output by shape, so exact names/opset don't matter to it.
+    """
+    try:
+        import torch
+        from torchvision.models.optical_flow import Raft_Small_Weights, raft_small
+    except Exception as e:  # noqa: BLE001
+        print(f"\n[skip raft-small] torch/torchvision not available: {e}")
+        return None
+
+    print("\n--- exporting torchvision raft_small -> ONNX ---")
+    model = raft_small(weights=Raft_Small_Weights.C_T_V2, progress=False).eval()
+
+    class LastFlow(torch.nn.Module):
+        def __init__(self, m: torch.nn.Module) -> None:
+            super().__init__()
+            self.m = m
+
+        def forward(self, a: "torch.Tensor", b: "torch.Tensor") -> "torch.Tensor":
+            return self.m(a, b, num_flow_updates=12)[-1]  # final full-res flow
+
+    wrapped = LastFlow(model).eval()
+    # Random (not zero) sample input — values don't affect the traced graph, but
+    # avoid any degenerate all-zero paths during tracing.
+    a = torch.rand(1, 3, H, W, dtype=torch.float32)
+    b = torch.rand(1, 3, H, W, dtype=torch.float32)
+    dst = out_dir / "raft-small-360x480.onnx"
+    with torch.no_grad():
+        torch.onnx.export(
+            wrapped,
+            (a, b),
+            str(dst),
+            input_names=["0", "1"],
+            output_names=["flow"],
+            opset_version=16,
+            do_constant_folding=True,
+        )
+    print(f"  exported -> {dst}  ({dst.stat().st_size / 1e6:.1f} MB)")
+    return dst
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--commit", action="store_true")
@@ -150,12 +213,21 @@ def main() -> int:
     print(f"\n--- downloading {fp32_name} ---")
     fp32 = Path(hf_hub_download(REPO_ID, fp32_name))
 
-    # NOTE: we intentionally ship ONLY the fp32 model. Quantizing this RAFT to
-    # int8 (dynamically, producing ConvInteger, or via the zoo's block-quant
-    # file) yields ops that onnxruntime-web's wasm EP cannot run in-browser —
-    # they pass desktop-CPU validation but fail at session-create time with
-    # "Could not find an implementation for ConvInteger". See models/README.md.
+    # NOTE: we ship the zoo's fp32 large model verbatim (no int8 — quantizing
+    # this RAFT yields ConvInteger/block-quant ops the wasm EP can't run; see
+    # models/README.md), PLUS a torchvision-exported raft_small for a lighter,
+    # faster "Balanced" neural tier.
     targets = [(fp32, "raft-large-360x480.onnx", "signed?")]
+
+    small_export_ok = True
+    try:
+        small = build_raft_small(Path(tempfile.mkdtemp()))
+        if small is not None:
+            targets.append((small, "raft-small-360x480.onnx", "signed?"))
+    except Exception as e:  # noqa: BLE001
+        print(f"\n[ERROR] raft-small export failed: {e}")
+        traceback.print_exc()
+        small_export_ok = False
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     reconcile = {}
@@ -173,7 +245,7 @@ def main() -> int:
     print("  output tensor: select the (1,2,360,480) full-res output by shape,")
     print("  NOT session.outputNames[0] (that is the 1/8-res 45x60 flow).")
     print("=======================================")
-    return 0 if ok_all else 1
+    return 0 if (ok_all and small_export_ok) else 1
 
 
 if __name__ == "__main__":
