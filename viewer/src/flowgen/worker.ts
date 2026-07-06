@@ -87,7 +87,11 @@ self.onmessage = async (ev: MessageEvent) => {
         const { sequenceMaxFlow } = await import("../export/colorize");
         const mx = sequenceMaxFlow(fields);
         const pngs: Uint8Array[] = [];
-        for (const f of fields) pngs.push(await colorPng(f, mx));
+        for (let i = 0; i < fields.length; i++) {
+          pngs.push(await colorPng(fields[i], mx));
+          post({ type: "progress", id: msg.id, phase: "Rendering frames", done: i + 1, total: fields.length, kind: "count" });
+        }
+        post({ type: "progress", id: msg.id, phase: "Packing ZIP", done: fields.length, total: fields.length, kind: "count" });
         const zip = buildRawZip(fields, pngs, msg.baseName);
         post(
           { type: "blob", id: msg.id, buffer: zip.buffer as ArrayBuffer, mime: "application/zip", filename: `${msg.baseName}.zip` },
@@ -96,7 +100,9 @@ self.onmessage = async (ev: MessageEvent) => {
         break;
       }
       case "encode-gif": {
-        const gif = encodeGif(msg.frames, msg.fps, msg.sharedMax);
+        const gif = encodeGif(msg.frames, msg.fps, msg.sharedMax, (done, total) =>
+          post({ type: "progress", id: msg.id, phase: "Encoding GIF", done, total, kind: "count" }),
+        );
         post(
           { type: "blob", id: msg.id, buffer: gif.buffer as ArrayBuffer, mime: "image/gif", filename: "flow.gif" },
           [gif.buffer as ArrayBuffer],
@@ -104,7 +110,9 @@ self.onmessage = async (ev: MessageEvent) => {
         break;
       }
       case "encode-mp4": {
-        const mp4 = await encodeMp4(msg.frames, msg.fps, msg.sharedMax, msg.codec);
+        const mp4 = await encodeMp4(msg.frames, msg.fps, msg.sharedMax, msg.codec, (done, total) =>
+          post({ type: "progress", id: msg.id, phase: "Encoding MP4", done, total, kind: "count" }),
+        );
         post(
           { type: "blob", id: msg.id, buffer: mp4.buffer as ArrayBuffer, mime: "video/mp4", filename: "flow.mp4" },
           [mp4.buffer as ArrayBuffer],

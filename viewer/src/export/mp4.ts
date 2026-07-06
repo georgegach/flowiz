@@ -29,7 +29,16 @@ export async function encodeMp4(
   fps: number,
   sharedMax: number,
   codec: string,
+  onProgress?: (done: number, total: number) => void,
 ): Promise<Uint8Array> {
+  // WebCodecs globals aren't reliably in lib.dom across TS versions — access untyped.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const VideoEncoderCtor = (globalThis as any).VideoEncoder;
+  const VideoFrameCtor = (globalThis as any).VideoFrame;
+  if (!VideoEncoderCtor || !VideoFrameCtor) {
+    throw new Error("This browser has no WebCodecs video encoder — try GIF or ZIP instead.");
+  }
+
   // H.264 (and most encoders) require even dimensions — pad up by 1px if odd.
   const w = frames[0].width + (frames[0].width % 2);
   const h = frames[0].height + (frames[0].height % 2);
@@ -40,14 +49,13 @@ export async function encodeMp4(
     fastStart: "in-memory",
   });
 
-  // WebCodecs globals aren't reliably in lib.dom across TS versions — access untyped.
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const VideoEncoderCtor = (globalThis as any).VideoEncoder;
-  const VideoFrameCtor = (globalThis as any).VideoFrame;
+  // The encoder reports async failures via this callback, NOT by throwing where
+  // we can catch it — capture the first error and surface it after flush().
+  let encoderError: Error | null = null;
   const encoder = new VideoEncoderCtor({
     output: (chunk: any, meta: any) => muxer.addVideoChunk(chunk, meta),
     error: (e: any) => {
-      throw e;
+      encoderError ??= e instanceof Error ? e : new Error(e?.message || "Video encoding failed");
     },
   });
   const bitrate = Math.min(8_000_000, Math.round(w * h * fps * 0.15));
@@ -58,6 +66,7 @@ export async function encodeMp4(
   const frameDurUs = Math.round(1e6 / fps);
 
   for (let i = 0; i < frames.length; i++) {
+    if (encoderError) throw encoderError; // stop early on a codec failure
     const s = frames[i];
     const rgba = colorizeFlow(toFlowField(s), sharedMax);
     ctx.fillStyle = "black";
@@ -66,10 +75,12 @@ export async function encodeMp4(
     const vf = new VideoFrameCtor(canvas, { timestamp: i * frameDurUs, duration: frameDurUs });
     encoder.encode(vf, { keyFrame: i % 30 === 0 });
     vf.close();
+    onProgress?.(i + 1, frames.length);
   }
 
   await encoder.flush();
-  muxer.finalize();
   encoder.close();
+  if (encoderError) throw encoderError;
+  muxer.finalize();
   return new Uint8Array((muxer.target as ArrayBufferTarget).buffer);
 }
