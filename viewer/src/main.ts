@@ -1088,6 +1088,10 @@ document.querySelector<HTMLInputElement>("#video-file")!.addEventListener("chang
   const input = e.target as HTMLInputElement;
   if (input.files) handleFiles(input.files);
 });
+// Pre-render the color wheel at startup so it's fully loaded and appears the
+// instant the panel opens (no lazy paint gap on the first flow). It's static and
+// frame-independent, so one paint at boot is enough.
+renderLegend();
 legendCb.dispatchEvent(new Event("change"));
 
 // --- Learn panel ---
