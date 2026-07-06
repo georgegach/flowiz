@@ -20,12 +20,26 @@ export interface RaftModelSpec {
   inputH: number;
   /** signed = 2*x/255-1 ; raw = x (0..255) — MUST match how the .onnx was exported. */
   pixelRange: "signed" | "raw";
+  /** One-line "what you get", shown under the model picker. */
+  blurb?: string;
 }
 
 export const RAFT_MODELS: RaftModelSpec[] = [
   {
-    // OpenCV-zoo RAFT (2023aug) fp32. Wants [-1,1] input — verified empirically
-    // by .github/scripts/fetch_raft_models.py.
+    // torchvision raft_small (C_T_V2) exported to ONNX by
+    // .github/scripts/fetch_raft_models.py. [-1,1] input, single full-res output;
+    // both verified empirically (0.09px EPE on the shift test).
+    id: "raft-small-360x480",
+    label: "Balanced — RAFT small",
+    bytes: 4_234_030,
+    file: "raft-small-360x480.onnx",
+    inputW: 480,
+    inputH: 360,
+    pixelRange: "signed",
+    blurb: "Small neural net (RAFT) — much sharper than DIS at only ~4 MB, and faster per frame than the large model.",
+  },
+  {
+    // OpenCV-zoo RAFT (2023aug) fp32. Wants [-1,1] input — verified empirically.
     id: "raft-large-360x480",
     label: "Best — RAFT large",
     bytes: 64_119_337,
@@ -33,6 +47,7 @@ export const RAFT_MODELS: RaftModelSpec[] = [
     inputW: 480,
     inputH: 360,
     pixelRange: "signed",
+    blurb: "Full RAFT network — the most accurate flow, but a large download and slower per frame.",
   },
 ];
 

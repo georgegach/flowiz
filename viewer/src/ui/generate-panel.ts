@@ -28,8 +28,9 @@ interface GenModelOption {
   disPreset?: DisPreset; // for DIS tiers: the base preset this tier selects
   blurb?: string; // one-line "what you get" shown under the picker
 }
-// Both DIS tiers share the same download (opencv-dis.wasm 4,412,489 + .js 139,157);
-// they differ only in the DIS preset (accuracy vs speed). RAFT is a neural net.
+// DIS download = opencv-dis.wasm (4,412,489) + opencv-dis.js (139,157). RAFT
+// tiers are neural nets fetched per model (see RAFT_MODELS). The DIS medium/
+// ultrafast presets live in Advanced for anyone who wants them.
 const OPTIONS: GenModelOption[] = [
   {
     id: "dis",
@@ -37,15 +38,7 @@ const OPTIONS: GenModelOption[] = [
     label: "Fastest — DIS",
     bytes: 4_551_646,
     disPreset: "fast",
-    blurb: "Classical DIS on the CPU — near-instant, roughest edges. Great for a quick look.",
-  },
-  {
-    id: "dis-medium",
-    tier: "dis",
-    label: "Balanced — DIS",
-    bytes: 4_551_646,
-    disPreset: "medium",
-    blurb: "DIS with extra refinement — sharper motion boundaries, still CPU-only and no extra download.",
+    blurb: "Classical DIS on the CPU — near-instant and tiny, but the roughest edges. Great for a quick look.",
   },
   ...RAFT_MODELS.map((m): GenModelOption => ({
     id: m.id,
@@ -53,7 +46,7 @@ const OPTIONS: GenModelOption[] = [
     label: m.label,
     bytes: m.bytes,
     raftModelId: m.id,
-    blurb: "Deep network (RAFT) — the most accurate flow, but a large download and slower per frame.",
+    blurb: m.blurb,
   })),
 ];
 const fmtSize = (bytes: number) => `~${Math.round(bytes / 1e6)} MB`;
