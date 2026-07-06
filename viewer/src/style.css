@@ -114,19 +114,60 @@ main { flex: 1; display: flex; min-height: 0; }
 }
 .peekdot[hidden] { display: none; }
 
-/* Prev/next frame chevrons over the image edges. */
-.framenav {
-  position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
-  width: 34px; height: 46px; display: flex; align-items: center; justify-content: center;
-  color: var(--fg); border: 1px solid var(--border); border-radius: var(--radius-m); cursor: pointer;
-  background: color-mix(in srgb, var(--panel) 72%, transparent);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+/* Image column: the stage plus the timeline scrubber under it. The base
+   `.stage { flex: 1 }` already grows the stage inside this column. */
+.viewer-col { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+
+/* Timeline scrubber under the image (outside the controls panel, always there
+   on desktop and mobile). Chevrons flank the slider at its start/end. */
+.timeline {
+  flex: none; display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px 14px; background: var(--bg); border-top: 1px solid var(--border);
 }
-.framenav[hidden] { display: none; }
+.timeline[hidden] { display: none; }
+
+.framenav {
+  flex: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  color: var(--fg); border: 1px solid var(--border); border-radius: 50%; cursor: pointer;
+  background: var(--panel); transition: transform .1s, background .12s, border-color .12s;
+}
 .framenav svg { width: 18px; height: 18px; }
-.framenav:hover { background: var(--panel); }
-.framenav-prev { left: 12px; }
-.framenav-next { right: 12px; }
+.framenav:hover { background: var(--panel-2); border-color: var(--border-strong); }
+.framenav:active { transform: scale(0.93); }
+
+/* Range scrubber with a wide, grippy (textured) thumb. */
+.frameslider {
+  flex: 1; min-width: 0; height: 34px; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: transparent;
+}
+.frameslider::-webkit-slider-runnable-track {
+  height: 8px; border-radius: 999px; border: 1px solid var(--border);
+  background:
+    linear-gradient(var(--accent), var(--accent)) left / var(--fill, 0%) 100% no-repeat,
+    var(--panel-2);
+}
+.frameslider::-moz-range-track { height: 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); }
+.frameslider::-moz-range-progress { height: 8px; border-radius: 999px; background: var(--accent); }
+.frameslider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; margin-top: -10px;
+  width: 28px; height: 28px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--fg) 42%, transparent) 0 1.5px, transparent 1.5px 4.5px)
+      center / 13px 13px no-repeat,
+    var(--panel);
+  box-shadow: var(--shadow-md);
+}
+.frameslider::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 9px; border: 1px solid var(--border-strong);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--fg) 42%, transparent) 0 1.5px, transparent 1.5px 4.5px)
+      center / 13px 13px no-repeat,
+    var(--panel);
+  box-shadow: var(--shadow-md);
+}
+.frameslider:focus-visible { outline: none; }
+.frameslider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-md); }
+.frameslider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-md); }
 #canvas {
   max-width: 100%; max-height: 100%; image-rendering: pixelated;
   border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
@@ -386,6 +427,8 @@ button.secondary:active { transform: translateY(1px); }
   html, body { height: auto; }
   #app { height: auto; min-height: 100dvh; }
   main { flex-direction: column; }
+  .viewer-col { flex: 1 0 auto; }
+  .timeline { padding: 10px 14px 12px; gap: 10px; }
   .topbar { padding: 0 14px; }
 
   .stage {

@@ -184,6 +184,9 @@ def build_raft_small(out_dir: Path) -> Path | None:
     b = torch.rand(1, 3, H, W, dtype=torch.float32)
     dst = out_dir / "raft-small-360x480.onnx"
     with torch.no_grad():
+        # dynamo=False → the legacy TorchScript exporter, which reliably maps
+        # grid_sample -> ONNX GridSample (opset 16) and doesn't need onnxscript.
+        # (Recent torch defaults torch.onnx.export to the dynamo exporter.)
         torch.onnx.export(
             wrapped,
             (a, b),
@@ -192,6 +195,7 @@ def build_raft_small(out_dir: Path) -> Path | None:
             output_names=["flow"],
             opset_version=16,
             do_constant_folding=True,
+            dynamo=False,
         )
     print(f"  exported -> {dst}  ({dst.stat().st_size / 1e6:.1f} MB)")
     return dst

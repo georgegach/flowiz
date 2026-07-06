@@ -32,6 +32,7 @@ app.innerHTML = `
   </header>
 
   <main>
+    <div class="viewer-col">
     <section id="stage" class="stage">
       <div id="drop" class="dropzone">
         <div class="drop-inner">
@@ -72,8 +73,6 @@ app.innerHTML = `
       <div id="peekdot" class="peekdot" hidden></div>
       <div id="inspector" class="inspector" hidden></div>
       <div id="stagebar" class="stagebar" hidden></div>
-      <button id="prevframe" class="framenav framenav-prev" aria-label="Previous frame" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
-      <button id="nextframe" class="framenav framenav-next" aria-label="Next frame" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       <div id="loader" class="loader" hidden>
         <div class="loader-card">
           <div class="loader-title" id="loader-title">Loading files</div>
@@ -82,6 +81,12 @@ app.innerHTML = `
         </div>
       </div>
     </section>
+      <div id="timeline" class="timeline" hidden>
+        <button id="prevframe" class="framenav" aria-label="Previous frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <input id="frameslider" class="frameslider" type="range" min="0" max="0" value="0" step="1" aria-label="Frame timeline — slide to scrub frames" />
+        <button id="nextframe" class="framenav" aria-label="Next frame"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+    </div>
 
     <aside id="controls" class="controls" hidden>
       <section class="ctl-group" id="legend-card" hidden>
@@ -174,6 +179,8 @@ const stagebar = document.querySelector<HTMLDivElement>("#stagebar")!;
 const peekDot = document.querySelector<HTMLDivElement>("#peekdot")!;
 const prevBtn = document.querySelector<HTMLButtonElement>("#prevframe")!;
 const nextBtn = document.querySelector<HTMLButtonElement>("#nextframe")!;
+const timelineEl = document.querySelector<HTMLDivElement>("#timeline")!;
+const frameSlider = document.querySelector<HTMLInputElement>("#frameslider")!;
 const arrowsCanvas = document.querySelector<HTMLCanvasElement>("#arrows")!;
 const arrowsCb = document.querySelector<HTMLInputElement>("#showarrows")!;
 const sourceCanvas = document.querySelector<HTMLCanvasElement>("#source")!;
@@ -421,11 +428,23 @@ function loadFrame(i: number) {
   convertPanel?.update();
 }
 
+function updateTimeline() {
+  const multi = frames.length > 1;
+  timelineEl.hidden = !multi;
+  if (multi) {
+    if (frameSlider.max !== String(frames.length - 1)) frameSlider.max = String(frames.length - 1);
+    // Setting .value to the current value is a no-op and fires no event, so this
+    // stays in sync with keyboard/chevron scrubbing without feedback loops.
+    frameSlider.value = String(current);
+    frameSlider.style.setProperty("--fill", `${(current / (frames.length - 1)) * 100}%`);
+  }
+}
+
 function updateStats() {
   const f = frames[current];
   if (!f) {
     stagebar.hidden = true;
-    prevBtn.hidden = nextBtn.hidden = true;
+    timelineEl.hidden = true;
     return;
   }
   const mx = maxMagnitude(f);
@@ -436,7 +455,7 @@ function updateStats() {
     <div><span>File</span><b class="fname">${f.name}</b></div>`;
   stagebar.textContent = `${f.name} · ${current + 1}/${frames.length}`;
   stagebar.hidden = false;
-  prevBtn.hidden = nextBtn.hidden = frames.length < 2;
+  updateTimeline();
 }
 
 function gotoFrame(delta: number) {
@@ -445,6 +464,10 @@ function gotoFrame(delta: number) {
 }
 prevBtn.addEventListener("click", () => gotoFrame(-1));
 nextBtn.addEventListener("click", () => gotoFrame(1));
+frameSlider.addEventListener("input", () => {
+  const i = parseInt(frameSlider.value, 10);
+  if (Number.isFinite(i) && i !== current && i >= 0 && i < frames.length) loadFrame(i);
+});
 
 const strip = setupFilmstrip(filmstrip, (i) => loadFrame(i));
 
@@ -864,13 +887,16 @@ function updateLegendHover(clientX: number, clientY: number) {
 }
 
 legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
-// Touch: drag on the wheel isolates that direction (persists after lifting).
+// Touch: drag on the wheel isolates that direction (persists after lifting). The
+// target sits slightly ABOVE the fingertip so the finger doesn't cover it — same
+// idea as the image pixel-peeker, and touch-only (the mouse path is exact).
+const LEGEND_PEEK_OFFSET = 34; // px above the finger
 const legendTouch = (e: TouchEvent) => {
   const t = e.touches[0];
   if (!t) return;
   legendPinned = true;
   legendImg.classList.add("pinned");
-  updateLegendHover(t.clientX, t.clientY);
+  updateLegendHover(t.clientX, t.clientY - LEGEND_PEEK_OFFSET);
   e.preventDefault();
 };
 legendImg.addEventListener("touchstart", legendTouch, { passive: false });

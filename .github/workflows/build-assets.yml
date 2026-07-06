@@ -35,7 +35,7 @@ jobs:
           python-version: "3.11"
       - name: Install deps
         run: |
-          pip install --upgrade "huggingface_hub>=0.23" onnx onnxruntime numpy
+          pip install --upgrade "huggingface_hub>=0.23" onnx onnxruntime numpy onnxscript
           # CPU-only torch/torchvision to export raft_small (no CUDA wheels).
           pip install --upgrade --index-url https://download.pytorch.org/whl/cpu torch torchvision
       - name: Fetch + export + introspect + validate
