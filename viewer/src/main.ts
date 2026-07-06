@@ -686,13 +686,14 @@ function backingSize(cssSize: number): number {
 }
 
 // Show/hide the in-panel color-wheel card (opt-in via the checkbox), keeping
-// legendImg.hidden as the source of truth the hover/pin code reads.
+// legendImg.hidden as the source of truth the hover/pin code reads. The wheel is
+// a static reference — show it whenever the toggle is on, even before a flow is
+// loaded, so it's populated as soon as the page loads (not a blank card).
 function setLegendVisible(on: boolean) {
-  const show = on && frames.length > 0;
-  legendImg.hidden = !show;
-  legendCard.hidden = !show;
-  hlRadiusCtl.hidden = !show;
-  if (!show) unpinLegend();
+  legendImg.hidden = !on;
+  legendCard.hidden = !on;
+  hlRadiusCtl.hidden = !on;
+  if (!on) unpinLegend();
 }
 
 // The color-wheel legend (opt-in via the checkbox), rendered in the sidebar.
