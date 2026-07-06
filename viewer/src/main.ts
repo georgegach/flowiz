@@ -1,6 +1,7 @@
 import "./style.css";
 import { FlowRenderer, type Mode } from "./render";
 import { parseByName, maxMagnitude, type FlowField } from "./flow";
+import { uvToColor } from "./colorwheel";
 import { EXAMPLES } from "./examples";
 import { openLearn, initLearnFromHash } from "./learn";
 import { setupExportMenu } from "./ui/export-menu";
@@ -773,10 +774,14 @@ function showTouchPeek(clientX: number, clientY: number) {
   const u = f.data[i];
   const v = f.data[i + 1];
 
+  const mf = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
+  const [cr, cg, cb] = uvToColor(u / mf, v / mf);
+
   const dotLeft = peekX - sr.left;
   const dotTop = peekY - sr.top;
   peekDot.style.left = `${dotLeft}px`;
   peekDot.style.top = `${dotTop}px`;
+  peekDot.style.background = `rgb(${cr}, ${cg}, ${cb})`; // the color being peeked
   peekDot.hidden = false;
 
   inspector.hidden = false;
@@ -793,7 +798,6 @@ function showTouchPeek(clientX: number, clientY: number) {
   inspector.style.left = `${left}px`;
   inspector.style.top = `${top}px`;
 
-  const mf = parseFloat(maxflow.value) || maxMagnitude(f) || 1;
   drawLegendArrow(u / mf, v / mf);
 }
 
@@ -803,13 +807,11 @@ function hideTouchPeek() {
   legendArrow.hidden = true;
 }
 
-let touchStart: { x: number; y: number; t: number } | null = null;
 canvas.addEventListener(
   "touchstart",
   (e) => {
     if (!frames.length) return;
     const t = e.touches[0];
-    touchStart = { x: t.clientX, y: t.clientY, t: performance.now() };
     showTouchPeek(t.clientX, t.clientY);
     e.preventDefault(); // no scroll, and suppress the synthetic mouse events
   },
@@ -825,24 +827,8 @@ canvas.addEventListener(
   },
   { passive: false },
 );
-canvas.addEventListener("touchend", (e) => {
-  const start = touchStart;
-  touchStart = null;
-  hideTouchPeek();
-  if (!start || !frames.length) return;
-  const ch = e.changedTouches[0];
-  if (!ch) return;
-  const dx = ch.clientX - start.x;
-  const dy = ch.clientY - start.y;
-  // A quick horizontal flick pages frames; a slow drag just peeks.
-  if (performance.now() - start.t < 400 && Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-    gotoFrame(dx < 0 ? 1 : -1);
-  }
-});
-canvas.addEventListener("touchcancel", () => {
-  touchStart = null;
-  hideTouchPeek();
-});
+canvas.addEventListener("touchend", hideTouchPeek);
+canvas.addEventListener("touchcancel", hideTouchPeek);
 
 // --- legend hover: isolate the hovered direction/speed in the flow image ---
 let hlRadius = 0.06; // selection radius in normalized units (wheel radius = 1)
@@ -878,6 +864,17 @@ function updateLegendHover(clientX: number, clientY: number) {
 }
 
 legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
+// Touch: drag on the wheel isolates that direction (persists after lifting).
+const legendTouch = (e: TouchEvent) => {
+  const t = e.touches[0];
+  if (!t) return;
+  legendPinned = true;
+  legendImg.classList.add("pinned");
+  updateLegendHover(t.clientX, t.clientY);
+  e.preventDefault();
+};
+legendImg.addEventListener("touchstart", legendTouch, { passive: false });
+legendImg.addEventListener("touchmove", legendTouch, { passive: false });
 legendImg.addEventListener("click", () => {
   legendPinned = !legendPinned;
   legendImg.classList.toggle("pinned", legendPinned);
