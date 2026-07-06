@@ -154,7 +154,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .dropzone.hover .drop-illo svg { color: var(--accent); }
 .drop-title { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 12px 0 4px; }
 .drop-sub { color: var(--muted); margin: 0 0 22px; }
-.drop-paths { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 0 0 6px; text-align: center; }
+.drop-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0 0 6px; text-align: center; }
 .drop-path {
   border: 1px solid var(--border); border-radius: var(--radius-m); padding: 18px 16px; background: var(--panel-2);
 }
@@ -179,7 +179,7 @@ main { flex: 1; display: flex; min-height: 0; }
 .ex-btn.loading { opacity: .6; cursor: progress; }
 
 .controls {
-  width: 340px; border-left: 1px solid var(--border); background: var(--bg);
+  width: 340px; min-width: 0; border-left: 1px solid var(--border); background: var(--bg);
   padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
 }
 /* Carded control groups. Inner .ctl/.ctl.row styling below is still used by the
@@ -224,12 +224,15 @@ main { flex: 1; display: flex; min-height: 0; }
 .ctl.row input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
 
 .segmented {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px;
+  /* minmax(0,1fr) — NOT 1fr — so a long label (e.g. "Magnitude") can't floor the
+     column at its min-content and push the whole panel past the viewport edge. */
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px;
   background: var(--panel-2); padding: 3px; border-radius: var(--radius-m);
 }
 .segmented button {
   background: none; border: none; color: var(--muted);
   padding: 8px 4px; border-radius: 9px; cursor: pointer; font-size: 12.5px; font-weight: 500;
+  min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .segmented button:hover { color: var(--fg); }
 .segmented button.active { background: var(--panel); color: var(--fg); font-weight: 600; box-shadow: var(--shadow-sm); }
@@ -576,6 +579,17 @@ button.secondary:active { transform: translateY(1px); }
   font-family: var(--font-mono); font-size: 12px; color: var(--muted);
   margin-bottom: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.gen-desc {
+  margin: 0 0 14px; font-size: 12.5px; line-height: 1.5; color: var(--muted);
+}
+.gen-desc b { color: var(--fg); font-weight: 600; }
+.gen-learn {
+  display: inline; padding: 0; margin: 0; border: 0; background: none; cursor: pointer;
+  color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 2px;
+}
+.gen-blurb {
+  margin: -6px 0 14px; font-size: 12px; line-height: 1.45; color: var(--muted); min-height: 1.45em;
+}
 .gen-card .ctl { margin-bottom: 14px; }
 .gen-card .ctl.row { display: flex; gap: 14px; }
 .gen-card .ctl.row label { flex: 1; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
@@ -721,7 +735,7 @@ button.secondary:active { transform: translateY(1px); }
   color: var(--fg); font-family: var(--font-mono); font-size: 11.5px;
   background: var(--panel-2); padding: 1px 6px; border-radius: 5px; margin: 0 2px;
 }
-.segmented.formats { grid-template-columns: repeat(5, 1fr); }
+.segmented.formats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .segmented.formats button {
   display: flex; flex-direction: column; align-items: center; gap: 1px;
   padding: 7px 2px; line-height: 1.15;
@@ -732,7 +746,7 @@ button.secondary:active { transform: translateY(1px); }
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .segmented.formats button.active .fmt-sub { color: var(--accent); }
-.segmented.scope { grid-template-columns: 1fr 1fr; }
+.segmented.scope { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .convert-note { font-size: 11.5px; color: var(--muted); margin: -2px 0 0; line-height: 1.4; }
 #cv-go { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 #cv-go .cv-ico { display: inline-flex; }

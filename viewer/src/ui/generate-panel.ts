@@ -12,6 +12,7 @@ import { RAFT_MODELS } from "../flowgen/models";
 import { baseUrl } from "../flowgen/base-url";
 import { isCached, clearAssetCache, assetCacheUsage } from "../flowgen/asset-cache";
 import { openModal, type ModalHandle } from "./modal";
+import { openLearn } from "../learn";
 
 export interface GenerateContext {
   enqueue: (files: File[], settings: JobSettings) => void;
@@ -24,16 +25,35 @@ interface GenModelOption {
   label: string;
   bytes: number;
   raftModelId?: string;
+  disPreset?: DisPreset; // for DIS tiers: the base preset this tier selects
+  blurb?: string; // one-line "what you get" shown under the picker
 }
-// DIS on-disk size = opencv-dis.wasm (4,412,489) + opencv-dis.js (139,157).
+// Both DIS tiers share the same download (opencv-dis.wasm 4,412,489 + .js 139,157);
+// they differ only in the DIS preset (accuracy vs speed). RAFT is a neural net.
 const OPTIONS: GenModelOption[] = [
-  { id: "dis", tier: "dis", label: "Fastest — DIS", bytes: 4_551_646 },
+  {
+    id: "dis",
+    tier: "dis",
+    label: "Fastest — DIS",
+    bytes: 4_551_646,
+    disPreset: "fast",
+    blurb: "Classical DIS on the CPU — near-instant, roughest edges. Great for a quick look.",
+  },
+  {
+    id: "dis-medium",
+    tier: "dis",
+    label: "Balanced — DIS",
+    bytes: 4_551_646,
+    disPreset: "medium",
+    blurb: "DIS with extra refinement — sharper motion boundaries, still CPU-only and no extra download.",
+  },
   ...RAFT_MODELS.map((m): GenModelOption => ({
     id: m.id,
     tier: "raft",
     label: m.label,
     bytes: m.bytes,
     raftModelId: m.id,
+    blurb: "Deep network (RAFT) — the most accurate flow, but a large download and slower per frame.",
   })),
 ];
 const fmtSize = (bytes: number) => `~${Math.round(bytes / 1e6)} MB`;
@@ -81,6 +101,12 @@ export function openGeneratePanel(files: File[], ctx: GenerateContext) {
     <div class="gen-card loader-card">
       <div class="loader-title">Generate optical flow</div>
       <div class="gen-file">${fileLabel}</div>
+      <p class="gen-desc">
+        Estimates the motion of every pixel between consecutive frames and outputs one
+        <b>optical-flow image</b> per frame pair — colored by the wheel, where <b>hue = direction</b>
+        and <b>brightness = speed</b>. Everything runs on your device.
+        <button type="button" class="gen-learn" id="gen-learn">What is optical flow?</button>
+      </p>
       <div class="ctl">
         <label>Model</label>
         <div class="segmented" id="gen-tier" role="group" aria-label="Model">
@@ -90,6 +116,7 @@ export function openGeneratePanel(files: File[], ctx: GenerateContext) {
           ).join("")}
         </div>
       </div>
+      <p class="gen-blurb" id="gen-blurb"></p>
       <div class="ctl row">
         <label>Frame stride
           <select id="gen-stride"><option>1</option><option selected>2</option><option>4</option><option>8</option></select>
@@ -136,6 +163,8 @@ export function openGeneratePanel(files: File[], ctx: GenerateContext) {
 
   const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
   const tierBox = q<HTMLDivElement>("#gen-tier");
+  const blurbEl = q<HTMLParagraphElement>("#gen-blurb");
+  const learnBtn = q<HTMLButtonElement>("#gen-learn");
   const goBtn = q<HTMLButtonElement>("#gen-go");
   const cancelBtn = q<HTMLButtonElement>("#gen-cancel");
   const strideSel = q<HTMLSelectElement>("#gen-stride");
@@ -193,9 +222,13 @@ export function openGeneratePanel(files: File[], ctx: GenerateContext) {
   }
 
   const syncVisibility = () => {
-    const isRaft = currentOption().tier === "raft";
+    const opt = currentOption();
+    const isRaft = opt.tier === "raft";
     webgpuRow.hidden = !isRaft;
     disTuningBox.hidden = isRaft;
+    blurbEl.textContent = opt.blurb ?? "";
+    // The DIS tier is a friendly shortcut for a preset; keep Advanced in sync.
+    if (opt.tier === "dis" && opt.disPreset) disPresetSel.value = opt.disPreset;
   };
   syncVisibility();
   void refreshCache();
@@ -231,6 +264,10 @@ export function openGeneratePanel(files: File[], ctx: GenerateContext) {
     root.remove();
   };
   cancelBtn.addEventListener("click", close);
+  learnBtn.addEventListener("click", () => {
+    close();
+    openLearn("what-is-flow");
+  });
 
   const readDisTuning = (): DisTuning | undefined => {
     const t: DisTuning = {};
