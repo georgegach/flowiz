@@ -156,8 +156,9 @@ def build_raft_small(out_dir: Path) -> Path | None:
         exactly like the zoo's raft-large — so there's no runtime iters knob.
       * grid_sample -> ONNX GridSample needs opset >= 16. onnxruntime-web's wasm
         EP has a CPU GridSample kernel, so this runs in-browser (verify there!).
-      * Inputs are named '0','1' to mirror raft-large; raft.ts feeds by index and
-        picks the output by shape, so exact names/opset don't matter to it.
+      * Inputs are named image0/image1 (the TorchScript exporter rejects numeric
+        names). raft.ts feeds by index and picks output by shape, so names/opset
+        don't matter to it.
     """
     try:
         import torch
@@ -187,11 +188,14 @@ def build_raft_small(out_dir: Path) -> Path | None:
         # dynamo=False → the legacy TorchScript exporter, which reliably maps
         # grid_sample -> ONNX GridSample (opset 16) and doesn't need onnxscript.
         # (Recent torch defaults torch.onnx.export to the dynamo exporter.)
+        # Names must be valid identifiers — the TorchScript exporter rejects the
+        # zoo model's numeric '0'/'1'. raft.ts feeds inputs BY INDEX and picks the
+        # output BY SHAPE, so the actual names are irrelevant to the runtime.
         torch.onnx.export(
             wrapped,
             (a, b),
             str(dst),
-            input_names=["0", "1"],
+            input_names=["image0", "image1"],
             output_names=["flow"],
             opset_version=16,
             do_constant_folding=True,
