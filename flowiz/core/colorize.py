@@ -3,7 +3,7 @@
 The color mapping is the Baker et al. / Middlebury color wheel, implemented to
 be bit-compatible (within +-1 LSB) with the widely used ``flow_vis`` package so
 that flowiz output matches figures across the literature. See
-``tests/test_parity.py`` and ``tests/golden`` for the guardrails.
+``tests/test_parity.py`` for the guardrail.
 """
 
 from __future__ import annotations
@@ -60,31 +60,15 @@ def make_colorwheel() -> np.ndarray:
     return wheel.astype(np.uint8)
 
 
+@lru_cache(maxsize=1)
+def _colorwheel_normalized() -> np.ndarray:
+    """Color wheel as ``(ncols, 3)`` float64 in ``[0, 1]`` — cached per process."""
+    return make_colorwheel().astype(np.float64) / 255.0
+
+
 def _uv_to_colors(u: np.ndarray, v: np.ndarray, convention: Convention) -> np.ndarray:
     """Map normalized (u, v) in roughly the unit disk to an RGB uint8 image."""
-    wheel = make_colorwheel().astype(np.float64)
-    ncols = wheel.shape[0]
-
     rad = np.sqrt(np.square(u) + np.square(v))
-    a = np.arctan2(-v, -u) / np.pi
-    fk = (a + 1) / 2 * (ncols - 1)
-    k0 = np.floor(fk).astype(np.int32)  # int32, not uint8 (v2 bug)
-    k1 = k0 + 1
-    k1[k1 == ncols] = 0
-    f = fk - k0
-
-    img = np.zeros((*u.shape, 3), dtype=np.uint8)
-    for i in range(3):
-        tmp = wheel[:, i]
-        col0 = tmp[k0] / 255.0
-        col1 = tmp[k1] / 255.0
-        col = (1 - f) * col0 + f * col1
-
-        idx = rad <= 1
-        col[idx] = 1 - rad[idx] * (1 - col[idx])   # increase saturation toward center
-        col[~idx] = col[~idx] * 0.75               # out of range -> darken
-
-        img[..., i] = np.floor(255 * col).astype(np.uint8)
 
     if convention == "hsv":
         # Alternative encoding: hue = direction, value = magnitude.
@@ -95,7 +79,25 @@ def _uv_to_colors(u: np.ndarray, v: np.ndarray, convention: Convention) -> np.nd
         hsv = np.stack([ang, np.ones_like(ang), val], axis=-1)
         return (mcolors.hsv_to_rgb(hsv) * 255).astype(np.uint8)
 
-    return img
+    wheel = _colorwheel_normalized()  # (ncols, 3), already scaled to [0, 1]
+    ncols = wheel.shape[0]
+
+    a = np.arctan2(-v, -u) / np.pi
+    fk = (a + 1) / 2 * (ncols - 1)
+    k0 = np.floor(fk).astype(np.int32)  # int32, not uint8 (v2 bug)
+    k1 = k0 + 1
+    k1[k1 == ncols] = 0
+    f = (fk - k0)[..., None]
+
+    # Gather all three channels at once (H, W, 3) — no per-channel Python loop.
+    col = (1 - f) * wheel[k0] + f * wheel[k1]
+    rad3 = rad[..., None]
+    col = np.where(
+        rad3 <= 1,
+        1 - rad3 * (1 - col),   # increase saturation toward center
+        col * 0.75,             # out of range -> darken
+    )
+    return np.floor(255 * col).astype(np.uint8)
 
 
 def colorize(
@@ -124,8 +126,9 @@ def colorize(
         legend: overlay the color-wheel key in the bottom-right corner.
     """
     f = as_flow(flow)
-    u = f.u.astype(np.float64).copy()
-    v = f.v.astype(np.float64).copy()
+    # astype already returns a fresh array — no extra .copy() needed.
+    u = f.u.astype(np.float64)
+    v = f.v.astype(np.float64)
 
     invalid = np.zeros(u.shape, dtype=bool)
     if f.valid is not None:
@@ -142,11 +145,11 @@ def colorize(
         norm = float(max_flow)
         if saturate and norm > 0:
             scale = np.minimum(1.0, norm / np.maximum(rad, _EPS))
-            u = u * scale
-            v = v * scale
+            u *= scale
+            v *= scale
 
-    u = u / (norm + _EPS)
-    v = v / (norm + _EPS)
+    u /= norm + _EPS
+    v /= norm + _EPS
 
     img = _uv_to_colors(u, v, convention)
 
@@ -184,14 +187,14 @@ def colorize_sequence(
 def flow_to_uv(flow: Any) -> np.ndarray:
     """Split flow into a normalized ``(H, W, 2)`` uint8 UV image (u, v channels)."""
     f = as_flow(flow)
-    u = f.u.astype(np.float64).copy()
-    v = f.v.astype(np.float64).copy()
+    u = f.u.astype(np.float64)
+    v = f.v.astype(np.float64)
     bad = np.isnan(u) | np.isnan(v) | (np.abs(u) > _UNKNOWN_THRESH) | (np.abs(v) > _UNKNOWN_THRESH)
     u[bad] = 0.0
     v[bad] = 0.0
     maxrad = float(np.max(np.sqrt(u**2 + v**2))) if u.size else 0.0
-    u = u / (maxrad + _EPS)
-    v = v / (maxrad + _EPS)
+    u /= maxrad + _EPS
+    v /= maxrad + _EPS
     uv = (np.dstack([u, v]) * 127.999 + 128).astype(np.uint8)
     return uv
 

@@ -137,6 +137,83 @@ def test_kitti_decode_rejects_wrong_dtype():
         decode_kitti_array(np.zeros((4, 4, 3), dtype=np.uint8))
 
 
+# --- 16-bit PNG decoder: exercise every scanline filter type -----------------
+# Our own writer only emits filter 0, but real KITTI files use adaptive
+# filtering, so the decoder must invert all five. These tests build 16-bit RGB
+# PNGs with a reference forward-filter and assert exact recovery.
+
+
+def _paeth_ref(a: int, b: int, c: int) -> int:
+    p = a + b - c
+    pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+    if pa <= pb and pa <= pc:
+        return a
+    if pb <= pc:
+        return b
+    return c
+
+
+def _filter_row(cur: bytes, prev, ftype: int, bpp: int) -> bytes:
+    out = bytearray(len(cur))
+    for x in range(len(cur)):
+        a = cur[x - bpp] if x >= bpp else 0
+        b = prev[x] if prev is not None else 0
+        c = prev[x - bpp] if (x >= bpp and prev is not None) else 0
+        if ftype == 1:
+            pred = a
+        elif ftype == 2:
+            pred = b
+        elif ftype == 3:
+            pred = (a + b) >> 1
+        elif ftype == 4:
+            pred = _paeth_ref(a, b, c)
+        else:
+            pred = 0
+        out[x] = (cur[x] - pred) & 0xFF
+    return bytes(out)
+
+
+def _make_png16(arr: np.ndarray, filters) -> bytes:
+    import struct
+    import zlib
+
+    from flowiz.io.kitti import _PNG_SIG, _chunk
+
+    h, w, c = arr.shape
+    bpp = c * 2
+    be = arr.astype(">u2")
+    raw = bytearray()
+    prev = None
+    for y in range(h):
+        cur = be[y].reshape(w * c).tobytes()
+        raw.append(filters[y])
+        raw.extend(_filter_row(cur, prev, filters[y], bpp))
+        prev = cur
+    ihdr = struct.pack(">IIBBBBB", w, h, 16, 2, 0, 0, 0)
+    idat = zlib.compress(bytes(raw), 6)
+    return _PNG_SIG + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", idat) + _chunk(b"IEND", b"")
+
+
+@pytest.mark.parametrize("ftype", [0, 1, 2, 3, 4])
+def test_kitti_png_all_filter_types(ftype):
+    from flowiz.io.kitti import _read_png16
+
+    rng = np.random.default_rng(ftype + 1)
+    arr = rng.integers(0, 65536, size=(5, 7, 3), dtype=np.uint16)
+    back = _read_png16(_make_png16(arr, [ftype] * arr.shape[0]))
+    assert back.shape == arr.shape
+    assert np.array_equal(back, arr)
+
+
+def test_kitti_png_mixed_filters():
+    from flowiz.io.kitti import _read_png16
+
+    rng = np.random.default_rng(99)
+    arr = rng.integers(0, 65536, size=(6, 9, 3), dtype=np.uint16)
+    back = _read_png16(_make_png16(arr, [0, 1, 2, 3, 4, 2]))
+    assert np.array_equal(back, arr)
+
+
 def test_npz_read(tmp_path, random_flow):
     path = tmp_path / "a.npz"
     np.savez(path, flow=random_flow)

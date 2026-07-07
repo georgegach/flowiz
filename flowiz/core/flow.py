@@ -7,7 +7,7 @@ Inputs are always copied — v3 never mutates a caller's array (a v2 defect).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional
 
 import numpy as np
@@ -23,13 +23,11 @@ class Flow:
         valid: optional ``(H, W)`` bool mask of valid pixels. ``None`` means
             all pixels valid.
         source: provenance string (a file path, or ``"tensor"``/``"array"``).
-        meta: free-form metadata carried from the reader.
     """
 
     data: np.ndarray
     valid: Optional[np.ndarray] = None
     source: Optional[str] = None
-    meta: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.data.ndim != 3 or self.data.shape[2] != 2:
@@ -112,9 +110,7 @@ def as_flow(x: Any, *, source: Optional[str] = None) -> Flow:
         # CHW -> HWC
         arr = np.transpose(arr, (1, 2, 0))
     elif arr.ndim == 3 and arr.shape[2] == 2:
-        pass
-    elif arr.ndim == 3 and arr.shape[0] == 2 and arr.shape[2] == 2:
-        # Ambiguous 2xHx2 — assume already HWC (leading dim is height 2).
+        # Already HWC. (A 2x?x2 array is treated as HWC — leading dim is height.)
         pass
     else:
         raise ValueError(

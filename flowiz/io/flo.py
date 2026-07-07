@@ -33,13 +33,15 @@ def read_flo(path: Union[str, BinaryIO]) -> Flow:
         data = np.frombuffer(
             f.read(2 * width * height * 4), np.float32, count=2 * width * height
         )
+        # astype(copy=True) yields a fresh, writable, contiguous buffer — the
+        # read-only frombuffer view is not aliased, so no extra .copy() needed.
         data = data.reshape(height, width, 2).astype(np.float32)
     finally:
         if close:
             f.close()
 
     source = path if isinstance(path, str) else "stream"
-    return Flow(data=data.copy(), source=source)
+    return Flow(data=data, source=source)
 
 
 def write_flo(flow: Flow, path: str) -> None:

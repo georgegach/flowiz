@@ -26,10 +26,12 @@ def decode_kitti_array(arr: np.ndarray, source: str = "array") -> Flow:
         raise ValueError(
             f"Not a KITTI flow array (need uint16 HxWx3, got {arr.dtype} {arr.shape})."
         )
-    u = (arr[..., 0].astype(np.float64) - 2**15) / 64.0
-    v = (arr[..., 1].astype(np.float64) - 2**15) / 64.0
+    # (n - 2**15) / 64 is an exact multiple of 1/64, so float32 is lossless here
+    # and avoids float64 intermediates + an extra full-array cast.
+    u = (arr[..., 0].astype(np.float32) - 2**15) / 64.0
+    v = (arr[..., 1].astype(np.float32) - 2**15) / 64.0
     valid = arr[..., 2] > 0
-    data = np.dstack([u, v]).astype(np.float32)
+    data = np.dstack([u, v])
     data[~valid] = 0.0
     return Flow(data=data, valid=valid, source=source)
 
@@ -68,14 +70,14 @@ def _write_png16(arr: np.ndarray) -> bytes:
     if c != 3:
         raise ValueError("Only 3-channel 16-bit PNG writing is supported.")
     ihdr = struct.pack(">IIBBBBB", w, h, 16, 2, 0, 0, 0)  # 16-bit, truecolor RGB
-    be = arr.astype(">u2")
-    rows = bytearray()
     row_bytes = w * c * 2
-    flat = be.tobytes()
-    for y in range(h):
-        rows.append(0)  # filter type 0 (none)
-        rows.extend(flat[y * row_bytes : (y + 1) * row_bytes])
-    idat = zlib.compress(bytes(rows), 6)
+    # Prepend a per-row filter byte (0 = none) to the big-endian sample bytes,
+    # vectorized — no per-row Python loop.
+    be = np.ascontiguousarray(arr, dtype=">u2").reshape(h, w * c).view(np.uint8)
+    rows = np.empty((h, 1 + row_bytes), dtype=np.uint8)
+    rows[:, 0] = 0  # filter type 0 (none)
+    rows[:, 1:] = be
+    idat = zlib.compress(rows.tobytes(), 6)
     return _PNG_SIG + _chunk(b"IHDR", ihdr) + _chunk(b"IDAT", idat) + _chunk(b"IEND", b"")
 
 
@@ -103,44 +105,72 @@ def _read_png16(buf: bytes) -> np.ndarray:
 
 
 def _unfilter(raw: bytes, width: int, height: int, channels: int, bit_depth: int) -> np.ndarray:
-    bytes_per_sample = bit_depth // 8
-    bpp = channels * bytes_per_sample
+    """Reverse PNG scanline filtering (all 5 types), row-vectorized.
+
+    Filters None/Up/Sub are fully vectorized; Average/Paeth carry a genuine
+    left-neighbor dependency, so they loop over pixels (``width`` iterations)
+    but process all ``bpp`` byte-lanes at once — far cheaper than the old
+    per-byte (``height * stride``) Python loop.
+    """
+    bpp = channels * (bit_depth // 8)
     stride = width * bpp
-    out = bytearray(height * stride)
+    raw_arr = np.frombuffer(raw, dtype=np.uint8)
+
+    out = np.empty((height, stride), dtype=np.uint8)
+    prev = np.zeros(stride, dtype=np.uint8)
     pos = 0
     for y in range(height):
-        ftype = raw[pos]
-        pos += 1
-        row = y * stride
-        for x in range(stride):
-            rb = raw[pos]
-            pos += 1
-            a = out[row + x - bpp] if x >= bpp else 0
-            b = out[row - stride + x] if y > 0 else 0
-            c = out[row - stride + x - bpp] if (x >= bpp and y > 0) else 0
-            if ftype == 1:
-                val = rb + a
-            elif ftype == 2:
-                val = rb + b
-            elif ftype == 3:
-                val = rb + ((a + b) >> 1)
-            elif ftype == 4:
-                val = rb + _paeth(a, b, c)
-            else:
-                val = rb
-            out[row + x] = val & 0xFF
-    arr = np.frombuffer(bytes(out), dtype=np.uint8)
+        ftype = int(raw_arr[pos])
+        line = raw_arr[pos + 1 : pos + 1 + stride]
+        pos += 1 + stride
+        if ftype == 2:  # Up
+            recon = line + prev  # uint8 arithmetic wraps mod 256
+        elif ftype == 1:  # Sub — per-lane cumulative sum mod 256
+            acc = np.cumsum(line.reshape(width, bpp).astype(np.int64), axis=0)
+            recon = (acc & 0xFF).astype(np.uint8).reshape(stride)
+        elif ftype == 3:  # Average
+            recon = _unfilter_average(line, prev, width, bpp)
+        elif ftype == 4:  # Paeth
+            recon = _unfilter_paeth(line, prev, width, bpp)
+        else:  # 0 = None (and any unknown byte, matching the old fallthrough)
+            recon = line.copy()
+        out[y] = recon
+        prev = recon
+
+    flat = out.reshape(-1)
     if bit_depth == 16:
-        arr = arr.reshape(-1, 2).astype(np.uint16)
-        return (arr[:, 0] << 8) | arr[:, 1]  # PNG is big-endian
-    return arr.astype(np.uint16)
+        pairs = flat.reshape(-1, 2).astype(np.uint16)
+        return (pairs[:, 0] << 8) | pairs[:, 1]  # PNG is big-endian
+    return flat.astype(np.uint16)
 
 
-def _paeth(a: int, b: int, c: int) -> int:
+def _unfilter_average(line: np.ndarray, prev: np.ndarray, width: int, bpp: int) -> np.ndarray:
+    cur = line.reshape(width, bpp).astype(np.int32)
+    up = prev.reshape(width, bpp).astype(np.int32)
+    recon = np.empty((width, bpp), dtype=np.int32)
+    left = np.zeros(bpp, dtype=np.int32)
+    for p in range(width):
+        left = (cur[p] + ((left + up[p]) >> 1)) & 0xFF
+        recon[p] = left
+    return recon.astype(np.uint8).reshape(width * bpp)
+
+
+def _unfilter_paeth(line: np.ndarray, prev: np.ndarray, width: int, bpp: int) -> np.ndarray:
+    cur = line.reshape(width, bpp).astype(np.int32)
+    up = prev.reshape(width, bpp).astype(np.int32)
+    recon = np.empty((width, bpp), dtype=np.int32)
+    left = np.zeros(bpp, dtype=np.int32)
+    upleft = np.zeros(bpp, dtype=np.int32)
+    for p in range(width):
+        b = up[p]
+        left = (cur[p] + _paeth_vec(left, b, upleft)) & 0xFF
+        recon[p] = left
+        upleft = b
+    return recon.astype(np.uint8).reshape(width * bpp)
+
+
+def _paeth_vec(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """Vectorized Paeth predictor over one row's byte-lanes."""
     p = a + b - c
-    pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
-    if pa <= pb and pa <= pc:
-        return a
-    if pb <= pc:
-        return b
-    return c
+    pa, pb, pc = np.abs(p - a), np.abs(p - b), np.abs(p - c)
+    return np.where((pa <= pb) & (pa <= pc), a, np.where(pb <= pc, b, c))

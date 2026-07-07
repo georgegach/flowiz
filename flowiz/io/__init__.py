@@ -16,8 +16,6 @@ from flowiz.io.pfm import read_pfm
 
 __all__ = ["read", "write", "read_flo", "write_flo"]
 
-_FLO_TAG = b"\xd2\x2d\x46\x47"  # 202021.25 as little-endian float32 == b"PIEH"
-
 
 def _looks_like_flo(path: str) -> bool:
     try:
