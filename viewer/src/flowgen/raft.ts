@@ -88,18 +88,23 @@ export async function createRaft(
 
   const canvas = new OffscreenCanvas(INPUT_W, INPUT_H);
   const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  // Reused source-size canvas — recreated only when frame dimensions change.
+  let bmpCanvas: OffscreenCanvas | null = null;
+  let bctx: OffscreenCanvasRenderingContext2D | null = null;
 
   const preprocess = (frame: RGBAFrame, plan: LetterboxPlan): Float32Array => {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, INPUT_W, INPUT_H);
-    const bmpCanvas = new OffscreenCanvas(frame.width, frame.height);
-    const bctx = bmpCanvas.getContext("2d")!;
-    bctx.putImageData(
+    if (!bmpCanvas || bmpCanvas.width !== frame.width || bmpCanvas.height !== frame.height) {
+      bmpCanvas = new OffscreenCanvas(frame.width, frame.height);
+      bctx = bmpCanvas.getContext("2d")!;
+    }
+    bctx!.putImageData(
       new ImageData(new Uint8ClampedArray(frame.data), frame.width, frame.height),
       0,
       0,
     );
-    ctx.drawImage(bmpCanvas, plan.padX, plan.padY, plan.drawW, plan.drawH);
+    ctx.drawImage(bmpCanvas!, plan.padX, plan.padY, plan.drawW, plan.drawH);
     const img = ctx.getImageData(0, 0, INPUT_W, INPUT_H).data;
     // NCHW float32
     const chw = new Float32Array(3 * INPUT_H * INPUT_W);
@@ -113,12 +118,23 @@ export async function createRaft(
     return chw;
   };
 
+  // The generate loop feeds consecutive pairs (prev,frame) then (frame,next),
+  // so every interior frame would be preprocessed twice. Cache the last frame's
+  // tensor and reuse it as the next call's first operand. Plan is invariant
+  // across a sequence (frames share dimensions), so the cached tensor stays valid.
+  let lastFrame: RGBAFrame | null = null;
+  let lastChw: Float32Array | null = null;
+
   return {
     ep: usedEp,
     async compute(a: RGBAFrame, b: RGBAFrame): Promise<SerializedFlow> {
       const plan = planLetterbox(a.width, a.height, INPUT_W, INPUT_H);
-      const t0 = new ort.Tensor("float32", preprocess(a, plan), [1, 3, INPUT_H, INPUT_W]);
-      const t1 = new ort.Tensor("float32", preprocess(b, plan), [1, 3, INPUT_H, INPUT_W]);
+      const chwA = lastFrame === a && lastChw ? lastChw : preprocess(a, plan);
+      const chwB = preprocess(b, plan);
+      lastFrame = b;
+      lastChw = chwB;
+      const t0 = new ort.Tensor("float32", chwA, [1, 3, INPUT_H, INPUT_W]);
+      const t1 = new ort.Tensor("float32", chwB, [1, 3, INPUT_H, INPUT_W]);
       const feeds: Record<string, ort.Tensor> = {
         [inputNames[0]]: t0,
         [inputNames[1]]: t1,

@@ -60,5 +60,3 @@ export function encodeGif(
   gif.finish();
   return gif.bytes(); // exact-length copy — safe to transfer its buffer
 }
-
-export { MAX_WIDTH as GIF_MAX_WIDTH, MAX_FRAMES as GIF_MAX_FRAMES };

@@ -202,7 +202,7 @@ let playTimer: number | null = null;
 
 let highlight: { u: number; v: number; radius: number } | null = null;
 
-function draw() {
+function renderGL() {
   if (!renderer || !frames[current]) return;
   renderer.render({
     maxFlow: parseFloat(maxflow.value),
@@ -210,10 +210,50 @@ function draw() {
     maskInvalid: maskCb.checked,
     highlight,
   });
+}
+
+function draw() {
+  if (!renderer || !frames[current]) return;
+  renderGL();
   updateStats();
   drawArrows();
   drawSource();
   if (inspectorPin) renderInspector(inspectorPin.fx, inspectorPin.fy, inspectorPin.left, inspectorPin.top);
+}
+
+// Legend scrubbing only changes the `highlight` uniform — nothing that
+// updateStats/drawArrows/drawSource depend on. Re-run just the shader, and
+// coalesce a burst of pointer events into one paint per animation frame.
+let highlightRaf = 0;
+function drawHighlight() {
+  if (highlightRaf) return;
+  highlightRaf = requestAnimationFrame(() => {
+    highlightRaf = 0;
+    renderGL();
+  });
+}
+
+// Position an absolute overlay canvas to exactly cover the flow canvas, only
+// reallocating its backing store when the pixel size actually changed —
+// assigning canvas.width/height clears + reallocates the bitmap every call,
+// which is wasteful on every playback frame when the size is unchanged.
+function fitOverlay(
+  cv: HTMLCanvasElement,
+  cr: DOMRect,
+  sr: DOMRect,
+  ratio: number,
+): { cssW: number; cssH: number } {
+  const cssW = cr.width;
+  const cssH = cr.height;
+  const bw = Math.round(cssW * ratio);
+  const bh = Math.round(cssH * ratio);
+  if (cv.width !== bw) cv.width = bw;
+  if (cv.height !== bh) cv.height = bh;
+  cv.style.width = `${cssW}px`;
+  cv.style.height = `${cssH}px`;
+  cv.style.left = `${cr.left - sr.left}px`;
+  cv.style.top = `${cr.top - sr.top}px`;
+  return { cssW, cssH };
 }
 
 // Draw the real video frame directly behind the flow, sized/positioned to
@@ -229,16 +269,9 @@ function drawSource() {
   }
   const cr = canvas.getBoundingClientRect();
   const sr = stageEl.getBoundingClientRect();
-  const cssW = cr.width;
-  const cssH = cr.height;
   const ratio = Math.min(3, window.devicePixelRatio || 1);
   sourceCanvas.hidden = false;
-  sourceCanvas.width = Math.round(cssW * ratio);
-  sourceCanvas.height = Math.round(cssH * ratio);
-  sourceCanvas.style.width = `${cssW}px`;
-  sourceCanvas.style.height = `${cssH}px`;
-  sourceCanvas.style.left = `${cr.left - sr.left}px`;
-  sourceCanvas.style.top = `${cr.top - sr.top}px`;
+  const { cssW, cssH } = fitOverlay(sourceCanvas, cr, sr, ratio);
   const ctx = sourceCanvas.getContext("2d")!;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, cssW, cssH);
@@ -287,16 +320,9 @@ function drawArrows() {
   }
   const cr = canvas.getBoundingClientRect();
   const sr = stageEl.getBoundingClientRect();
-  const cssW = cr.width;
-  const cssH = cr.height;
   const ratio = Math.min(3, window.devicePixelRatio || 1);
   arrowsCanvas.hidden = false;
-  arrowsCanvas.width = Math.round(cssW * ratio);
-  arrowsCanvas.height = Math.round(cssH * ratio);
-  arrowsCanvas.style.width = `${cssW}px`;
-  arrowsCanvas.style.height = `${cssH}px`;
-  arrowsCanvas.style.left = `${cr.left - sr.left}px`;
-  arrowsCanvas.style.top = `${cr.top - sr.top}px`;
+  const { cssW, cssH } = fitOverlay(arrowsCanvas, cr, sr, ratio);
 
   const ctx = arrowsCanvas.getContext("2d")!;
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -418,6 +444,7 @@ function loadFrame(i: number) {
   const f = frames[i];
   if (!f) return;
   current = i;
+  invalidateRects(); // a new frame may resize the canvas (aspect/50vh clamp)
   if (!renderer) renderer = new FlowRenderer(canvas);
   renderer.upload(f);
   const mx = maxMagnitude(f);
@@ -737,9 +764,28 @@ function renderInspector(fx: number, fy: number, left: number, top: number) {
   drawLegendArrow(u / mf, v / mf);
 }
 
+// The inspector rewrites its own DOM every pointer move, which dirties layout;
+// reading canvas/stage geometry fresh each move would then force a synchronous
+// reflow. Cache the two rects and invalidate them only when geometry can
+// actually change (scroll, resize, frame swap).
+let cachedCanvasRect: DOMRect | null = null;
+let cachedStageRect: DOMRect | null = null;
+function invalidateRects() {
+  cachedCanvasRect = null;
+  cachedStageRect = null;
+}
+function canvasRect(): DOMRect {
+  return (cachedCanvasRect ??= canvas.getBoundingClientRect());
+}
+function stageRect(): DOMRect {
+  return (cachedStageRect ??= stageEl.getBoundingClientRect());
+}
+window.addEventListener("scroll", invalidateRects, true);
+window.addEventListener("resize", invalidateRects);
+
 function pixelAt(e: MouseEvent, f: FlowField) {
-  const rect = canvas.getBoundingClientRect();
-  const sr = stageEl.getBoundingClientRect();
+  const rect = canvasRect();
+  const sr = stageRect();
   return {
     fx: Math.floor(((e.clientX - rect.left) / rect.width) * f.width),
     fy: Math.floor(((e.clientY - rect.top) / rect.height) * f.height),
@@ -789,8 +835,8 @@ function showTouchPeek(clientX: number, clientY: number) {
     hideTouchPeek();
     return;
   }
-  const rect = canvas.getBoundingClientRect();
-  const sr = stageEl.getBoundingClientRect();
+  const rect = canvasRect();
+  const sr = stageRect();
   const peekX = clientX;
   const peekY = clientY - PEEK_OFFSET;
   const fx = Math.max(0, Math.min(f.width - 1, Math.floor(((peekX - rect.left) / rect.width) * f.width)));
@@ -879,13 +925,13 @@ function updateLegendHover(clientX: number, clientY: number) {
     legendArrow.hidden = true;
     if (highlight) {
       highlight = null;
-      draw();
+      drawHighlight();
     }
     return;
   }
   highlight = { u: tu, v: tv, radius: hlRadius };
   drawLegendArrow(tu, tv, hlRadius); // arrow + selection ring, rest muted
-  draw();
+  drawHighlight();
 }
 
 legendImg.addEventListener("mousemove", (e) => updateLegendHover(e.clientX, e.clientY));
@@ -919,7 +965,8 @@ legendImg.addEventListener(
     e.preventDefault(); // keep the page from scrolling while resizing
     // Exponential scaling proportional to the wheel delta — smooth on
     // trackpads (many small deltas) and stepped on notched mouse wheels.
-    hlRadius = Math.min(1.5, Math.max(0.02, hlRadius * Math.exp(-e.deltaY * 0.005)));
+    // Cap matches the #hlradius slider (0.6) so scroll and slider agree.
+    hlRadius = Math.min(0.6, Math.max(0.02, hlRadius * Math.exp(-e.deltaY * 0.005)));
     syncHlRadiusInput();
     updateLegendHover(e.clientX, e.clientY);
   },

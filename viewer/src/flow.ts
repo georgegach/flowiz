@@ -10,9 +10,13 @@ export interface FlowField {
   /** Optional per-pixel validity (length width*height). */
   valid?: Uint8Array;
   name: string;
+  /** Lazily-filled cache for {@link maxMagnitude} (a field is never mutated
+   *  after parsing, so the O(W·H) scan only needs to run once). */
+  _maxMag?: number;
 }
 
 export function maxMagnitude(f: FlowField): number {
+  if (f._maxMag !== undefined) return f._maxMag;
   let mx = 0;
   for (let i = 0; i < f.data.length; i += 2) {
     const u = f.data[i];
@@ -21,6 +25,7 @@ export function maxMagnitude(f: FlowField): number {
     const m = Math.hypot(u, v);
     if (m > mx) mx = m;
   }
+  f._maxMag = mx;
   return mx;
 }
 

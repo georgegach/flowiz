@@ -4,7 +4,6 @@ import type { FlowField } from "./flow";
 import { parseFlo } from "./flow";
 
 export interface ExampleDef {
-  id: string;
   label: string;
   /** Loader returns one or more frames. */
   load: () => Promise<FlowField[]>;
@@ -41,7 +40,6 @@ async function fetchFlo(url: string, name: string): Promise<FlowField> {
 
 export const EXAMPLES: ExampleDef[] = [
   {
-    id: "sequence",
     label: "Real sequence (5 frames)",
     load: async () => {
       const names = [1, 2, 3, 4, 5].map((i) => `frame_${String(i).padStart(4, "0")}.flo`);
@@ -51,7 +49,6 @@ export const EXAMPLES: ExampleDef[] = [
     },
   },
   {
-    id: "rotation",
     label: "Rotation",
     load: async () => [
       synth("rotation.synthetic", W, H, (x, y, cx, cy) => [
@@ -61,14 +58,12 @@ export const EXAMPLES: ExampleDef[] = [
     ],
   },
   {
-    id: "zoom",
     label: "Zoom / radial",
     load: async () => [
       synth("zoom.synthetic", W, H, (x, y, cx, cy) => [(x - cx) / 10, (y - cy) / 10]),
     ],
   },
   {
-    id: "wave",
     label: "Wave",
     load: async () => [
       synth("wave.synthetic", W, H, (x, y) => [

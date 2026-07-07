@@ -5,7 +5,7 @@ import type { FlowField } from "./flow";
 
 export type Mode = "rgb" | "uv" | "mag" | "angle";
 
-export interface RenderOptions {
+interface RenderOptions {
   maxFlow: number;
   mode: Mode;
   maskInvalid: boolean;
@@ -100,11 +100,16 @@ export class FlowRenderer {
   private uniforms: Record<string, WebGLUniformLocation | null> = {};
   private width = 0;
   private height = 0;
+  /** Reused RGBA32F packing buffer — grown to the largest frame, never freed. */
+  private packScratch = new Float32Array(0);
 
   constructor(private canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true });
     if (!gl) throw new Error("WebGL2 is not available in this browser.");
     this.gl = gl;
+    // Enable float-texture support once; needed before uploading RGBA32F.
+    gl.getExtension("EXT_color_buffer_float");
+    gl.getExtension("OES_texture_float_linear");
     this.program = this.buildProgram();
     this.flowTex = gl.createTexture()!;
     this.wheelTex = this.buildWheelTexture();
@@ -181,17 +186,20 @@ export class FlowRenderer {
     this.canvas.width = flow.width;
     this.canvas.height = flow.height;
 
-    // Pack u,v,valid into an RGBA32F texture.
-    const rgba = new Float32Array(flow.width * flow.height * 4);
-    for (let i = 0; i < flow.width * flow.height; i++) {
+    // Pack u,v,valid into an RGBA32F texture, reusing a persistent buffer.
+    // (texImage2D reads only the first width*height*4 elements, so a larger
+    // scratch buffer left over from a bigger frame is fine.)
+    const px = flow.width * flow.height;
+    const n = px * 4;
+    if (this.packScratch.length < n) this.packScratch = new Float32Array(n);
+    const rgba = this.packScratch;
+    for (let i = 0; i < px; i++) {
       rgba[i * 4] = flow.data[i * 2];
       rgba[i * 4 + 1] = flow.data[i * 2 + 1];
       rgba[i * 4 + 2] = flow.valid ? flow.valid[i] : 1;
       rgba[i * 4 + 3] = 1;
     }
     gl.bindTexture(gl.TEXTURE_2D, this.flowTex);
-    gl.getExtension("EXT_color_buffer_float");
-    gl.getExtension("OES_texture_float_linear");
     gl.texImage2D(
       gl.TEXTURE_2D, 0, gl.RGBA32F, flow.width, flow.height, 0, gl.RGBA, gl.FLOAT, rgba,
     );

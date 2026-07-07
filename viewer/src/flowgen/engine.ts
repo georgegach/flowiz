@@ -25,7 +25,7 @@ export class CancelledError extends Error {
 }
 
 function serialize(f: FlowField): SerializedFlow {
-  // Copy so the main-thread frame survives (worker receives a structured clone).
+  // Copy so the main-thread frame survives (the copy is handed to the worker).
   return {
     width: f.width,
     height: f.height,
@@ -33,6 +33,21 @@ function serialize(f: FlowField): SerializedFlow {
     valid: f.valid ? f.valid.slice().buffer : undefined,
     name: f.name,
   };
+}
+
+// Serialize a whole sequence and collect its (freshly-copied, throwaway)
+// buffers as transferables — moving them to the worker avoids a second full
+// structured-clone of every frame on postMessage.
+function serializeAll(frames: FlowField[]): { frames: SerializedFlow[]; transfer: Transferable[] } {
+  const out: SerializedFlow[] = [];
+  const transfer: Transferable[] = [];
+  for (const f of frames) {
+    const s = serialize(f);
+    out.push(s);
+    transfer.push(s.data);
+    if (s.valid) transfer.push(s.valid);
+  }
+  return { frames: out, transfer };
 }
 
 function deserialize(s: SerializedFlow): FlowField {
@@ -124,42 +139,33 @@ export class FlowEngine {
     });
   }
 
-  private awaitBlob(msg: WorkerRequest): Promise<Blob> {
+  private awaitBlob(msg: WorkerRequest, transfer: Transferable[] = []): Promise<Blob> {
     return new Promise((resolve, reject) => {
       this.pendingBlob = resolve;
       this.errored = reject;
-      this.send(msg);
+      this.send(msg, transfer);
     });
   }
 
   encodeZip(frames: FlowField[], baseName: string): Promise<Blob> {
-    return this.awaitBlob({
-      type: "encode-zip",
-      id: this.nextId++,
-      frames: frames.map(serialize),
-      baseName,
-    });
+    const { frames: ser, transfer } = serializeAll(frames);
+    return this.awaitBlob({ type: "encode-zip", id: this.nextId++, frames: ser, baseName }, transfer);
   }
 
   encodeGif(frames: FlowField[], fps: number, sharedMax: number): Promise<Blob> {
-    return this.awaitBlob({
-      type: "encode-gif",
-      id: this.nextId++,
-      frames: frames.map(serialize),
-      fps,
-      sharedMax,
-    });
+    const { frames: ser, transfer } = serializeAll(frames);
+    return this.awaitBlob(
+      { type: "encode-gif", id: this.nextId++, frames: ser, fps, sharedMax },
+      transfer,
+    );
   }
 
   encodeMp4(frames: FlowField[], fps: number, sharedMax: number, codec: string): Promise<Blob> {
-    return this.awaitBlob({
-      type: "encode-mp4",
-      id: this.nextId++,
-      frames: frames.map(serialize),
-      fps,
-      sharedMax,
-      codec,
-    });
+    const { frames: ser, transfer } = serializeAll(frames);
+    return this.awaitBlob(
+      { type: "encode-mp4", id: this.nextId++, frames: ser, fps, sharedMax, codec },
+      transfer,
+    );
   }
 
   dispose() {

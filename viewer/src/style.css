@@ -747,10 +747,6 @@ button.secondary:active { transform: scale(0.98); }
 #gen-tier { display: flex; flex-direction: column; gap: 6px; }
 #gen-tier button { justify-content: space-between; display: flex; align-items: center; padding: 9px 12px; }
 #gen-tier button small { color: var(--muted); font-weight: 400; margin-left: 10px; }
-.gen-badge {
-  font-family: var(--font-mono); font-size: 11px; color: var(--accent);
-  margin: 4px 0 10px;
-}
 .gen-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 .gen-actions button {
   padding: 8px 18px; border-radius: 999px; border: 1px solid var(--border-strong);
@@ -765,7 +761,6 @@ button.secondary:active { transform: scale(0.98); }
   margin: 2px 0 10px; cursor: pointer;
 }
 .gen-opt input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
-.gen-progress { margin: 4px 0 2px; }
 
 /* Indeterminate bar — a sliding sweep for phases without a known total. */
 .loader-bar.indeterminate { position: relative; }
@@ -776,14 +771,6 @@ button.secondary:active { transform: scale(0.98); }
 @keyframes loader-sweep {
   0% { transform: translateX(-110%); }
   100% { transform: translateX(310%); }
-}
-
-.gen-error {
-  margin: 6px 0 2px; padding: 10px 12px; border-radius: var(--radius-s);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
-  color: var(--fg); font-size: 12.5px; line-height: 1.45;
-  word-break: break-word; white-space: pre-wrap;
 }
 
 /* --- generate: Advanced (DIS tuning + cache controls) --- */

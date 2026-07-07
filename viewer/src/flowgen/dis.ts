@@ -74,11 +74,14 @@ export async function createDis(
       apply("setVariationalRefinementIterations", () => dis.setVariationalRefinementIterations(0));
   }
 
-  // Reused scratch Mats.
+  // Reused scratch Mats. grayPrev/grayCur are swapped each pair so the current
+  // frame's grayscale is retained as the next pair's previous — the generate
+  // loop feeds (prev,frame) then (frame,next), so this halves cvtColor calls.
   let rgba: any = null;
-  let gray0: any = null;
-  let gray1: any = null;
+  let grayPrev: any = null;
+  let grayCur: any = null;
   let flowMat: any = null;
+  let lastFrame: RGBAFrame | null = null;
 
   const toGray = (frame: RGBAFrame, dst: any) => {
     if (!rgba || rgba.rows !== frame.height || rgba.cols !== frame.width) {
@@ -93,15 +96,15 @@ export async function createDis(
     compute(a: RGBAFrame, b: RGBAFrame): SerializedFlow {
       const w = a.width;
       const h = a.height;
-      if (!gray0) {
-        gray0 = new cv.Mat();
-        gray1 = new cv.Mat();
+      if (!grayPrev) {
+        grayPrev = new cv.Mat();
+        grayCur = new cv.Mat();
         flowMat = new cv.Mat();
       }
       try {
-        toGray(a, gray0);
-        toGray(b, gray1);
-        dis.calc(gray0, gray1, flowMat);
+        if (lastFrame !== a) toGray(a, grayPrev); // else grayPrev already holds a
+        toGray(b, grayCur);
+        dis.calc(grayPrev, grayCur, flowMat);
       } catch (e) {
         // opencv.js throws C++ exceptions as raw numbers (a pointer); surface a
         // readable message instead of a bare "undefined".
@@ -114,12 +117,17 @@ export async function createDis(
       const src = flowMat.data32F as Float32Array;
       const data = new Float32Array(w * h * 2);
       data.set(src.subarray(0, data.length));
+      // Retain b's gray as the next pair's previous frame.
+      const tmp = grayPrev;
+      grayPrev = grayCur;
+      grayCur = tmp;
+      lastFrame = b;
       return { width: w, height: h, data: data.buffer, name: "" };
     },
     dispose() {
       rgba?.delete();
-      gray0?.delete();
-      gray1?.delete();
+      grayPrev?.delete();
+      grayCur?.delete();
       flowMat?.delete();
       dis?.delete?.();
     },

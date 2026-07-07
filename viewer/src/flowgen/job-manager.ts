@@ -14,7 +14,6 @@ import type { ExecutionProvider, GenOptions, ProgressKind } from "./types";
 import { FlowEngine, CancelledError } from "./engine";
 import { baseUrl } from "./base-url";
 import { openVideo, type VideoFrameSource } from "../video/decode";
-import { openVideoFFmpeg } from "../video/ffmpeg-decode";
 
 /** Keep at most this many source-frame snapshots (≈0.5 MB each) — long videos
  * otherwise pin gigabytes. Beyond it, frames stream without a source overlay. */
@@ -196,6 +195,9 @@ export class FlowJobManager {
       this.emitUpdate();
       const { stride, maxDim } = job.settings;
       try {
+        // Loaded lazily so the (rarely used) ffmpeg.wasm glue stays out of the
+        // main entry chunk — flow files and the sample flows never need it.
+        const { openVideoFFmpeg } = await import("../video/ffmpeg-decode");
         src = await openVideoFFmpeg(
           job.file,
           { stride, maxDim },
@@ -223,44 +225,61 @@ export class FlowJobManager {
 
       const stem = job.file.name.replace(/\.[^.]+$/, "");
       let i = 0;
-      for await (const frame of src.frames()) {
-        if (this.cancelRequested || this.stopRequested) break;
-        // Snapshot BEFORE pushFrame transfers frame.data (detached buffers read
-        // as silent zero-length). Cap snapshots so long videos don't blow memory.
-        const wantSnap = job.framesDone < MAX_SOURCE_SNAPSHOTS;
-        const snap = wantSnap
-          ? createImageBitmap(
-              new ImageData(new Uint8ClampedArray(frame.data.slice(0)), frame.width, frame.height),
-            ).catch(() => null)
-          : Promise.resolve<ImageBitmap | null>(null);
+      // Drive the frame iterator manually so we can start decoding frame N+1
+      // (on the main thread) while frame N's inference runs in the worker —
+      // one frame of prefetch overlaps decode latency with compute. Ordering is
+      // preserved, so the worker's prev-frame cache stays correct.
+      const it = src.frames()[Symbol.asyncIterator]();
+      let nextP = it.next();
+      try {
+        for (;;) {
+          const res = await nextP;
+          if (res.done) break;
+          if (this.cancelRequested || this.stopRequested) break;
+          const frame = res.value;
+          nextP = it.next(); // begin decoding the next frame during this inference
 
-        let flow: FlowField | null;
-        try {
-          flow = await engine.pushFrame(frame, i++);
-        } catch (e) {
-          if (e instanceof CancelledError) break;
-          throw e;
-        }
-        if (flow) {
-          if (!streamStarted) {
-            this.events.onStreamStart(job);
-            streamStarted = true;
+          // Snapshot BEFORE pushFrame transfers frame.data (detached buffers read
+          // as silent zero-length). Cap snapshots so long videos don't blow memory.
+          const wantSnap = job.framesDone < MAX_SOURCE_SNAPSHOTS;
+          const snap = wantSnap
+            ? createImageBitmap(
+                new ImageData(new Uint8ClampedArray(frame.data.slice(0)), frame.width, frame.height),
+              ).catch(() => null)
+            : Promise.resolve<ImageBitmap | null>(null);
+
+          let flow: FlowField | null;
+          try {
+            flow = await engine.pushFrame(frame, i++);
+          } catch (e) {
+            if (e instanceof CancelledError) break;
+            throw e;
           }
-          flow.name = `${stem}_${String(job.framesDone + 1).padStart(4, "0")}.flo`;
-          job.framesDone++;
-          producedAny = true;
-          this.events.onFrame(job, flow, await snap);
-          this.events.onProgress(
-            job,
-            `Computing flow ${job.framesDone} / ${job.framesTotal}`,
-            job.framesDone,
-            job.framesTotal,
-            "count",
-          );
-          this.emitUpdate();
-        } else {
-          (await snap)?.close();
+          if (flow) {
+            if (!streamStarted) {
+              this.events.onStreamStart(job);
+              streamStarted = true;
+            }
+            flow.name = `${stem}_${String(job.framesDone + 1).padStart(4, "0")}.flo`;
+            job.framesDone++;
+            producedAny = true;
+            this.events.onFrame(job, flow, await snap);
+            this.events.onProgress(
+              job,
+              `Computing flow ${job.framesDone} / ${job.framesTotal}`,
+              job.framesDone,
+              job.framesTotal,
+              "count",
+            );
+            this.emitUpdate();
+          } else {
+            (await snap)?.close();
+          }
         }
+      } finally {
+        // Swallow the abandoned prefetch so an early break can't raise an
+        // unhandled rejection once the source is closed.
+        void nextP.catch(() => {});
       }
 
       // Terminal status.
