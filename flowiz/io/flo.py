@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import BinaryIO, Union
+from typing import BinaryIO, Union, cast
 
 import numpy as np
 
@@ -16,9 +16,9 @@ def read_flo(path: Union[str, BinaryIO]) -> Flow:
     """Read a Middlebury ``.flo`` file into a :class:`Flow`."""
     close = False
     if hasattr(path, "read"):
-        f = path  # type: ignore[assignment]
+        f = cast("BinaryIO", path)
     else:
-        f = open(path, "rb")  # type: ignore[assignment]
+        f = cast("BinaryIO", open(path, "rb"))
         close = True
     try:
         tag = np.frombuffer(f.read(4), np.float32, count=1)[0]

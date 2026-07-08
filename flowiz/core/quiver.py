@@ -61,7 +61,8 @@ def quiver(
     ax.axis("off")
 
     fig.canvas.draw()
-    buf = np.asarray(fig.canvas.buffer_rgba())
+    # buffer_rgba() exists on the Agg canvas but isn't declared on the base class.
+    buf = np.asarray(fig.canvas.buffer_rgba())  # type: ignore[attr-defined]
     plt.close(fig)
 
     img = buf[..., :3].copy()
