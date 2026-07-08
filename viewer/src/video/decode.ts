@@ -30,9 +30,14 @@ export interface VideoFrameSource {
 
 const ASSUMED_FPS = 30;
 
+/** Longest we'll wait for a single seek before giving up on that frame — a
+ *  non-decodable seek point otherwise never emits `seeked` and hangs forever. */
+const SEEK_TIMEOUT_MS = 4000;
+
 export async function openVideo(
   file: File,
   opts: FrameSourceOptions,
+  signal?: AbortSignal,
 ): Promise<VideoFrameSource> {
   const url = URL.createObjectURL(file);
   const video = document.createElement("video");
@@ -41,10 +46,21 @@ export async function openVideo(
   video.preload = "auto";
   video.src = url;
 
-  await new Promise<void>((resolve, reject) => {
-    video.onloadedmetadata = () => resolve();
-    video.onerror = () => reject(new Error("Could not decode this video."));
-  });
+  const cleanup = () => {
+    URL.revokeObjectURL(url);
+    video.removeAttribute("src");
+    video.load();
+  };
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("Could not decode this video."));
+    });
+  } catch (e) {
+    cleanup(); // don't leak the blob URL / File-pinning <video> on decode failure
+    throw e;
+  }
 
   const srcWidth = video.videoWidth;
   const srcHeight = video.videoHeight;
@@ -67,21 +83,32 @@ export async function openVideo(
 
   const seekTo = (t: number) =>
     new Promise<void>((resolve) => {
-      const onSeeked = () => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
         video.removeEventListener("seeked", onSeeked);
+        resolve();
+      };
+      const onSeeked = () => {
         // Give the decoder a beat to paint the frame before we read it.
         const rvfc = (video as unknown as {
           requestVideoFrameCallback?: (cb: () => void) => number;
         }).requestVideoFrameCallback;
-        if (rvfc) rvfc.call(video, () => resolve());
-        else requestAnimationFrame(() => resolve());
+        if (rvfc) rvfc.call(video, finish);
+        else requestAnimationFrame(finish);
       };
+      // A stalled/non-decodable seek never fires `seeked`; fall through after a
+      // timeout with whatever frame is currently painted rather than hanging.
+      const timer = setTimeout(finish, SEEK_TIMEOUT_MS);
       video.addEventListener("seeked", onSeeked);
       video.currentTime = t;
     });
 
   async function* frames(): AsyncGenerator<RGBAFrameData> {
     for (let i = 0; i < count; i++) {
+      if (signal?.aborted) return;
       const t = Math.min(duration - 1e-3, (i * stride) / fps);
       await seekTo(t);
       ctx.drawImage(video, 0, 0, outW, outH);
@@ -98,10 +125,6 @@ export async function openVideo(
     srcWidth: outW,
     srcHeight: outH,
     frames,
-    close() {
-      URL.revokeObjectURL(url);
-      video.removeAttribute("src");
-      video.load();
-    },
+    close: cleanup,
   };
 }

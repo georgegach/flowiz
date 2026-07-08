@@ -41,6 +41,7 @@ export async function openVideoFFmpeg(
   opts: FrameSourceOptions,
   onProgress: ProgressFn,
   baseUrl: string,
+  signal?: AbortSignal,
 ): Promise<VideoFrameSource> {
   const stride = Math.max(1, Math.floor(opts.stride));
   const maxDim = Math.max(2, Math.floor(opts.maxDim));
@@ -67,6 +68,18 @@ export async function openVideoFFmpeg(
   let lastFrame = 0;
 
   const revoke = () => URL.revokeObjectURL(wasmURL);
+
+  // Forcefully interrupt a long decode/exec on cancel — terminate() rejects the
+  // in-flight ffmpeg call so the caller unwinds instead of running to the end.
+  const onAbort = () => {
+    try {
+      ffmpeg.terminate();
+    } catch {
+      /* already gone */
+    }
+    revoke();
+  };
+  signal?.addEventListener("abort", onAbort);
 
   ffmpeg.on("log", ({ message }) => {
     if (fps == null) fps = parseFps(message);
@@ -127,10 +140,16 @@ export async function openVideoFFmpeg(
   }
 
   const entries = await ffmpeg.listDir("/");
-  const names = entries
+  let names = entries
     .filter((e) => !e.isDir && /^frame_\d+\.png$/.test(e.name))
     .map((e) => e.name)
     .sort();
+  // Cap the total frame count so a long clip can't pin gigabytes of decoded
+  // PNGs + flow fields and crash the tab. Delete the dropped PNGs from MEMFS.
+  if (opts.maxFrames && names.length > opts.maxFrames) {
+    for (const extra of names.slice(opts.maxFrames)) await ffmpeg.deleteFile(extra).catch(() => {});
+    names = names.slice(0, opts.maxFrames);
+  }
   if (!names.length) {
     ffmpeg.terminate();
     revoke();
@@ -151,6 +170,7 @@ export async function openVideoFFmpeg(
     canvas.height = outH;
     const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     for (let idx = 0; idx < names.length; idx++) {
+      if (signal?.aborted) return;
       const name = names[idx];
       const data = (await ffmpeg.readFile(name)) as Uint8Array;
       const bmp = await createImageBitmap(new Blob([data], { type: "image/png" }));
@@ -174,6 +194,7 @@ export async function openVideoFFmpeg(
     srcHeight: outH,
     frames,
     close() {
+      signal?.removeEventListener("abort", onAbort);
       ffmpeg.terminate();
       revoke();
     },

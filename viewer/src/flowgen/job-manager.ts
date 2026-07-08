@@ -68,6 +68,7 @@ export class FlowJobManager {
   private engine: FlowEngine | null = null;
   private cancelRequested = false;
   private stopRequested = false;
+  private abort: AbortController | null = null;
 
   constructor(private events: JobManagerEvents) {}
 
@@ -98,6 +99,7 @@ export class FlowJobManager {
   stop(id: number): void {
     if (this.activeJob?.id === id) {
       this.stopRequested = true;
+      this.abort?.abort(); // also interrupt a long decode (no frames produced yet)
     } else {
       this.dropQueued(id);
     }
@@ -107,6 +109,7 @@ export class FlowJobManager {
   cancel(id: number): void {
     if (this.activeJob?.id === id) {
       this.cancelRequested = true;
+      this.abort?.abort(); // interrupt an in-flight video decode
       this.engine?.dispose(); // only way to interrupt a multi-second inference
     } else {
       this.dropQueued(id);
@@ -143,6 +146,8 @@ export class FlowJobManager {
     this.activeJob = job;
     this.cancelRequested = false;
     this.stopRequested = false;
+    this.abort = new AbortController();
+    const signal = this.abort.signal;
     job.status = "starting";
     this.emitUpdate();
 
@@ -200,17 +205,19 @@ export class FlowJobManager {
         const { openVideoFFmpeg } = await import("../video/ffmpeg-decode");
         src = await openVideoFFmpeg(
           job.file,
-          { stride, maxDim },
+          { stride, maxDim, maxFrames: MAX_SOURCE_SNAPSHOTS },
           (phase, done, total, kind) => {
             decodeP = { phase, done, total, kind };
             flush();
           },
           base,
+          signal,
         );
       } catch (ffErr) {
+        if (signal.aborted) throw ffErr; // user cancelled/stopped — don't fall back
         this.events.notify("ffmpeg unavailable — using the browser decoder.", "info");
         console.warn("ffmpeg decode failed, falling back to <video>:", ffErr);
-        src = await openVideo(job.file, { stride, maxDim });
+        src = await openVideo(job.file, { stride, maxDim, maxFrames: MAX_SOURCE_SNAPSHOTS }, signal);
       }
 
       const ep = await enginePromise;
@@ -252,6 +259,7 @@ export class FlowJobManager {
           try {
             flow = await engine.pushFrame(frame, i++);
           } catch (e) {
+            void snap.then((b) => b?.close()); // don't leak the pending source bitmap
             if (e instanceof CancelledError) break;
             throw e;
           }
@@ -303,12 +311,16 @@ export class FlowJobManager {
     } catch (err) {
       if (this.cancelRequested) {
         job.status = "cancelled";
+      } else if (this.stopRequested) {
+        // Aborted a long decode before any frame — treat as a clean stop.
+        job.status = "stopped";
       } else {
         job.status = "error";
         job.error = (err as Error)?.message || String(err) || "Generation failed.";
         this.events.notify(job.error);
       }
     } finally {
+      this.abort = null;
       try {
         src?.close();
       } catch {
