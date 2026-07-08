@@ -18,7 +18,7 @@ def read_flo(path: Union[str, BinaryIO]) -> Flow:
     if hasattr(path, "read"):
         f = cast("BinaryIO", path)
     else:
-        f = cast("BinaryIO", open(path, "rb"))
+        f = cast("BinaryIO", open(cast("str", path), "rb"))
         close = True
     try:
         tag = np.frombuffer(f.read(4), np.float32, count=1)[0]
