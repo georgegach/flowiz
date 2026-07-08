@@ -65,22 +65,31 @@ export async function encodeMp4(
   const ctx = canvas.getContext("2d")!;
   const frameDurUs = Math.round(1e6 / fps);
 
-  for (let i = 0; i < frames.length; i++) {
-    if (encoderError) throw encoderError; // stop early on a codec failure
-    const s = frames[i];
-    const rgba = colorizeFlow(toFlowField(s), sharedMax);
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, w, h);
-    ctx.putImageData(new ImageData(rgba, s.width, s.height), 0, 0);
-    const vf = new VideoFrameCtor(canvas, { timestamp: i * frameDurUs, duration: frameDurUs });
-    encoder.encode(vf, { keyFrame: i % 30 === 0 });
-    vf.close();
-    onProgress?.(i + 1, frames.length);
-  }
+  try {
+    for (let i = 0; i < frames.length; i++) {
+      if (encoderError) throw encoderError; // stop early on a codec failure
+      const s = frames[i];
+      const rgba = colorizeFlow(toFlowField(s), sharedMax);
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, w, h);
+      ctx.putImageData(new ImageData(rgba, s.width, s.height), 0, 0);
+      const vf = new VideoFrameCtor(canvas, { timestamp: i * frameDurUs, duration: frameDurUs });
+      encoder.encode(vf, { keyFrame: i % 30 === 0 });
+      vf.close();
+      onProgress?.(i + 1, frames.length);
+    }
 
-  await encoder.flush();
-  encoder.close();
-  if (encoderError) throw encoderError;
-  muxer.finalize();
-  return new Uint8Array((muxer.target as ArrayBufferTarget).buffer);
+    await encoder.flush();
+    if (encoderError) throw encoderError;
+    muxer.finalize();
+    return new Uint8Array((muxer.target as ArrayBufferTarget).buffer);
+  } finally {
+    // Always release the encoder + its OffscreenCanvas, even on the mid-loop
+    // error throw (previously close() was skipped, abandoning the encoder).
+    try {
+      if (encoder.state !== "closed") encoder.close();
+    } catch {
+      /* already closed */
+    }
+  }
 }

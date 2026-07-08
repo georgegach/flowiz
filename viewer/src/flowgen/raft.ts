@@ -53,6 +53,8 @@ export async function createRaft(
     session = await ort.InferenceSession.create(modelBytes, {
       executionProviders: wantGpu ? ["webgpu", "wasm"] : ["wasm"],
     });
+    // Reflects the *requested* provider: onnxruntime can still fall back to
+    // WASM per-op internally without throwing, so this is a best-effort label.
     usedEp = wantGpu ? "webgpu" : "wasm";
   } catch (e) {
     if (!wantGpu) throw e; // wasm already failed — nothing to fall back to

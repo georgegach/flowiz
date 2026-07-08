@@ -69,21 +69,31 @@ export class FlowEngine {
   private pendingFlow = new Map<number, { resolve: (f: FlowField) => void; reject: (e: Error) => void }>();
   private pendingBlob: ((b: Blob) => void) | null = null;
   private errored: ((e: Error) => void) | null = null;
+  private deadError: Error | null = null;
   onProgress?: (phase: string, done: number, total: number, kind: ProgressKind) => void;
 
   constructor() {
     this.worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
     this.worker.onmessage = (ev: MessageEvent<WorkerResponse>) => this.onMessage(ev.data);
+    // A native worker crash fires once and only once. Reject everything in flight
+    // AND latch the error, so a crash during the priming (index 0) frame — which
+    // registers no pending promise — can't strand the next pushFrame forever.
     this.worker.onerror = (e) => {
       const err = new Error(e.message || "Worker crashed");
+      this.deadError = err;
       this.readyReject?.(err);
+      this.readyReject = this.readyResolve = null;
+      for (const { reject } of this.pendingFlow.values()) reject(err);
+      this.pendingFlow.clear();
       this.pendingBlob = null;
       this.errored?.(err);
+      this.errored = null;
     };
   }
 
   private send(msg: WorkerRequest, transfer: Transferable[] = []) {
     if (this.disposed) throw new CancelledError();
+    if (this.deadError) throw this.deadError; // worker already crashed — fail fast
     this.worker.postMessage(msg, transfer);
   }
 
