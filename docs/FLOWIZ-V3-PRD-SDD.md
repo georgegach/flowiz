@@ -132,7 +132,7 @@ flowiz/
   video.py           # sequence normalization + imageio-ffmpeg streaming writer
   cli/
     app.py           # Typer app; commands: convert, video, info, compare, view
-  viewer_assets/     # built static viewer, shipped in wheel (hatch build hook copies from viewer/dist)
+  viewer_assets/     # built static viewer, shipped in wheel (release.yml copies viewer/dist here; pyproject [tool.hatch.build] artifacts re-includes this git-ignored dir)
   py.typed
 viewer/              # TypeScript source (Vite), see §4
 docs/                # MkDocs

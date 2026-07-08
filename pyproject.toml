@@ -74,6 +74,13 @@ Issues = "https://github.com/georgegach/flowiz/issues"
 [project.scripts]
 flowiz = "flowiz.cli.app:main"
 
+# The browser viewer is built and copied into flowiz/viewer_assets/ at release
+# time (see .github/workflows/release.yml). That directory is git-ignored, and
+# Hatchling excludes VCS-ignored paths by default — so it must be re-included
+# here as a build artifact, otherwise `flowiz view` ships without its assets.
+[tool.hatch.build]
+artifacts = ["flowiz/viewer_assets/**"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["flowiz"]
 
