@@ -28,6 +28,8 @@ def natural_sort(paths: Sequence[str]) -> list[str]:
 
 
 def _sequence_max(files: Sequence[str]) -> float:
+    # Deliberately reads each file once here and again in the encode loop below,
+    # trading a second pass over disk for not holding the whole sequence in RAM.
     mx = 0.0
     for f in files:
         mx = max(mx, read(f).max_magnitude())

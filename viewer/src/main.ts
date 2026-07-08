@@ -74,7 +74,7 @@ app.innerHTML = `
       <div id="peekdot" class="peekdot" hidden></div>
       <div id="inspector" class="inspector" hidden></div>
       <div id="stagebar" class="stagebar" hidden></div>
-      <div id="loader" class="loader" hidden>
+      <div id="loader" class="loader" role="status" aria-live="polite" hidden>
         <div class="loader-card">
           <div class="loader-title" id="loader-title">Loading files</div>
           <div class="loader-bar" id="loader-bar"><div id="loader-fill" class="loader-fill"></div></div>
@@ -606,8 +606,7 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   userAdjustedMaxflow = false; // a fresh sequence gets its own auto normalizer
   setRangeForSequence();
   loadFrame(0);
-  renderLegend();
-  setLegendVisible(legendCb.checked);
+  setLegendVisible(legendCb.checked); // wheel itself is static, painted once at boot
 }
 
 // --- background generation: frames stream in one at a time ---
@@ -644,7 +643,6 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
     canvas.hidden = false;
     controls.hidden = false;
     loadFrame(0);
-    renderLegend();
     setLegendVisible(legendCb.checked);
   } else {
     // Never jump to a newly generated frame — leave the user on whatever frame
@@ -716,8 +714,7 @@ function showError(msg: string, kind: "error" | "info" = "error") {
 }
 
 // --- color wheel painter: supersampled backing store + edge anti-aliasing ---
-async function paintWheel(ctx: CanvasRenderingContext2D, px: number) {
-  const { uvToColor } = await import("./colorwheel");
+function paintWheel(ctx: CanvasRenderingContext2D, px: number) {
   const img = ctx.createImageData(px, px);
   const r = px / 2;
   const band = 2.0 / r; // width of the anti-aliased rim, in normalized units
@@ -764,9 +761,8 @@ function renderLegend() {
   const px = backingSize(css);
   const c = document.createElement("canvas");
   c.width = c.height = px;
-  paintWheel(c.getContext("2d")!, px).then(() => {
-    legendImg.src = c.toDataURL();
-  });
+  paintWheel(c.getContext("2d")!, px);
+  legendImg.src = c.toDataURL();
 }
 
 // --- inspector: per-pixel readout on hover; click to pin ---
@@ -1132,8 +1128,12 @@ window.addEventListener("keydown", (e) => {
 
 // theme toggle — persists the explicit choice; follows the OS until one is made
 const themeBtn = document.querySelector<HTMLButtonElement>("#theme")!;
+const syncThemePressed = () =>
+  themeBtn.setAttribute("aria-pressed", String(document.documentElement.classList.contains("dark")));
+syncThemePressed(); // expose current theme state to assistive tech
 themeBtn.addEventListener("click", () => {
   const dark = document.documentElement.classList.toggle("dark");
+  syncThemePressed();
   try {
     localStorage.setItem("flowiz.theme", dark ? "dark" : "light");
   } catch {
@@ -1149,22 +1149,27 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
   }
   if (stored) return; // an explicit choice wins over the system preference
   document.documentElement.classList.toggle("dark", e.matches);
+  syncThemePressed();
 });
 
-// drag & drop
-["dragover", "dragenter"].forEach((ev) =>
-  window.addEventListener(ev, (e) => {
-    e.preventDefault();
-    drop.classList.add("hover");
-  }),
-);
-["dragleave", "drop"].forEach((ev) =>
-  window.addEventListener(ev, (e) => {
-    e.preventDefault();
-    drop.classList.remove("hover");
-  }),
-);
+// drag & drop — a depth counter avoids the hover flicker that a bare
+// dragleave (which fires on every child-element boundary) would cause.
+let dragDepth = 0;
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("dragenter", (e) => {
+  e.preventDefault();
+  dragDepth++;
+  if (!drop.hidden) drop.classList.add("hover");
+});
+window.addEventListener("dragleave", (e) => {
+  e.preventDefault();
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) drop.classList.remove("hover");
+});
 window.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  drop.classList.remove("hover");
   if (e.dataTransfer?.files.length) handleFiles(e.dataTransfer.files);
 });
 document.querySelector<HTMLInputElement>("#file")!.addEventListener("change", (e) => {

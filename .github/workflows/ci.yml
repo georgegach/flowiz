@@ -28,7 +28,6 @@ jobs:
         run: ruff check flowiz
       - name: Type check
         if: matrix.python-version == '3.11'
-        continue-on-error: true
         run: pyright flowiz
       - name: Test
         run: pytest --cov=flowiz --cov-report=term-missing --cov-report=xml --cov-fail-under=85
