@@ -193,6 +193,19 @@ const hlRadiusInput = document.querySelector<HTMLInputElement>("#hlradius")!;
 const hlRadiusCtl = document.querySelector<HTMLDivElement>("#hlradius-ctl")!;
 
 let renderer: FlowRenderer | null = null;
+// Max-flow is a per-sequence normalizer, not per-frame: set once when a
+// sequence loads (and grown as generated frames stream in) so playback and
+// exports stay flicker-free. A manual slider tweak pins it for that sequence.
+let userAdjustedMaxflow = false;
+
+function setRangeForSequence() {
+  if (userAdjustedMaxflow) return;
+  let mx = 0;
+  for (const f of frames) mx = Math.max(mx, maxMagnitude(f));
+  maxflow.max = String(Math.max(1, Math.ceil(mx * 1.5)));
+  maxflow.value = String(Math.max(0.1, mx));
+  maxval.textContent = parseFloat(maxflow.value).toFixed(2);
+}
 let convertPanel: ConvertPanel | null = null;
 let frames: FlowField[] = [];
 let sourceFrames: (ImageBitmap | null)[] = []; // real video frames, aligned to `frames`
@@ -461,10 +474,6 @@ function loadFrame(i: number) {
   current = i;
   invalidateRects(); // a new frame may resize the canvas (aspect/50vh clamp)
   renderer!.upload(f);
-  const mx = maxMagnitude(f);
-  maxflow.max = String(Math.max(1, Math.ceil(mx * 1.5)));
-  maxflow.value = String(Math.max(0.1, mx));
-  maxval.textContent = mx.toFixed(2);
   draw();
   strip.setCurrent(current);
   convertPanel?.update();
@@ -594,6 +603,8 @@ function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
   controls.hidden = false;
   playbackSection.hidden = frames.length < 2;
   strip.setFrames(frames);
+  userAdjustedMaxflow = false; // a fresh sequence gets its own auto normalizer
+  setRangeForSequence();
   loadFrame(0);
   renderLegend();
   setLegendVisible(legendCb.checked);
@@ -608,6 +619,7 @@ function beginStream() {
   frames = [];
   sourceFrames = [];
   current = 0;
+  userAdjustedMaxflow = false; // new job → auto normalizer, grown as frames arrive
   strip.setFrames([]);
   stagebar.hidden = true;
   drop.hidden = true;
@@ -626,6 +638,8 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
   const hasSource = sourceFrames.some(Boolean);
   sourceCtl.hidden = !hasSource;
   flowOpRow.hidden = !hasSource || !showSourceCb.checked;
+  const prevMax = maxflow.value;
+  setRangeForSequence(); // grow the shared normalizer as frames stream in
   if (frames.length === 1) {
     canvas.hidden = false;
     controls.hidden = false;
@@ -634,9 +648,11 @@ function appendFrame(flow: FlowField, src: ImageBitmap | null) {
     setLegendVisible(legendCb.checked);
   } else {
     // Never jump to a newly generated frame — leave the user on whatever frame
-    // they're inspecting; only refresh the frame count + strip highlight.
+    // they're inspecting; only refresh the frame count + strip highlight. If the
+    // shared normalizer grew, redraw the current frame so it stays consistent.
     updateStats();
     strip.setCurrent(current);
+    if (maxflow.value !== prevMax) draw();
   }
 }
 
@@ -1025,6 +1041,7 @@ document.querySelector("#mode")!.addEventListener("click", (e) => {
   draw();
 });
 maxflow.addEventListener("input", () => {
+  userAdjustedMaxflow = true; // pin the normalizer for this sequence
   maxval.textContent = parseFloat(maxflow.value).toFixed(2);
   draw();
 });
@@ -1042,15 +1059,18 @@ window.addEventListener("resize", () => {
     drawSource();
   }
 });
+const currentMaxFlow = () => parseFloat(maxflow.value) || maxMagnitude(frames[current]) || 1;
 convertPanel = setupConvertPanel(document.querySelector<HTMLDivElement>("#convert-ctl")!, {
   getFrames: () => frames,
   getCurrent: () => current,
+  getMaxFlow: currentMaxFlow,
   notify: showError,
 });
 setupExportMenu(document.querySelector<HTMLDivElement>("#export-ctl")!, {
   getFrames: () => frames,
   getCurrent: () => current,
   getFps: () => parseInt(fpsInput.value, 10),
+  getMaxFlow: currentMaxFlow,
   canvas,
   notify: showError,
 });

@@ -102,9 +102,15 @@ export async function convert(
   frames: FlowField[],
   indices: number[],
   fmt: ConvertFormat,
+  colorMaxFlow?: number,
 ): Promise<ConvertResult> {
   const meta = formatMeta(fmt);
-  const maxFlow = fmt === "color" ? sequenceMaxFlow(indices.map((i) => frames[i])) : 0;
+  // Color batches use the on-screen normalizer when given (matches the preview),
+  // else a sequence-wide max over the selection (still flicker-free).
+  const maxFlow =
+    fmt === "color"
+      ? colorMaxFlow ?? sequenceMaxFlow(indices.map((i) => frames[i]))
+      : 0;
 
   if (indices.length === 1) {
     const f = frames[indices[0]];

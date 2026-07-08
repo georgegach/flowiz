@@ -13,6 +13,8 @@ const CHECK_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" s
 export interface ConvertContext {
   getFrames: () => FlowField[];
   getCurrent: () => number;
+  /** Current on-screen Max-flow normalizer, so color exports match the preview. */
+  getMaxFlow: () => number;
   notify: (msg: string, kind?: "error" | "info") => void;
 }
 
@@ -129,7 +131,7 @@ export function setupConvertPanel(container: HTMLElement, ctx: ConvertContext): 
     goBtn.classList.add("busy");
     goBtn.disabled = true;
     try {
-      const { blob, filename } = await convert(frames, indicesForScope(frames), fmt);
+      const { blob, filename } = await convert(frames, indicesForScope(frames), fmt, ctx.getMaxFlow());
       download(blob, filename);
       // brief success affordance (icon + label swap on stable nodes)
       if (doneTimer !== null) clearTimeout(doneTimer);

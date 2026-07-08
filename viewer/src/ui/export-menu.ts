@@ -7,12 +7,13 @@
 
 import type { FlowField } from "../flow";
 import { FlowEngine } from "../flowgen/engine";
-import { sequenceMaxFlow } from "../export/colorize";
 
 export interface ExportContext {
   getFrames: () => FlowField[];
   getCurrent: () => number;
   getFps: () => number;
+  /** Current on-screen Max-flow normalizer, so exports match the preview. */
+  getMaxFlow: () => number;
   canvas: HTMLCanvasElement;
   notify: (msg: string, kind?: "error" | "info") => void;
 }
@@ -146,11 +147,11 @@ export function setupExportMenu(container: HTMLElement, ctx: ExportContext) {
     } else if (act === "zip") {
       withEngine((e) => e.encodeZip(frames, base), `${base}.zip`, "ZIP");
     } else if (act === "gif") {
-      const mx = sequenceMaxFlow(frames);
+      const mx = ctx.getMaxFlow();
       withEngine((e) => e.encodeGif(frames, ctx.getFps(), mx), `${base}.gif`, "GIF");
     } else if (act === "mp4") {
       if (b.dataset.disabled === "1") return;
-      const mx = sequenceMaxFlow(frames);
+      const mx = ctx.getMaxFlow();
       withEngine((e) => e.encodeMp4(frames, ctx.getFps(), mx, b.dataset.codec || "avc1.42001f"), `${base}.mp4`, "MP4");
     }
   });
