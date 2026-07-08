@@ -440,13 +440,27 @@ function drawLegendArrow(nu: number, nv: number, selRadius?: number) {
   ctx.stroke();
 }
 
+// Lazily build the WebGL2 renderer. Returns false (and toasts once) when
+// WebGL2 is unavailable, so callers can bail before mutating the UI into a
+// blank-stage / dead-controls state.
+function ensureRenderer(): boolean {
+  if (renderer) return true;
+  try {
+    renderer = new FlowRenderer(canvas);
+    return true;
+  } catch (e) {
+    showError((e as Error).message || "WebGL2 is required to display flow and is not available in this browser.");
+    return false;
+  }
+}
+
 function loadFrame(i: number) {
   const f = frames[i];
   if (!f) return;
+  if (!ensureRenderer()) return;
   current = i;
   invalidateRects(); // a new frame may resize the canvas (aspect/50vh clamp)
-  if (!renderer) renderer = new FlowRenderer(canvas);
-  renderer.upload(f);
+  renderer!.upload(f);
   const mx = maxMagnitude(f);
   maxflow.max = String(Math.max(1, Math.ceil(mx * 1.5)));
   maxflow.value = String(Math.max(0.1, mx));
@@ -560,6 +574,9 @@ async function handleFiles(fileList: FileList | File[]) {
 }
 
 function showFrames(parsed: FlowField[], source?: (ImageBitmap | null)[]) {
+  // Fail loudly (toast) before hiding the dropzone / revealing controls, so a
+  // no-WebGL2 browser doesn't end up with a blank stage and dead controls.
+  if (!ensureRenderer()) return;
   stopPlayback();
   // Sort flows by name; carry the matching source frame with each so the two
   // stay aligned after sorting.
@@ -601,6 +618,7 @@ function beginStream() {
 // Append one freshly computed frame. Never routes through showFrames (which
 // sorts + replaces + closes prior bitmaps); auto-range stays per-frame.
 function appendFrame(flow: FlowField, src: ImageBitmap | null) {
+  if (!ensureRenderer()) return;
   frames.push(flow);
   sourceFrames.push(src);
   strip.appendFrame(flow);
@@ -1132,10 +1150,12 @@ window.addEventListener("drop", (e) => {
 document.querySelector<HTMLInputElement>("#file")!.addEventListener("change", (e) => {
   const input = e.target as HTMLInputElement;
   if (input.files) handleFiles(input.files);
+  input.value = ""; // allow re-picking the same file (else no change event fires)
 });
 document.querySelector<HTMLInputElement>("#video-file")!.addEventListener("change", (e) => {
   const input = e.target as HTMLInputElement;
   if (input.files) handleFiles(input.files);
+  input.value = "";
 });
 // Pre-render the color wheel at startup so it's fully loaded and appears the
 // instant the panel opens (no lazy paint gap on the first flow). It's static and
