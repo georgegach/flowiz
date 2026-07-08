@@ -39,6 +39,12 @@ export function parseFlo(buf: ArrayBuffer, name: string): FlowField {
   }
   const width = dv.getInt32(4, true);
   const height = dv.getInt32(8, true);
+  if (!(width > 0 && width < 100000 && height > 0 && height < 100000)) {
+    throw new Error(`${name}: illegal .flo dimensions ${width}x${height}.`);
+  }
+  if (buf.byteLength < 12 + width * height * 2 * 4) {
+    throw new Error(`${name}: truncated .flo (expected ${width}x${height}x2 floats).`);
+  }
   const data = new Float32Array(width * height * 2);
   let off = 12;
   for (let i = 0; i < data.length; i++) {
@@ -95,6 +101,11 @@ export function parseNpy(buf: ArrayBuffer, name: string): FlowField {
   const headerStart = major >= 2 ? 12 : 10;
   const header = String.fromCharCode(...bytes.slice(headerStart, headerStart + headerLen));
   const descr = /'descr':\s*'([^']+)'/.exec(header)?.[1] ?? "<f4";
+  // Column-major dumps would need a transpose this fast path doesn't do; reject
+  // them clearly rather than returning silently-garbled flow.
+  if (/'fortran_order':\s*True/.test(header)) {
+    throw new Error(`${name}: Fortran-order .npy is not supported — re-save as C-order.`);
+  }
   const shapeMatch = /'shape':\s*\(([^)]*)\)/.exec(header)?.[1] ?? "";
   const shape = shapeMatch
     .split(",")

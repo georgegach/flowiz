@@ -39,7 +39,10 @@ uniform float u_hlRadius;    // keep-radius in normalized units
 const float PI = 3.14159265358979;
 
 vec3 wheelLookup(float idx) {
-  float t = idx / (u_ncols); // sample center
+  // Sample the exact texel center (NEAREST filtering) so col0/col1 are the raw
+  // wheel entries and the single manual mix() below matches the CPU/library
+  // reference bit-for-bit — LINEAR here would blend twice and drift.
+  float t = (idx + 0.5) / u_ncols;
   return texture(u_wheel, vec2(t, 0.5)).rgb;
 }
 
@@ -165,8 +168,9 @@ export class FlowRenderer {
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, NCOLS, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // NEAREST: wheelLookup samples texel centers and interpolates once in-shader.
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     return tex;
