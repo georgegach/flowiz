@@ -18,6 +18,11 @@ export interface ExportContext {
   notify: (msg: string, kind?: "error" | "info") => void;
 }
 
+// Mirror of the caps enforced inside export/gif.ts so we can warn the user
+// before a long/large sequence is silently truncated or downscaled.
+const GIF_MAX_FRAMES = 300;
+const GIF_MAX_WIDTH = 480;
+
 const DOWNLOAD_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>`;
 
 function download(blob: Blob, name: string) {
@@ -148,6 +153,14 @@ export function setupExportMenu(container: HTMLElement, ctx: ExportContext) {
       withEngine((e) => e.encodeZip(frames, base), `${base}.zip`, "ZIP");
     } else if (act === "gif") {
       const mx = ctx.getMaxFlow();
+      const dropped = Math.max(0, frames.length - GIF_MAX_FRAMES);
+      const scaled = frames[0].width > GIF_MAX_WIDTH;
+      if (dropped || scaled) {
+        const parts = [];
+        if (dropped) parts.push(`first ${GIF_MAX_FRAMES} of ${frames.length} frames`);
+        if (scaled) parts.push(`width capped to ${GIF_MAX_WIDTH}px`);
+        ctx.notify(`GIF limited to ${parts.join(", ")} — use MP4 for the full sequence.`, "info");
+      }
       withEngine((e) => e.encodeGif(frames, ctx.getFps(), mx), `${base}.gif`, "GIF");
     } else if (act === "mp4") {
       if (b.dataset.disabled === "1") return;

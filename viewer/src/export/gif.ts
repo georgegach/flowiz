@@ -5,6 +5,8 @@ import type { SerializedFlow } from "../flowgen/types";
 import { colorizeFlow } from "./colorize";
 import type { FlowField } from "../flow";
 
+// NOTE: keep in sync with GIF_MAX_WIDTH / GIF_MAX_FRAMES in ui/export-menu.ts,
+// which warns the user upfront when a sequence will be capped here.
 const MAX_WIDTH = 480;
 const MAX_FRAMES = 300;
 
